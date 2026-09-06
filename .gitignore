@@ -1,0 +1,15 @@
+router/.venv/
+router/node_modules/
+router/web/node_modules/
+router/web/dist/
+router/.local/
+router/.pytest_cache/
+router/.ruff_cache/
+router/.mypy_cache/
+router/output/
+router/.playwright-cli/
+**/__pycache__/
+**/*.egg-info/
+router/.env
+router/.env.*
+!router/.env.example

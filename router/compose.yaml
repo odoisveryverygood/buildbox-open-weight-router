@@ -1,0 +1,20 @@
+# LOCAL DEVELOPMENT ONLY. Trust auth is permitted solely on the loopback-bound port.
+name: buildbox-router-foundation
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: router
+      POSTGRES_DB: router_fixture
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - router_fixture_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U router -d router_fixture"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+volumes:
+  router_fixture_pg:

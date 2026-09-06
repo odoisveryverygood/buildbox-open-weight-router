@@ -1,0 +1,14 @@
+{
+  "name": "buildbox-router-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["web"],
+  "scripts": {
+    "generate": "uv run python scripts/generate_contracts.py && openapi-typescript openapi.json -o web/src/generated/api.ts",
+    "typecheck": "npm run typecheck --workspace web",
+    "lint": "npm run lint --workspace web",
+    "build": "npm run build --workspace web",
+    "dev": "npm run dev --workspace web"
+  },
+  "devDependencies": {"openapi-typescript": "7.10.1"}
+}
