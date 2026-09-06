@@ -4,8 +4,10 @@
 
 Base: `b36437fc91b717b3978f977ec3cdf084c8206a5b` (completed Prompt 1 foundation).
 Branch: `codex/router-intelligence`.
+Implementation commit: `71e8227195ef3a2fa0f7e1c01f4591482f5df5d6`.
 Worktree: `Buildbox-Router-Intelligence`, created separately from the foundation.
-The final delivery message records the exact lane commit; resolve the commit
+The subsequent handoff-only commit records that implementation hash; it changes no
+runtime code or tests. The final delivery message records the exact lane tip; resolve the commit
 containing this handoff with `git log -1 --format=%H -- docs/handoffs/02-intelligence.md`.
 
 **Status: offline lane implementation delivered; full requested feature coverage
