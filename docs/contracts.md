@@ -1,5 +1,30 @@
 # Frozen foundation interfaces · v1.0
 
+## Integration planning API 1.1
+
+`router/backend/buildbox_router/planning_contracts.py` composes the canonical v1
+workflow/catalog records with exact plan versions, processing permissions, typed
+target requirements, preserved clarification answers, immutable inputs and a
+saved research/selection result. New endpoints are `/api/plans` and
+`/api/plans/{id}/versions/{version}` with `/revise`, `/cancel` and `/policy` actions.
+Job submission requires an owner-scoped idempotency key. Old recommendations
+are not repinned; changed constraints create a new version and old exports fail.
+
+Rich research records were promoted to `evidence_contracts.py`. The former
+`research/records.py` contains compatibility re-exports, not duplicate schemas.
+The v1 `Evidence` shape remains intact. Job records now include operation, phase,
+progress, cancellation/uncertain states, budget accounting and actual served
+control-plane metadata. Explicit migration revision 2 adds submission and provider
+reservation tables. Generated OpenAPI/TypeScript remains the frontend authority.
+
+`PlanningResult` is the persisted downstream boundary: exact `plan_id/version`,
+validated interpretation/workflow, pinned catalog, optional rich `ResearchLedger`,
+optional recommendation, exclusions, assumptions, missing facts, result status,
+fixture marker and `evaluation_status=not_run`. A blocked result has no runnable
+recommendation. No graph, policy or evidence object grants execution permission.
+
+## Preserved foundation contracts
+
 Canonical source: `router/backend/buildbox_router/contracts.py`.
 Protocol source: `router/backend/buildbox_router/ports.py`.
 Generated API description: `router/openapi.json`.

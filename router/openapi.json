@@ -1,6 +1,76 @@
 {
   "components": {
     "schemas": {
+      "ArtifactRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "artifact": {
+            "$ref": "#/components/schemas/ModelArtifact"
+          },
+          "declared_task": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "identity_claim_id": {
+            "title": "Identity Claim Id",
+            "type": "string"
+          },
+          "input_modalities": {
+            "$ref": "#/components/schemas/Fact_tuple_str__________"
+          },
+          "license_terms_reviewed": {
+            "const": false,
+            "default": false,
+            "title": "License Terms Reviewed",
+            "type": "boolean"
+          },
+          "license_url": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "output_modalities": {
+            "$ref": "#/components/schemas/Fact_tuple_str__________"
+          },
+          "publisher": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "release_date": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "repository_id": {
+            "title": "Repository Id",
+            "type": "string"
+          },
+          "repository_url": {
+            "title": "Repository Url",
+            "type": "string"
+          },
+          "weight_files": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Weight Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "artifact",
+          "repository_id",
+          "repository_url",
+          "publisher",
+          "weight_files",
+          "access",
+          "license_url",
+          "declared_task",
+          "input_modalities",
+          "output_modalities",
+          "release_date",
+          "identity_claim_id"
+        ],
+        "title": "ArtifactRecord",
+        "type": "object"
+      },
       "Assignment": {
         "additionalProperties": false,
         "properties": {
@@ -186,6 +256,140 @@
         "title": "CatalogSnapshot",
         "type": "object"
       },
+      "ClaimRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "benchmark_name": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "benchmark_split": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "benchmark_version": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/Evidence"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "identity",
+              "license",
+              "access",
+              "capability",
+              "deployment",
+              "pricing"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "harness": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Limitations",
+            "type": "array"
+          },
+          "measured_by_us": {
+            "const": false,
+            "default": false,
+            "title": "Measured By Us",
+            "type": "boolean"
+          },
+          "metric_unit": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "publication_date": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "raw_metric": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "sample_size": {
+            "$ref": "#/components/schemas/Fact_int_"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "source_digest": {
+            "title": "Source Digest",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_locator": {
+            "minLength": 1,
+            "title": "Source Locator",
+            "type": "string"
+          },
+          "source_type": {
+            "enum": [
+              "publisher_metadata",
+              "publisher_card",
+              "official_endpoint",
+              "benchmark"
+            ],
+            "title": "Source Type",
+            "type": "string"
+          },
+          "subject_id": {
+            "title": "Subject Id",
+            "type": "string"
+          },
+          "subject_kind": {
+            "enum": [
+              "artifact",
+              "endpoint"
+            ],
+            "title": "Subject Kind",
+            "type": "string"
+          },
+          "tested_at": {
+            "$ref": "#/components/schemas/Fact_str_"
+          }
+        },
+        "required": [
+          "evidence",
+          "subject_id",
+          "subject_kind",
+          "field",
+          "source_id",
+          "source_type",
+          "source_locator",
+          "source_digest",
+          "observed_at",
+          "expires_at",
+          "publication_date",
+          "tested_at",
+          "raw_metric",
+          "metric_unit",
+          "benchmark_name",
+          "benchmark_version",
+          "benchmark_split",
+          "harness",
+          "settings",
+          "sample_size",
+          "limitations"
+        ],
+        "title": "ClaimRecord",
+        "type": "object"
+      },
       "Clarification": {
         "additionalProperties": false,
         "properties": {
@@ -214,6 +418,35 @@
           "question"
         ],
         "title": "Clarification",
+        "type": "object"
+      },
+      "ClarificationAnswer": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Answer",
+            "type": "string"
+          },
+          "question_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Question Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question_id",
+          "answer"
+        ],
+        "title": "ClarificationAnswer",
         "type": "object"
       },
       "Constraints": {
@@ -357,6 +590,122 @@
           "synthetic"
         ],
         "title": "DraftPolicy",
+        "type": "object"
+      },
+      "EndpointRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "conditional_pricing": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "context_tokens": {
+            "$ref": "#/components/schemas/Fact_int_"
+          },
+          "deployment_mode": {
+            "const": "hosted_gateway",
+            "default": "hosted_gateway",
+            "title": "Deployment Mode",
+            "type": "string"
+          },
+          "endpoint_tag": {
+            "title": "Endpoint Tag",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "hardware": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "max_completion_tokens": {
+            "$ref": "#/components/schemas/Fact_int_"
+          },
+          "max_prompt_tokens": {
+            "$ref": "#/components/schemas/Fact_int_"
+          },
+          "metadata_url": {
+            "title": "Metadata Url",
+            "type": "string"
+          },
+          "prices": {
+            "items": {
+              "$ref": "#/components/schemas/PriceComponent"
+            },
+            "title": "Prices",
+            "type": "array"
+          },
+          "privacy": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "provider_restrictions": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "quantization": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "region": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "routing_model_id": {
+            "title": "Routing Model Id",
+            "type": "string"
+          },
+          "served_revision": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "serving_url": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "supported_parameters": {
+            "$ref": "#/components/schemas/Fact_tuple_str__________"
+          }
+        },
+        "required": [
+          "id",
+          "artifact_id",
+          "routing_model_id",
+          "endpoint_tag",
+          "provider",
+          "metadata_url",
+          "serving_url",
+          "served_revision",
+          "supported_parameters",
+          "context_tokens",
+          "max_prompt_tokens",
+          "max_completion_tokens",
+          "quantization",
+          "hardware",
+          "region",
+          "privacy",
+          "provider_restrictions",
+          "prices",
+          "conditional_pricing",
+          "evidence_ids",
+          "limitations"
+        ],
+        "title": "EndpointRecord",
         "type": "object"
       },
       "ErrorCode": {
@@ -741,6 +1090,50 @@
         "title": "Fact[str]",
         "type": "object"
       },
+      "Fact_tuple_str__________": {
+        "additionalProperties": false,
+        "properties": {
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "unknown_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unknown Reason"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "provenance"
+        ],
+        "title": "Fact[tuple[str, ...]]",
+        "type": "object"
+      },
       "FilterResult": {
         "additionalProperties": false,
         "properties": {
@@ -774,6 +1167,55 @@
           "excluded"
         ],
         "title": "FilterResult",
+        "type": "object"
+      },
+      "FreshnessPolicy": {
+        "additionalProperties": false,
+        "description": "Configurable engineering defaults, not claims about universal shelf life.",
+        "properties": {
+          "access_seconds": {
+            "default": 86400,
+            "minimum": 1.0,
+            "title": "Access Seconds",
+            "type": "integer"
+          },
+          "capability_seconds": {
+            "default": 2592000,
+            "minimum": 1.0,
+            "title": "Capability Seconds",
+            "type": "integer"
+          },
+          "deployment_seconds": {
+            "default": 86400,
+            "minimum": 1.0,
+            "title": "Deployment Seconds",
+            "type": "integer"
+          },
+          "identity_seconds": {
+            "default": 2592000,
+            "minimum": 1.0,
+            "title": "Identity Seconds",
+            "type": "integer"
+          },
+          "license_seconds": {
+            "default": 604800,
+            "minimum": 1.0,
+            "title": "License Seconds",
+            "type": "integer"
+          },
+          "pricing_seconds": {
+            "default": 21600,
+            "minimum": 1.0,
+            "title": "Pricing Seconds",
+            "type": "integer"
+          },
+          "version": {
+            "default": "freshness-1",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "title": "FreshnessPolicy",
         "type": "object"
       },
       "Intake": {
@@ -865,9 +1307,60 @@
         "title": "Interpretation",
         "type": "object"
       },
+      "Issue": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "subject",
+          "message"
+        ],
+        "title": "Issue",
+        "type": "object"
+      },
       "Job": {
         "additionalProperties": false,
         "properties": {
+          "accounted_usd": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accounted Usd"
+          },
+          "accounting": {
+            "default": "not_started",
+            "enum": [
+              "not_started",
+              "reserved",
+              "known",
+              "uncertain"
+            ],
+            "title": "Accounting",
+            "type": "string"
+          },
           "attempts": {
             "default": 0,
             "title": "Attempts",
@@ -892,6 +1385,28 @@
             "title": "Id",
             "type": "string"
           },
+          "operation": {
+            "default": "recommendation",
+            "enum": [
+              "recommendation",
+              "planning"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "phase": {
+            "default": "queued",
+            "title": "Phase",
+            "type": "string"
+          },
+          "progress": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Progress",
+            "type": "array"
+          },
           "recommendation_id": {
             "anyOf": [
               {
@@ -904,18 +1419,43 @@
             ],
             "title": "Recommendation Id"
           },
+          "reserved_usd": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Reserved Usd",
+            "type": "number"
+          },
           "schema_version": {
             "const": "1.0",
             "default": "1.0",
             "title": "Schema Version",
             "type": "string"
           },
+          "served_configuration": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "title": "Served Configuration",
+            "type": "object"
+          },
           "status": {
             "enum": [
               "queued",
               "running",
               "succeeded",
-              "failed"
+              "failed",
+              "cancelled",
+              "uncertain"
             ],
             "title": "Status",
             "type": "string"
@@ -1100,6 +1640,438 @@
         "title": "Node",
         "type": "object"
       },
+      "PlanInput": {
+        "additionalProperties": false,
+        "properties": {
+          "answers": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ClarificationAnswer"
+            },
+            "maxItems": 30,
+            "title": "Answers",
+            "type": "array"
+          },
+          "catalog_mode": {
+            "default": "fixture",
+            "enum": [
+              "fixture",
+              "public_snapshot",
+              "runtime_public"
+            ],
+            "title": "Catalog Mode",
+            "type": "string"
+          },
+          "edited_workflow": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Workflow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "intake": {
+            "$ref": "#/components/schemas/Intake"
+          },
+          "processing": {
+            "$ref": "#/components/schemas/ProcessingPolicy"
+          },
+          "requirements": {
+            "$ref": "#/components/schemas/TargetRequirements"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intake"
+        ],
+        "title": "PlanInput",
+        "type": "object"
+      },
+      "PlanVersion": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "input": {
+            "$ref": "#/components/schemas/PlanInput"
+          },
+          "input_hash": {
+            "title": "Input Hash",
+            "type": "string"
+          },
+          "planning_schema": {
+            "const": "1.1",
+            "default": "1.1",
+            "title": "Planning Schema",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "input",
+          "input_hash"
+        ],
+        "title": "PlanVersion",
+        "type": "object"
+      },
+      "PlanView": {
+        "additionalProperties": false,
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          },
+          "latest_version": {
+            "title": "Latest Version",
+            "type": "integer"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanVersion"
+          },
+          "planning_schema": {
+            "const": "1.1",
+            "default": "1.1",
+            "title": "Planning Schema",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanningResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "plan",
+          "latest_version",
+          "stale",
+          "job"
+        ],
+        "title": "PlanView",
+        "type": "object"
+      },
+      "PlanningCapabilities": {
+        "additionalProperties": false,
+        "properties": {
+          "authentication": {
+            "enum": [
+              "local_fixture",
+              "shared"
+            ],
+            "title": "Authentication",
+            "type": "string"
+          },
+          "evaluation_status": {
+            "const": "not_run",
+            "default": "not_run",
+            "title": "Evaluation Status",
+            "type": "string"
+          },
+          "interpretation_available": {
+            "title": "Interpretation Available",
+            "type": "boolean"
+          },
+          "live_gate": {
+            "title": "Live Gate",
+            "type": "string"
+          },
+          "local_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Model"
+          },
+          "mode": {
+            "enum": [
+              "fixture",
+              "live"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "public_runtime_available": {
+            "default": true,
+            "title": "Public Runtime Available",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "authentication",
+          "interpretation_available",
+          "live_gate"
+        ],
+        "title": "PlanningCapabilities",
+        "type": "object"
+      },
+      "PlanningResult": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "catalog": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogSnapshot"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evaluation_status": {
+            "const": "not_run",
+            "default": "not_run",
+            "title": "Evaluation Status",
+            "type": "string"
+          },
+          "exclusions": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Exclusions",
+            "type": "object"
+          },
+          "fixture": {
+            "title": "Fixture",
+            "type": "boolean"
+          },
+          "interpretation": {
+            "$ref": "#/components/schemas/Interpretation"
+          },
+          "missing_facts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Facts",
+            "type": "array"
+          },
+          "plan_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "planning_schema": {
+            "const": "1.1",
+            "default": "1.1",
+            "title": "Planning Schema",
+            "type": "string"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Recommendation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "research": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchLedger"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "needs_clarification",
+              "blocked",
+              "provisional",
+              "deterministic"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Workflow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "plan_id",
+          "version",
+          "interpretation",
+          "status",
+          "fixture"
+        ],
+        "title": "PlanningResult",
+        "type": "object"
+      },
+      "PriceComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component": {
+            "title": "Component",
+            "type": "string"
+          },
+          "currency": {
+            "default": "USD",
+            "enum": [
+              "USD",
+              "unknown"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "raw_amount": {
+            "title": "Raw Amount",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "token",
+              "request",
+              "image",
+              "search",
+              "unknown"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "usd_per_million_tokens": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usd Per Million Tokens"
+          }
+        },
+        "required": [
+          "component",
+          "raw_amount",
+          "unit"
+        ],
+        "title": "PriceComponent",
+        "type": "object"
+      },
+      "ProcessingPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "inference": {
+            "default": "local_only",
+            "enum": [
+              "local_only",
+              "local_model",
+              "approved_hosted"
+            ],
+            "title": "Inference",
+            "type": "string"
+          },
+          "interpretation_role": {
+            "default": "interpretation",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Interpretation Role",
+            "type": "string"
+          },
+          "max_planning_usd": {
+            "default": 0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Max Planning Usd",
+            "type": "number"
+          },
+          "public_research": {
+            "default": false,
+            "title": "Public Research",
+            "type": "boolean"
+          },
+          "research_role": {
+            "default": "research",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Research Role",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "title": "ProcessingPolicy",
+        "type": "object"
+      },
       "Provenance": {
         "additionalProperties": false,
         "properties": {
@@ -1230,6 +2202,87 @@
         "title": "Recommendation",
         "type": "object"
       },
+      "ResearchLedger": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ArtifactRecord"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "claims": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ClaimRecord"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "endpoints": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/EndpointRecord"
+            },
+            "title": "Endpoints",
+            "type": "array"
+          },
+          "format_version": {
+            "const": "research-ledger-1",
+            "default": "research-ledger-1",
+            "title": "Format Version",
+            "type": "string"
+          },
+          "freshness_policy": {
+            "$ref": "#/components/schemas/FreshnessPolicy"
+          },
+          "issues": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Issue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "parser_versions": {
+            "default": [
+              "artifact-discovery-1",
+              "capability-evidence-1",
+              "deployment-evidence-1"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Parser Versions",
+            "type": "array"
+          },
+          "plan_fingerprint": {
+            "default": "unplanned",
+            "title": "Plan Fingerprint",
+            "type": "string"
+          },
+          "sources": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/SourceCapture"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "synthetic": {
+            "default": false,
+            "title": "Synthetic",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "freshness_policy"
+        ],
+        "title": "ResearchLedger",
+        "type": "object"
+      },
       "ResearchTool": {
         "additionalProperties": false,
         "properties": {
@@ -1258,6 +2311,58 @@
           "purpose"
         ],
         "title": "ResearchTool",
+        "type": "object"
+      },
+      "SourceCapture": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 1048576,
+            "title": "Body",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "retention": {
+            "default": "Minimal public fields/excerpts, not a complete source document",
+            "title": "Retention",
+            "type": "string"
+          },
+          "source_type": {
+            "enum": [
+              "publisher_metadata",
+              "publisher_card",
+              "official_endpoint",
+              "benchmark"
+            ],
+            "title": "Source Type",
+            "type": "string"
+          },
+          "synthetic": {
+            "default": false,
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "source_type",
+          "observed_at",
+          "body"
+        ],
+        "title": "SourceCapture",
         "type": "object"
       },
       "StackComparison": {
@@ -1294,6 +2399,25 @@
         "title": "StackComparison",
         "type": "object"
       },
+      "Status": {
+        "enum": [
+          "complete",
+          "partial_coverage",
+          "inaccessible",
+          "source_conflict",
+          "stale_data",
+          "budget_exhausted",
+          "search_limit",
+          "rate_limited",
+          "timeout",
+          "cancelled",
+          "unsafe_source",
+          "invalid_evidence",
+          "runtime_unavailable"
+        ],
+        "title": "Status",
+        "type": "string"
+      },
       "Submission": {
         "additionalProperties": false,
         "properties": {
@@ -1327,6 +2451,47 @@
           "interpretation"
         ],
         "title": "Submission",
+        "type": "object"
+      },
+      "TargetRequirements": {
+        "additionalProperties": false,
+        "properties": {
+          "deployment": {
+            "default": "any",
+            "enum": [
+              "any",
+              "self_hosted"
+            ],
+            "title": "Deployment",
+            "type": "string"
+          },
+          "input_modality": {
+            "default": "text",
+            "enum": [
+              "text",
+              "image"
+            ],
+            "title": "Input Modality",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "structured_output": {
+            "default": false,
+            "title": "Structured Output",
+            "type": "boolean"
+          },
+          "tool_calling": {
+            "default": false,
+            "title": "Tool Calling",
+            "type": "boolean"
+          }
+        },
+        "title": "TargetRequirements",
         "type": "object"
       },
       "Workflow": {
@@ -1437,8 +2602,8 @@
     }
   },
   "info": {
-    "title": "Buildbox offline workflow router",
-    "version": "1.0"
+    "title": "Buildbox planning router",
+    "version": "1.1"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -1708,6 +2873,540 @@
           }
         },
         "summary": "Get Job"
+      }
+    },
+    "/api/planning-capabilities": {
+      "get": {
+        "operationId": "capabilities_api_planning_capabilities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningCapabilities"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Capabilities"
+      }
+    },
+    "/api/planning-examples": {
+      "get": {
+        "operationId": "plan_examples_api_planning_examples_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Example"
+                  },
+                  "title": "Response Plan Examples Api Planning Examples Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Plan Examples"
+      }
+    },
+    "/api/plans": {
+      "post": {
+        "operationId": "create_plan_api_plans_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": true,
+            "schema": {
+              "maxLength": 80,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Create Plan"
+      }
+    },
+    "/api/plans/{plan_id}/versions/{version}": {
+      "get": {
+        "operationId": "read_plan_api_plans__plan_id__versions__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "title": "Plan Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Read Plan"
+      }
+    },
+    "/api/plans/{plan_id}/versions/{version}/cancel": {
+      "post": {
+        "operationId": "cancel_plan_api_plans__plan_id__versions__version__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "title": "Plan Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Cancel Plan"
+      }
+    },
+    "/api/plans/{plan_id}/versions/{version}/policy": {
+      "post": {
+        "operationId": "plan_policy_api_plans__plan_id__versions__version__policy_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "title": "Plan Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftPolicy"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Plan Policy"
+      }
+    },
+    "/api/plans/{plan_id}/versions/{version}/revise": {
+      "post": {
+        "operationId": "revise_plan_api_plans__plan_id__versions__version__revise_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "title": "Plan Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": true,
+            "schema": {
+              "maxLength": 80,
+              "minLength": 8,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Revise Plan"
       }
     },
     "/api/recommendations/{recommendation_id}": {

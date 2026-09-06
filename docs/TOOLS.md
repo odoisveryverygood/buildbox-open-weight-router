@@ -1,5 +1,35 @@
 # Tool access and runtime boundary
 
+## Integration update — September 6, 2026
+
+The foundation inventory below is historical. Integration verified actual local
+API/worker calls, not just development connectors:
+
+- Ollama 0.32.5 and a pre-existing cached `qwen2.5:0.5b` were found. An isolated
+  loopback server with cloud disabled was used through the runtime adapter. No
+  model download, provider credential or paid call was needed. Explicit per-plan
+  opt-in and a 1,400-output-token/40-second bound apply. This is an uncalibrated
+  control-plane parser, not a recommended target artifact.
+- Runtime public research fetched official Hugging Face model metadata via the
+  app worker, with opt-in and a zero-dollar provider cap. No private workflow
+  text was sent. Exact source/observation records are retained with the plan.
+- The OpenRouter runtime adapter is implemented and offline-tested against its
+  current official request/endpoint documentation. No hosted permission/key/spend
+  record was supplied; no hosted call is claimed verified. Separate role records
+  support different model/provider-endpoint/key choices. Public research does not
+  require an LLM, Bright Data, or Exa.
+- Native PostgreSQL 17.11 is now available and passed an isolated UTF-8 database
+  migration/persistence/concurrent-budget check. Docker's image-store I/O error
+  still exists; integration did not repair or reset it.
+- HTTP Basic authentication backed by operator-provisioned PBKDF2 identities was
+  verified through the real local API and browser, including cross-tenant denial.
+  This is not permission for shared/public deployment; non-loopback use needs TLS.
+
+See [local run and permission boundaries](../router/INTEGRATION_RUN.md) and the
+integration handoff for exact evidence, commands and remaining release gates.
+
+## Historical foundation inventory
+
 Discovery/read checks: September 6, 2026. Connector access is development-time
 access only; it does **not** grant deployed application access. No session token,
 private requirements text, provider key or account identifier was copied here.

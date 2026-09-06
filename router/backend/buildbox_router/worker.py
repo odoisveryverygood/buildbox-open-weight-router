@@ -6,14 +6,21 @@ import time
 from .composition import Services, fixture_services
 from .config import Settings
 from .contracts import Workflow
+from .planning import PlanningService
+from .planning_storage import PlanningStorage
 from .storage import SqlStorage, engine_for
 
 
-def run_once(services: Services) -> bool:
+def run_once(services: Services, settings: Settings | None = None) -> bool:
     claimed = services.storage.claim()
     if claimed is None:
         return False
     owner, job = claimed
+    if job.operation == "planning" and isinstance(services.storage, SqlStorage):
+        PlanningService(PlanningStorage(services.storage.engine), settings or Settings()).run(
+            owner, job
+        )
+        return True
     try:
         workflow = Workflow.model_validate_json(
             services.storage.get(owner, "workflow", job.workflow_id, job.workflow_version)
@@ -31,16 +38,19 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
-    engine = engine_for(Settings.from_env())
-    storage = SqlStorage(engine)
+    settings = Settings.from_env()
+    engine = engine_for(settings)
+    storage = PlanningStorage(engine)
     storage.check_revision()
     services = fixture_services(storage)
     try:
         while True:
-            run_once(services)
+            run_once(services, settings)
             if args.once:
                 break
             time.sleep(1)
+    except KeyboardInterrupt:
+        pass
     finally:
         engine.dispose()
 

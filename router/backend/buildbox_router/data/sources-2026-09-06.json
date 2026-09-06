@@ -1,0 +1,152 @@
+[
+  {
+    "id": "hub-1",
+    "url": "https://huggingface.co/api/models/Qwen/Qwen3-8B",
+    "source_type": "publisher_metadata",
+    "observed_at": "2026-09-06T21:35:41.814Z",
+    "body": "{\"id\":\"Qwen/Qwen3-8B\",\"modelId\":\"Qwen/Qwen3-8B\",\"author\":\"Qwen\",\"sha\":\"b968826d9c46dd6066d109eabc6255188de91218\",\"private\":false,\"gated\":false,\"disabled\":false,\"pipeline_tag\":\"text-generation\",\"lastModified\":\"2025-07-26T03:49:13.000Z\",\"createdAt\":\"2025-04-27T03:42:21.000Z\",\"cardData\":{\"license\":\"apache-2.0\",\"license_link\":\"https://huggingface.co/Qwen/Qwen3-8B/blob/main/LICENSE\",\"pipeline_tag\":\"text-generation\",\"base_model\":[\"Qwen/Qwen3-8B-Base\"]},\"siblings\":[{\"rfilename\":\".gitattributes\"},{\"rfilename\":\"LICENSE\"},{\"rfilename\":\"README.md\"},{\"rfilename\":\"config.json\"},{\"rfilename\":\"generation_config.json\"},{\"rfilename\":\"merges.txt\"},{\"rfilename\":\"model-00001-of-00005.safetensors\"},{\"rfilename\":\"model-00002-of-00005.safetensors\"},{\"rfilename\":\"model-00003-of-00005.safetensors\"},{\"rfilename\":\"model-00004-of-00005.safetensors\"},{\"rfilename\":\"model-00005-of-00005.safetensors\"},{\"rfilename\":\"model.safetensors.index.json\"},{\"rfilename\":\"tokenizer.json\"},{\"rfilename\":\"tokenizer_config.json\"},{\"rfilename\":\"vocab.json\"}],\"safetensors\":{\"parameters\":{\"BF16\":8190735360},\"total\":8190735360},\"model-index\":null}",
+    "synthetic": false,
+    "retention": "Allowlisted structured fields only; excluded widgets, user/Space references and tokenizer templates."
+  },
+  {
+    "id": "hub-2",
+    "url": "https://huggingface.co/api/models/Qwen/Qwen3-Embedding-0.6B",
+    "source_type": "publisher_metadata",
+    "observed_at": "2026-09-06T21:35:41.930Z",
+    "body": "{\"id\":\"Qwen/Qwen3-Embedding-0.6B\",\"modelId\":\"Qwen/Qwen3-Embedding-0.6B\",\"author\":\"Qwen\",\"sha\":\"97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3\",\"private\":false,\"gated\":false,\"disabled\":false,\"pipeline_tag\":\"feature-extraction\",\"lastModified\":\"2026-04-20T02:45:58.000Z\",\"createdAt\":\"2025-06-03T14:25:32.000Z\",\"cardData\":{\"license\":\"apache-2.0\",\"base_model\":[\"Qwen/Qwen3-0.6B-Base\"],\"tags\":[\"transformers\",\"sentence-transformers\",\"sentence-similarity\",\"feature-extraction\",\"text-embeddings-inference\"]},\"siblings\":[{\"rfilename\":\".gitattributes\"},{\"rfilename\":\"1_Pooling/config.json\"},{\"rfilename\":\"README.md\"},{\"rfilename\":\"config.json\"},{\"rfilename\":\"config_sentence_transformers.json\"},{\"rfilename\":\"generation_config.json\"},{\"rfilename\":\"merges.txt\"},{\"rfilename\":\"model.safetensors\"},{\"rfilename\":\"modules.json\"},{\"rfilename\":\"tokenizer.json\"},{\"rfilename\":\"tokenizer_config.json\"},{\"rfilename\":\"vocab.json\"}],\"safetensors\":{\"parameters\":{\"BF16\":595776512},\"total\":595776512},\"model-index\":null}",
+    "synthetic": false,
+    "retention": "Allowlisted structured fields only; excluded widgets, user/Space references and tokenizer templates."
+  },
+  {
+    "id": "hub-3",
+    "url": "https://huggingface.co/api/models/Qwen/Qwen2.5-VL-7B-Instruct",
+    "source_type": "publisher_metadata",
+    "observed_at": "2026-09-06T21:35:41.932Z",
+    "body": "{\"id\":\"Qwen/Qwen2.5-VL-7B-Instruct\",\"modelId\":\"Qwen/Qwen2.5-VL-7B-Instruct\",\"author\":\"Qwen\",\"sha\":\"cc594898137f460bfe9f0759e9844b3ce807cfb5\",\"private\":false,\"gated\":false,\"disabled\":false,\"pipeline_tag\":\"image-text-to-text\",\"lastModified\":\"2025-04-06T16:23:01.000Z\",\"createdAt\":\"2025-01-26T09:26:37.000Z\",\"cardData\":{\"license\":\"apache-2.0\",\"pipeline_tag\":\"image-text-to-text\",\"language\":[\"en\"],\"tags\":[\"multimodal\"]},\"siblings\":[{\"rfilename\":\".gitattributes\"},{\"rfilename\":\"README.md\"},{\"rfilename\":\"chat_template.json\"},{\"rfilename\":\"config.json\"},{\"rfilename\":\"generation_config.json\"},{\"rfilename\":\"merges.txt\"},{\"rfilename\":\"model-00001-of-00005.safetensors\"},{\"rfilename\":\"model-00002-of-00005.safetensors\"},{\"rfilename\":\"model-00003-of-00005.safetensors\"},{\"rfilename\":\"model-00004-of-00005.safetensors\"},{\"rfilename\":\"model-00005-of-00005.safetensors\"},{\"rfilename\":\"model.safetensors.index.json\"},{\"rfilename\":\"preprocessor_config.json\"},{\"rfilename\":\"tokenizer.json\"},{\"rfilename\":\"tokenizer_config.json\"},{\"rfilename\":\"vocab.json\"}],\"safetensors\":{\"parameters\":{\"BF16\":8292166656},\"total\":8292166656},\"model-index\":null}",
+    "synthetic": false,
+    "retention": "Allowlisted structured fields only; excluded widgets, user/Space references and tokenizer templates."
+  },
+  {
+    "id": "hub-4",
+    "url": "https://huggingface.co/api/models/google/gemma-3-4b-it",
+    "source_type": "publisher_metadata",
+    "observed_at": "2026-09-06T21:35:41.936Z",
+    "body": "{\"id\":\"google/gemma-3-4b-it\",\"modelId\":\"google/gemma-3-4b-it\",\"author\":\"google\",\"sha\":\"093f9f388b31de276ce2de164bdc2081324b9767\",\"private\":false,\"gated\":\"manual\",\"disabled\":false,\"pipeline_tag\":\"image-text-to-text\",\"lastModified\":\"2025-03-21T20:20:53.000Z\",\"createdAt\":\"2025-02-20T21:20:07.000Z\",\"cardData\":{\"license\":\"gemma\",\"pipeline_tag\":\"image-text-to-text\",\"base_model\":\"google/gemma-3-4b-pt\"},\"siblings\":[{\"rfilename\":\".gitattributes\"},{\"rfilename\":\"README.md\"},{\"rfilename\":\"added_tokens.json\"},{\"rfilename\":\"chat_template.json\"},{\"rfilename\":\"config.json\"},{\"rfilename\":\"generation_config.json\"},{\"rfilename\":\"model-00001-of-00002.safetensors\"},{\"rfilename\":\"model-00002-of-00002.safetensors\"},{\"rfilename\":\"model.safetensors.index.json\"},{\"rfilename\":\"preprocessor_config.json\"},{\"rfilename\":\"processor_config.json\"},{\"rfilename\":\"special_tokens_map.json\"},{\"rfilename\":\"tokenizer.json\"},{\"rfilename\":\"tokenizer.model\"},{\"rfilename\":\"tokenizer_config.json\"}],\"safetensors\":{\"parameters\":{\"BF16\":4300079472},\"total\":4300079472},\"model-index\":null}",
+    "synthetic": false,
+    "retention": "Allowlisted structured fields only; excluded widgets, user/Space references and tokenizer templates."
+  },
+  {
+    "id": "hub-5",
+    "url": "https://huggingface.co/api/models/meta-llama/Llama-3.1-8B-Instruct",
+    "source_type": "publisher_metadata",
+    "observed_at": "2026-09-06T21:35:41.936Z",
+    "body": "{\"id\":\"meta-llama/Llama-3.1-8B-Instruct\",\"modelId\":\"meta-llama/Llama-3.1-8B-Instruct\",\"author\":\"meta-llama\",\"sha\":\"0e9e39f249a16976918f6564b8830bc894c89659\",\"private\":false,\"gated\":\"manual\",\"disabled\":false,\"pipeline_tag\":\"text-generation\",\"lastModified\":\"2024-09-25T17:00:57.000Z\",\"createdAt\":\"2024-07-18T08:56:00.000Z\",\"cardData\":{\"license\":\"llama3.1\",\"pipeline_tag\":\"text-generation\",\"base_model\":\"meta-llama/Meta-Llama-3.1-8B\",\"language\":[\"en\",\"de\",\"fr\",\"it\",\"pt\",\"hi\",\"es\",\"th\"],\"tags\":[\"facebook\",\"meta\",\"pytorch\",\"llama\",\"llama-3\"]},\"siblings\":[{\"rfilename\":\".gitattributes\"},{\"rfilename\":\"LICENSE\"},{\"rfilename\":\"README.md\"},{\"rfilename\":\"USE_POLICY.md\"},{\"rfilename\":\"config.json\"},{\"rfilename\":\"generation_config.json\"},{\"rfilename\":\"model-00001-of-00004.safetensors\"},{\"rfilename\":\"model-00002-of-00004.safetensors\"},{\"rfilename\":\"model-00003-of-00004.safetensors\"},{\"rfilename\":\"model-00004-of-00004.safetensors\"},{\"rfilename\":\"model.safetensors.index.json\"},{\"rfilename\":\"original/consolidated.00.pth\"},{\"rfilename\":\"original/params.json\"},{\"rfilename\":\"original/tokenizer.model\"},{\"rfilename\":\"special_tokens_map.json\"},{\"rfilename\":\"tokenizer.json\"},{\"rfilename\":\"tokenizer_config.json\"}],\"safetensors\":{\"parameters\":{\"BF16\":8030261248},\"total\":8030261248},\"model-index\":null}",
+    "synthetic": false,
+    "retention": "Allowlisted structured fields only; excluded widgets, user/Space references and tokenizer templates."
+  },
+  {
+    "id": "hub-6",
+    "url": "https://huggingface.co/api/models/mistralai/Mistral-Small-3.1-24B-Instruct-2503",
+    "source_type": "publisher_metadata",
+    "observed_at": "2026-09-06T21:35:41.936Z",
+    "body": "{\"id\":\"mistralai/Mistral-Small-3.1-24B-Instruct-2503\",\"modelId\":\"mistralai/Mistral-Small-3.1-24B-Instruct-2503\",\"author\":\"mistralai\",\"sha\":\"68faf511d618ef198fef186659617cfd2eb8e33a\",\"private\":false,\"gated\":false,\"disabled\":false,\"lastModified\":\"2025-12-22T10:15:41.000Z\",\"createdAt\":\"2025-03-11T17:04:58.000Z\",\"cardData\":{\"license\":\"apache-2.0\",\"base_model\":[\"mistralai/Mistral-Small-3.1-24B-Base-2503\"],\"language\":[\"en\",\"fr\",\"de\",\"es\",\"pt\",\"it\",\"ja\",\"ko\",\"ru\",\"zh\",\"ar\",\"fa\",\"id\",\"ms\",\"ne\",\"pl\",\"ro\",\"sr\",\"sv\",\"tr\",\"uk\",\"vi\",\"hi\",\"bn\"],\"tags\":[\"mistral-common\"]},\"siblings\":[{\"rfilename\":\".gitattributes\"},{\"rfilename\":\"README.md\"},{\"rfilename\":\"SYSTEM_PROMPT.txt\"},{\"rfilename\":\"chat_template.json\"},{\"rfilename\":\"config.json\"},{\"rfilename\":\"consolidated.safetensors\"},{\"rfilename\":\"generation_config.json\"},{\"rfilename\":\"model-00001-of-00010.safetensors\"},{\"rfilename\":\"model-00002-of-00010.safetensors\"},{\"rfilename\":\"model-00003-of-00010.safetensors\"},{\"rfilename\":\"model-00004-of-00010.safetensors\"},{\"rfilename\":\"model-00005-of-00010.safetensors\"},{\"rfilename\":\"model-00006-of-00010.safetensors\"},{\"rfilename\":\"model-00007-of-00010.safetensors\"},{\"rfilename\":\"model-00008-of-00010.safetensors\"},{\"rfilename\":\"model-00009-of-00010.safetensors\"},{\"rfilename\":\"model-00010-of-00010.safetensors\"},{\"rfilename\":\"model.safetensors.index.json\"},{\"rfilename\":\"params.json\"},{\"rfilename\":\"preprocessor_config.json\"},{\"rfilename\":\"processor_config.json\"},{\"rfilename\":\"special_tokens_map.json\"},{\"rfilename\":\"tekken.json\"},{\"rfilename\":\"tokenizer.json\"},{\"rfilename\":\"tokenizer_config.json\"}],\"safetensors\":{\"parameters\":{\"BF16\":24011361280},\"total\":24011361280},\"model-index\":null}",
+    "synthetic": false,
+    "retention": "Allowlisted structured fields only; excluded widgets, user/Space references and tokenizer templates."
+  },
+  {
+    "id": "hub-7",
+    "url": "https://huggingface.co/api/models/microsoft/Phi-4-mini-instruct",
+    "source_type": "publisher_metadata",
+    "observed_at": "2026-09-06T21:35:41.936Z",
+    "body": "{\"id\":\"microsoft/Phi-4-mini-instruct\",\"modelId\":\"microsoft/Phi-4-mini-instruct\",\"author\":\"microsoft\",\"sha\":\"cfbefacb99257ffa30c83adab238a50856ac3083\",\"private\":false,\"gated\":false,\"disabled\":false,\"pipeline_tag\":\"text-generation\",\"lastModified\":\"2025-12-10T20:24:40.000Z\",\"createdAt\":\"2025-02-19T01:00:58.000Z\",\"cardData\":{\"license\":\"mit\",\"license_link\":\"https://huggingface.co/microsoft/Phi-4-mini-instruct/resolve/main/LICENSE\",\"pipeline_tag\":\"text-generation\",\"language\":[\"multilingual\",\"ar\",\"zh\",\"cs\",\"da\",\"nl\",\"en\",\"fi\",\"fr\",\"de\",\"he\",\"hu\",\"it\",\"ja\",\"ko\",\"no\",\"pl\",\"pt\",\"ru\",\"es\",\"sv\",\"th\",\"tr\",\"uk\"],\"tags\":[\"nlp\",\"code\"]},\"siblings\":[{\"rfilename\":\".gitattributes\"},{\"rfilename\":\"CODE_OF_CONDUCT.md\"},{\"rfilename\":\"LICENSE\"},{\"rfilename\":\"NOTICE.md\"},{\"rfilename\":\"README.md\"},{\"rfilename\":\"SECURITY.md\"},{\"rfilename\":\"added_tokens.json\"},{\"rfilename\":\"config.json\"},{\"rfilename\":\"configuration_phi3.py\"},{\"rfilename\":\"data_summary_card.md\"},{\"rfilename\":\"generation_config.json\"},{\"rfilename\":\"merges.txt\"},{\"rfilename\":\"model-00001-of-00002.safetensors\"},{\"rfilename\":\"model-00002-of-00002.safetensors\"},{\"rfilename\":\"model.safetensors.index.json\"},{\"rfilename\":\"modeling_phi3.py\"},{\"rfilename\":\"sample_finetune.py\"},{\"rfilename\":\"special_tokens_map.json\"},{\"rfilename\":\"tokenizer.json\"},{\"rfilename\":\"tokenizer_config.json\"},{\"rfilename\":\"vocab.json\"}],\"safetensors\":{\"parameters\":{\"BF16\":3836021760},\"total\":3836021760},\"model-index\":null}",
+    "synthetic": false,
+    "retention": "Allowlisted structured fields only; excluded widgets, user/Space references and tokenizer templates."
+  },
+  {
+    "id": "hub-8",
+    "url": "https://huggingface.co/api/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+    "source_type": "publisher_metadata",
+    "observed_at": "2026-09-06T21:35:41.936Z",
+    "body": "{\"id\":\"deepseek-ai/DeepSeek-R1-Distill-Qwen-7B\",\"modelId\":\"deepseek-ai/DeepSeek-R1-Distill-Qwen-7B\",\"author\":\"deepseek-ai\",\"sha\":\"916b56a44061fd5cd7d6a8fb632557ed4f724f60\",\"private\":false,\"gated\":false,\"disabled\":false,\"pipeline_tag\":\"text-generation\",\"lastModified\":\"2025-02-24T03:32:20.000Z\",\"createdAt\":\"2025-01-20T09:16:14.000Z\",\"cardData\":{\"license\":\"mit\"},\"siblings\":[{\"rfilename\":\".gitattributes\"},{\"rfilename\":\"LICENSE\"},{\"rfilename\":\"README.md\"},{\"rfilename\":\"config.json\"},{\"rfilename\":\"figures/benchmark.jpg\"},{\"rfilename\":\"generation_config.json\"},{\"rfilename\":\"model-00001-of-000002.safetensors\"},{\"rfilename\":\"model-00002-of-000002.safetensors\"},{\"rfilename\":\"model.safetensors.index.json\"},{\"rfilename\":\"tokenizer.json\"},{\"rfilename\":\"tokenizer_config.json\"}],\"safetensors\":{\"parameters\":{\"BF16\":7615616512},\"total\":7615616512},\"model-index\":null}",
+    "synthetic": false,
+    "retention": "Allowlisted structured fields only; excluded widgets, user/Space references and tokenizer templates."
+  },
+  {
+    "id": "card-1",
+    "url": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B/raw/97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3/README.md",
+    "source_type": "publisher_card",
+    "observed_at": "2026-09-06T21:36:06.366Z",
+    "body": "license: apache-2.0\n### MTEB (Multilingual)\n| Model                            |  Size   |  Mean (Task)  | Mean (Type) | Bitxt Mining | Class. | Clust. | Inst. Retri. | Multi. Class. | Pair. Class. | Rerank | Retri. | STS  |\n| **Qwen3-Embedding-0.6B**         |  0.6B   |     64.33     | 56.00       | 72.22        | 66.83  | 52.33  | 5.09         | 24.59         | 80.83        | 61.41  | 64.64  | 76.17|\n> **Note**: For compared models, the scores are retrieved from MTEB online [leaderboard](https://huggingface.co/spaces/mteb/leaderboard) on May 24th, 2025.",
+    "synthetic": false,
+    "retention": "Exact original README lines 2, 233, 235, 246, 250; remainder deliberately omitted."
+  },
+  {
+    "id": "card-2",
+    "url": "https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct/raw/cc594898137f460bfe9f0759e9844b3ce807cfb5/README.md",
+    "source_type": "publisher_card",
+    "observed_at": "2026-09-06T21:36:06.368Z",
+    "body": "license: apache-2.0\n| Benchmark | InternVL2.5-8B | MiniCPM-o 2.6 | GPT-4o-mini | Qwen2-VL-7B |**Qwen2.5-VL-7B** |\n| DocVQA<sub>test</sub>  | 93 | 93 | - | 94.5 | **95.7** |\n| OCRBench | 822 | 852 | 785 | 845 | **864** |",
+    "synthetic": false,
+    "retention": "Exact original README lines 3, 58, 62, 66; remainder deliberately omitted."
+  },
+  {
+    "id": "card-3",
+    "url": "https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/raw/68faf511d618ef198fef186659617cfd2eb8e33a/README.md",
+    "source_type": "publisher_card",
+    "observed_at": "2026-09-06T21:36:06.368Z",
+    "body": "license: apache-2.0\n- **System Prompt:** Maintains strong adherence and support for system prompts.\n| Model                          | MMLU      | MMLU Pro (5-shot CoT) | MATH                   | GPQA Main (5-shot CoT) | GPQA Diamond (5-shot CoT )| MBPP      | HumanEval | SimpleQA (TotalAcc)|\n| **Small 3.1 24B Instruct**     | 80.62%    | 66.76%                | 69.30%                 | **44.42%**             | **45.96%**                | 74.71%    | **88.41%**| **10.43%**         |\n| Model                          | MMMU       | MMMU PRO  | Mathvista | ChartQA   | DocVQA    | AI2D        | MM MT Bench |\n| **Small 3.1 24B Instruct**     | 64.00%     | **49.25%**| **68.91%**| 86.24%    | **94.08%**| **93.72%**  | **7.3**     |",
+    "synthetic": false,
+    "retention": "Exact original README lines 28, 67, 85, 87, 95, 97; remainder deliberately omitted."
+  },
+  {
+    "id": "card-4",
+    "url": "https://huggingface.co/microsoft/Phi-4-mini-instruct/raw/cfbefacb99257ffa30c83adab238a50856ac3083/README.md",
+    "source_type": "publisher_card",
+    "observed_at": "2026-09-06T21:36:06.368Z",
+    "body": "license: mit\nlicense_link: https://huggingface.co/microsoft/Phi-4-mini-instruct/resolve/main/LICENSE\nTo understand the capabilities, the 3.8B parameters Phi-4-mini-instruct  model was compared with a set of models over a variety of benchmarks using an internal benchmark platform (See Appendix A for benchmark methodology). A high-level overview of the model quality is as follows:\n|                                  | Phi-4 mini-Ins | Phi-3.5-mini-Ins | Llama-3.2-3B-Ins | Mistral-3B | Qwen2.5-3B-Ins | Qwen2.5-7B-Ins | Mistral-8B-2410 | Llama-3.1-8B-Ins | Llama-3.1-Tulu-3-8B | Gemma2-9B-Ins | GPT-4o-mini-2024-07-18 |\n| MMLU (5-shot)                    | 67.3        | 65.5              | 61.8              | 60.8              | 65.0            | 72.6            | 63.0            | 68.1            | 65.0            | 71.3            | 77.2            |",
+    "synthetic": false,
+    "retention": "Exact original README lines 28, 29, 81, 85, 89; remainder deliberately omitted."
+  },
+  {
+    "id": "card-5",
+    "url": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B/raw/916b56a44061fd5cd7d6a8fb632557ed4f724f60/README.md",
+    "source_type": "publisher_card",
+    "observed_at": "2026-09-06T21:36:06.368Z",
+    "body": "license: mit\n For all our models, the maximum generation length is set to 32,768 tokens. For benchmarks requiring sampling, we use a temperature of $0.6$, a top-p value of $0.95$, and generate 64 responses per query to estimate pass@1.\n| Model                                    | AIME 2024 pass@1 | AIME 2024 cons@64 | MATH-500 pass@1 | GPQA Diamond pass@1 | LiveCodeBench pass@1 | CodeForces rating |\n| DeepSeek-R1-Distill-Qwen-7B          | 55.5             | 83.3              | 92.8            | 49.1                 | 37.6                 | 1189              |\nThis code repository and the model weights are licensed under the [MIT License](https://github.com/deepseek-ai/DeepSeek-R1/blob/main/LICENSE).\n- DeepSeek-R1-Distill-Qwen-1.5B, DeepSeek-R1-Distill-Qwen-7B, DeepSeek-R1-Distill-Qwen-14B and DeepSeek-R1-Distill-Qwen-32B are derived from [Qwen-2.5 series](https://github.com/QwenLM/Qwen2.5), which are originally licensed under [Apache 2.0 License](https://huggingface.co/Qwen/Qwen2.5-1.5B/blob/main/LICENSE), and now finetuned with 800k samples curated with DeepSeek-R1.",
+    "synthetic": false,
+    "retention": "Exact original README lines 2, 121, 160, 167, 218, 220; remainder deliberately omitted."
+  },
+  {
+    "id": "card-6",
+    "url": "https://huggingface.co/Qwen/Qwen3-8B/raw/b968826d9c46dd6066d109eabc6255188de91218/README.md",
+    "source_type": "publisher_card",
+    "observed_at": "2026-09-06T21:36:23.811Z",
+    "body": "license: apache-2.0\nlicense_link: https://huggingface.co/Qwen/Qwen3-8B/blob/main/LICENSE\n**Qwen3-8B** has the following features:\n- Type: Causal Language Models\n- Number of Parameters: 8.2B\n- Context Length: 32,768 natively and [131,072 tokens with YaRN](#processing-long-texts). \nFor more details, including benchmark evaluation, hardware requirements, and inference performance, please refer to our [blog](https://qwenlm.github.io/blog/qwen3/), [GitHub](https://github.com/QwenLM/Qwen3), and [Documentation](https://qwen.readthedocs.io/en/latest/).",
+    "synthetic": false,
+    "retention": "Exact original README lines 3, 4, 27, 28, 30, 34, 36; remainder deliberately omitted."
+  },
+  {
+    "id": "openrouter-qwen-mapping",
+    "url": "https://openrouter.ai/api/v1/model/qwen/qwen3-8b",
+    "source_type": "official_endpoint",
+    "observed_at": "2026-09-06T21:36:38.809Z",
+    "body": "{\"data\":{\"id\":\"qwen/qwen3-8b\",\"canonical_slug\":\"qwen/qwen3-8b-04-28\",\"hugging_face_id\":\"Qwen/Qwen3-8B\"}}",
+    "synthetic": false
+  },
+  {
+    "id": "openrouter-endpoints-1",
+    "url": "https://openrouter.ai/api/v1/models/qwen/qwen3-8b/endpoints",
+    "source_type": "official_endpoint",
+    "observed_at": "2026-09-06T21:36:06.601Z",
+    "body": "{\"data\":{\"id\":\"qwen/qwen3-8b\",\"name\":\"Qwen: Qwen3 8B\",\"created\":1745876632,\"description\":\"Qwen3-8B is a dense 8.2B parameter causal language model from the Qwen3 series, designed for both reasoning-heavy tasks and efficient dialogue. It supports seamless switching between \\\"thinking\\\" mode for math,...\",\"architecture\":{\"tokenizer\":\"Qwen3\",\"instruct_type\":\"qwen3\",\"modality\":\"text->text\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"text\"]},\"endpoints\":[{\"name\":\"Alibaba | qwen/qwen3-8b-04-28\",\"model_id\":\"qwen/qwen3-8b\",\"model_name\":\"Qwen: Qwen3 8B\",\"context_length\":131072,\"pricing\":{\"prompt\":\"0.000000117\",\"completion\":\"0.000000455\",\"discount\":0},\"provider_name\":\"Alibaba\",\"tag\":\"alibaba\",\"quantization\":\"unknown\",\"max_completion_tokens\":8192,\"max_prompt_tokens\":98304,\"supported_parameters\":[\"reasoning\",\"include_reasoning\",\"max_tokens\",\"temperature\",\"top_p\",\"seed\",\"presence_penalty\",\"response_format\",\"tools\",\"tool_choice\",\"top_k\",\"frequency_penalty\",\"stop\"],\"supports_tool_choice\":{\"none\":true,\"auto\":true,\"required\":false,\"function\":false},\"status\":0,\"uptime_last_30m\":100,\"uptime_last_5m\":100,\"uptime_last_1d\":100,\"supports_implicit_caching\":false,\"supports_voice_cloning\":false,\"latency_last_30m\":null,\"throughput_last_30m\":null}]}}",
+    "synthetic": false
+  },
+  {
+    "id": "openrouter-endpoints-2",
+    "url": "https://openrouter.ai/api/v1/models/deepseek/deepseek-r1-distill-qwen-7b/endpoints",
+    "source_type": "official_endpoint",
+    "observed_at": "2026-09-06T21:36:06.602Z",
+    "body": "{\"data\":{\"id\":\"deepseek/deepseek-r1-distill-qwen-7b\",\"name\":\"DeepSeek: R1 Distill Qwen 7B\",\"created\":1748628237,\"description\":\"DeepSeek-R1-Distill-Qwen-7B is a 7 billion parameter dense language model distilled from DeepSeek-R1, leveraging reinforcement learning-enhanced reasoning data generated by DeepSeek's larger models. The distillation process transfers advanced reasoning, math, and...\",\"architecture\":{\"tokenizer\":\"Qwen\",\"instruct_type\":\"deepseek-r1\",\"modality\":\"text->text\",\"input_modalities\":[\"text\"],\"output_modalities\":[\"text\"]},\"endpoints\":[]}}",
+    "synthetic": false
+  }
+]

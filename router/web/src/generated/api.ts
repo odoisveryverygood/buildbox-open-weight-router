@@ -72,6 +72,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/planning-capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Capabilities */
+        get: operations["capabilities_api_planning_capabilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/planning-examples": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Plan Examples */
+        get: operations["plan_examples_api_planning_examples_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Plan */
+        post: operations["create_plan_api_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plans/{plan_id}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Plan */
+        get: operations["read_plan_api_plans__plan_id__versions__version__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plans/{plan_id}/versions/{version}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Plan */
+        post: operations["cancel_plan_api_plans__plan_id__versions__version__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plans/{plan_id}/versions/{version}/policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Plan Policy */
+        post: operations["plan_policy_api_plans__plan_id__versions__version__policy_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plans/{plan_id}/versions/{version}/revise": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revise Plan */
+        post: operations["revise_plan_api_plans__plan_id__versions__version__revise_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/recommendations/{recommendation_id}": {
         parameters: {
             query?: never;
@@ -195,6 +314,31 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ArtifactRecord */
+        ArtifactRecord: {
+            access: components["schemas"]["Fact_str_"];
+            artifact: components["schemas"]["ModelArtifact"];
+            declared_task: components["schemas"]["Fact_str_"];
+            /** Identity Claim Id */
+            identity_claim_id: string;
+            input_modalities: components["schemas"]["Fact_tuple_str__________"];
+            /**
+             * License Terms Reviewed
+             * @default false
+             * @constant
+             */
+            license_terms_reviewed: false;
+            license_url: components["schemas"]["Fact_str_"];
+            output_modalities: components["schemas"]["Fact_tuple_str__________"];
+            publisher: components["schemas"]["Fact_str_"];
+            release_date: components["schemas"]["Fact_str_"];
+            /** Repository Id */
+            repository_id: string;
+            /** Repository Url */
+            repository_url: string;
+            /** Weight Files */
+            weight_files: string[];
+        };
         /** Assignment */
         Assignment: {
             /** Configuration Id */
@@ -272,6 +416,61 @@ export interface components {
             /** Synthetic */
             synthetic: boolean;
         };
+        /** ClaimRecord */
+        ClaimRecord: {
+            benchmark_name: components["schemas"]["Fact_str_"];
+            benchmark_split: components["schemas"]["Fact_str_"];
+            benchmark_version: components["schemas"]["Fact_str_"];
+            evidence: components["schemas"]["Evidence"];
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Field
+             * @enum {string}
+             */
+            field: "identity" | "license" | "access" | "capability" | "deployment" | "pricing";
+            harness: components["schemas"]["Fact_str_"];
+            /** Limitations */
+            limitations: string[];
+            /**
+             * Measured By Us
+             * @default false
+             * @constant
+             */
+            measured_by_us: false;
+            metric_unit: components["schemas"]["Fact_str_"];
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            publication_date: components["schemas"]["Fact_str_"];
+            raw_metric: components["schemas"]["Fact_str_"];
+            sample_size: components["schemas"]["Fact_int_"];
+            settings: components["schemas"]["Fact_str_"];
+            /** Source Digest */
+            source_digest: string;
+            /** Source Id */
+            source_id: string;
+            /** Source Locator */
+            source_locator: string;
+            /**
+             * Source Type
+             * @enum {string}
+             */
+            source_type: "publisher_metadata" | "publisher_card" | "official_endpoint" | "benchmark";
+            /** Subject Id */
+            subject_id: string;
+            /**
+             * Subject Kind
+             * @enum {string}
+             */
+            subject_kind: "artifact" | "endpoint";
+            tested_at: components["schemas"]["Fact_str_"];
+        };
         /** Clarification */
         Clarification: {
             /** Field */
@@ -283,6 +482,19 @@ export interface components {
             material: boolean;
             /** Question */
             question: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+        };
+        /** ClarificationAnswer */
+        ClarificationAnswer: {
+            /** Answer */
+            answer: string;
+            /** Question Id */
+            question_id: string;
             /**
              * Schema Version
              * @default 1.0
@@ -361,6 +573,44 @@ export interface components {
             workflow_id: string;
             /** Workflow Version */
             workflow_version: number;
+        };
+        /** EndpointRecord */
+        EndpointRecord: {
+            /** Artifact Id */
+            artifact_id: string;
+            conditional_pricing: components["schemas"]["Fact_str_"];
+            context_tokens: components["schemas"]["Fact_int_"];
+            /**
+             * Deployment Mode
+             * @default hosted_gateway
+             * @constant
+             */
+            deployment_mode: "hosted_gateway";
+            /** Endpoint Tag */
+            endpoint_tag: string;
+            /** Evidence Ids */
+            evidence_ids: string[];
+            hardware: components["schemas"]["Fact_str_"];
+            /** Id */
+            id: string;
+            /** Limitations */
+            limitations: string[];
+            max_completion_tokens: components["schemas"]["Fact_int_"];
+            max_prompt_tokens: components["schemas"]["Fact_int_"];
+            /** Metadata Url */
+            metadata_url: string;
+            /** Prices */
+            prices: components["schemas"]["PriceComponent"][];
+            privacy: components["schemas"]["Fact_str_"];
+            provider: components["schemas"]["Fact_str_"];
+            provider_restrictions: components["schemas"]["Fact_str_"];
+            quantization: components["schemas"]["Fact_str_"];
+            region: components["schemas"]["Fact_str_"];
+            /** Routing Model Id */
+            routing_model_id: string;
+            served_revision: components["schemas"]["Fact_str_"];
+            serving_url: components["schemas"]["Fact_str_"];
+            supported_parameters: components["schemas"]["Fact_tuple_str__________"];
         };
         /**
          * ErrorCode
@@ -528,6 +778,20 @@ export interface components {
             /** Value */
             value?: string | null;
         };
+        /** Fact[tuple[str, ...]] */
+        Fact_tuple_str__________: {
+            provenance: components["schemas"]["Provenance"];
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Unknown Reason */
+            unknown_reason?: string | null;
+            /** Value */
+            value?: string[] | null;
+        };
         /** FilterResult */
         FilterResult: {
             /** Eligible */
@@ -542,6 +806,47 @@ export interface components {
              * @constant
              */
             schema_version: "1.0";
+        };
+        /**
+         * FreshnessPolicy
+         * @description Configurable engineering defaults, not claims about universal shelf life.
+         */
+        FreshnessPolicy: {
+            /**
+             * Access Seconds
+             * @default 86400
+             */
+            access_seconds: number;
+            /**
+             * Capability Seconds
+             * @default 2592000
+             */
+            capability_seconds: number;
+            /**
+             * Deployment Seconds
+             * @default 86400
+             */
+            deployment_seconds: number;
+            /**
+             * Identity Seconds
+             * @default 2592000
+             */
+            identity_seconds: number;
+            /**
+             * License Seconds
+             * @default 604800
+             */
+            license_seconds: number;
+            /**
+             * Pricing Seconds
+             * @default 21600
+             */
+            pricing_seconds: number;
+            /**
+             * Version
+             * @default freshness-1
+             */
+            version: string;
         };
         /** Intake */
         Intake: {
@@ -582,8 +887,29 @@ export interface components {
             status: "ready" | "needs_clarification" | "unsupported";
             workflow?: components["schemas"]["Workflow"] | null;
         };
+        /** Issue */
+        Issue: {
+            /** Message */
+            message: string;
+            /**
+             * Retryable
+             * @default false
+             */
+            retryable: boolean;
+            status: components["schemas"]["Status"];
+            /** Subject */
+            subject: string;
+        };
         /** Job */
         Job: {
+            /** Accounted Usd */
+            accounted_usd?: number | null;
+            /**
+             * Accounting
+             * @default not_started
+             * @enum {string}
+             */
+            accounting: "not_started" | "reserved" | "known" | "uncertain";
             /**
              * Attempts
              * @default 0
@@ -594,19 +920,44 @@ export interface components {
             error?: components["schemas"]["ErrorResponse"] | null;
             /** Id */
             id: string;
+            /**
+             * Operation
+             * @default recommendation
+             * @enum {string}
+             */
+            operation: "recommendation" | "planning";
+            /**
+             * Phase
+             * @default queued
+             */
+            phase: string;
+            /**
+             * Progress
+             * @default []
+             */
+            progress: string[];
             /** Recommendation Id */
             recommendation_id?: string | null;
+            /**
+             * Reserved Usd
+             * @default 0
+             */
+            reserved_usd: number;
             /**
              * Schema Version
              * @default 1.0
              * @constant
              */
             schema_version: "1.0";
+            /** Served Configuration */
+            served_configuration?: {
+                [key: string]: string | number;
+            };
             /**
              * Status
              * @enum {string}
              */
-            status: "queued" | "running" | "succeeded" | "failed";
+            status: "queued" | "running" | "succeeded" | "failed" | "cancelled" | "uncertain";
             /** Updated At */
             updated_at: number;
             /** Workflow Id */
@@ -677,6 +1028,216 @@ export interface components {
             /** Tool Id */
             tool_id?: string | null;
         };
+        /** PlanInput */
+        PlanInput: {
+            /**
+             * Answers
+             * @default []
+             */
+            answers: components["schemas"]["ClarificationAnswer"][];
+            /**
+             * Catalog Mode
+             * @default fixture
+             * @enum {string}
+             */
+            catalog_mode: "fixture" | "public_snapshot" | "runtime_public";
+            edited_workflow?: components["schemas"]["Workflow"] | null;
+            intake: components["schemas"]["Intake"];
+            processing?: components["schemas"]["ProcessingPolicy"];
+            requirements?: components["schemas"]["TargetRequirements"];
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+        };
+        /** PlanVersion */
+        PlanVersion: {
+            /** Id */
+            id: string;
+            input: components["schemas"]["PlanInput"];
+            /** Input Hash */
+            input_hash: string;
+            /**
+             * Planning Schema
+             * @default 1.1
+             * @constant
+             */
+            planning_schema: "1.1";
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Version */
+            version: number;
+        };
+        /** PlanView */
+        PlanView: {
+            job: components["schemas"]["Job"];
+            /** Latest Version */
+            latest_version: number;
+            plan: components["schemas"]["PlanVersion"];
+            /**
+             * Planning Schema
+             * @default 1.1
+             * @constant
+             */
+            planning_schema: "1.1";
+            result?: components["schemas"]["PlanningResult"] | null;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Stale */
+            stale: boolean;
+        };
+        /** PlanningCapabilities */
+        PlanningCapabilities: {
+            /**
+             * Authentication
+             * @enum {string}
+             */
+            authentication: "local_fixture" | "shared";
+            /**
+             * Evaluation Status
+             * @default not_run
+             * @constant
+             */
+            evaluation_status: "not_run";
+            /** Interpretation Available */
+            interpretation_available: boolean;
+            /** Live Gate */
+            live_gate: string;
+            /** Local Model */
+            local_model?: string | null;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "fixture" | "live";
+            /**
+             * Public Runtime Available
+             * @default true
+             */
+            public_runtime_available: boolean;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+        };
+        /** PlanningResult */
+        PlanningResult: {
+            /**
+             * Assumptions
+             * @default []
+             */
+            assumptions: string[];
+            catalog?: components["schemas"]["CatalogSnapshot"] | null;
+            /**
+             * Evaluation Status
+             * @default not_run
+             * @constant
+             */
+            evaluation_status: "not_run";
+            /** Exclusions */
+            exclusions?: {
+                [key: string]: string[];
+            };
+            /** Fixture */
+            fixture: boolean;
+            interpretation: components["schemas"]["Interpretation"];
+            /**
+             * Missing Facts
+             * @default []
+             */
+            missing_facts: string[];
+            /** Plan Id */
+            plan_id: string;
+            /**
+             * Planning Schema
+             * @default 1.1
+             * @constant
+             */
+            planning_schema: "1.1";
+            recommendation?: components["schemas"]["Recommendation"] | null;
+            research?: components["schemas"]["ResearchLedger"] | null;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "needs_clarification" | "blocked" | "provisional" | "deterministic";
+            /** Version */
+            version: number;
+            workflow?: components["schemas"]["Workflow"] | null;
+        };
+        /** PriceComponent */
+        PriceComponent: {
+            /** Component */
+            component: string;
+            /**
+             * Currency
+             * @default USD
+             * @enum {string}
+             */
+            currency: "USD" | "unknown";
+            /** Raw Amount */
+            raw_amount: string;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "token" | "request" | "image" | "search" | "unknown";
+            /** Usd Per Million Tokens */
+            usd_per_million_tokens?: string | null;
+        };
+        /** ProcessingPolicy */
+        ProcessingPolicy: {
+            /**
+             * Inference
+             * @default local_only
+             * @enum {string}
+             */
+            inference: "local_only" | "local_model" | "approved_hosted";
+            /**
+             * Interpretation Role
+             * @default interpretation
+             */
+            interpretation_role: string;
+            /**
+             * Max Planning Usd
+             * @default 0
+             */
+            max_planning_usd: number;
+            /**
+             * Public Research
+             * @default false
+             */
+            public_research: boolean;
+            /**
+             * Research Role
+             * @default research
+             */
+            research_role: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+        };
         /** Provenance */
         Provenance: {
             /**
@@ -729,6 +1290,60 @@ export interface components {
             /** Workflow Version */
             workflow_version: number;
         };
+        /** ResearchLedger */
+        ResearchLedger: {
+            /**
+             * Artifacts
+             * @default []
+             */
+            artifacts: components["schemas"]["ArtifactRecord"][];
+            /**
+             * Claims
+             * @default []
+             */
+            claims: components["schemas"]["ClaimRecord"][];
+            /**
+             * Endpoints
+             * @default []
+             */
+            endpoints: components["schemas"]["EndpointRecord"][];
+            /**
+             * Format Version
+             * @default research-ledger-1
+             * @constant
+             */
+            format_version: "research-ledger-1";
+            freshness_policy: components["schemas"]["FreshnessPolicy"];
+            /**
+             * Issues
+             * @default []
+             */
+            issues: components["schemas"]["Issue"][];
+            /**
+             * Parser Versions
+             * @default [
+             *       "artifact-discovery-1",
+             *       "capability-evidence-1",
+             *       "deployment-evidence-1"
+             *     ]
+             */
+            parser_versions: string[];
+            /**
+             * Plan Fingerprint
+             * @default unplanned
+             */
+            plan_fingerprint: string;
+            /**
+             * Sources
+             * @default []
+             */
+            sources: components["schemas"]["SourceCapture"][];
+            /**
+             * Synthetic
+             * @default false
+             */
+            synthetic: boolean;
+        };
         /** ResearchTool */
         ResearchTool: {
             /** Id */
@@ -744,6 +1359,35 @@ export interface components {
              * @constant
              */
             schema_version: "1.0";
+        };
+        /** SourceCapture */
+        SourceCapture: {
+            /** Body */
+            body: string;
+            /** Id */
+            id: string;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /**
+             * Retention
+             * @default Minimal public fields/excerpts, not a complete source document
+             */
+            retention: string;
+            /**
+             * Source Type
+             * @enum {string}
+             */
+            source_type: "publisher_metadata" | "publisher_card" | "official_endpoint" | "benchmark";
+            /**
+             * Synthetic
+             * @default false
+             */
+            synthetic: boolean;
+            /** Url */
+            url: string;
         };
         /** StackComparison */
         StackComparison: {
@@ -763,6 +1407,11 @@ export interface components {
              */
             schema_version: "1.0";
         };
+        /**
+         * Status
+         * @enum {string}
+         */
+        Status: "complete" | "partial_coverage" | "inaccessible" | "source_conflict" | "stale_data" | "budget_exhausted" | "search_limit" | "rate_limited" | "timeout" | "cancelled" | "unsafe_source" | "invalid_evidence" | "runtime_unavailable";
         /** Submission */
         Submission: {
             /** Intake Id */
@@ -775,6 +1424,37 @@ export interface components {
              * @constant
              */
             schema_version: "1.0";
+        };
+        /** TargetRequirements */
+        TargetRequirements: {
+            /**
+             * Deployment
+             * @default any
+             * @enum {string}
+             */
+            deployment: "any" | "self_hosted";
+            /**
+             * Input Modality
+             * @default text
+             * @enum {string}
+             */
+            input_modality: "text" | "image";
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Structured Output
+             * @default false
+             */
+            structured_output: boolean;
+            /**
+             * Tool Calling
+             * @default false
+             */
+            tool_calling: boolean;
         };
         /** Workflow */
         Workflow: {
@@ -1028,6 +1708,422 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    capabilities_api_planning_capabilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanningCapabilities"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    plan_examples_api_planning_examples_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Example"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_plan_api_plans_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "idempotency-key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    read_plan_api_plans__plan_id__versions__version__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cancel_plan_api_plans__plan_id__versions__version__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    plan_policy_api_plans__plan_id__versions__version__policy_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftPolicy"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    revise_plan_api_plans__plan_id__versions__version__revise_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "idempotency-key": string;
+            };
+            path: {
+                plan_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanView"];
                 };
             };
             /** @description Bad Request */

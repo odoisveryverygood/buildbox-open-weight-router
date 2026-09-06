@@ -103,6 +103,39 @@ class SqlStorage:
             if row is None:
                 return None
             old = Job.model_validate_json(row["payload"])
+            if (
+                old.operation == "planning"
+                and old.attempts
+                and conn.execute(
+                    text("SELECT count(*) FROM provider_calls WHERE job_id=:id AND owner=:owner"),
+                    {"id": old.id, "owner": row["owner"]},
+                ).scalar_one()
+            ):
+                held = old.model_copy(
+                    update={
+                        "status": "uncertain",
+                        "phase": "requires_reconciliation",
+                        "accounting": "uncertain",
+                        "updated_at": now,
+                        "error": ErrorResponse(
+                            code=ErrorCode.UNSUPPORTED,
+                            message="Worker lease expired after a provider reservation; paid work is never automatically repeated",
+                        ),
+                    }
+                )
+                conn.execute(
+                    text(
+                        "UPDATE jobs SET status='uncertain',updated_at=:now,payload=:payload WHERE id=:id AND status=:status AND attempts=:attempts"
+                    ),
+                    {
+                        "id": old.id,
+                        "status": old.status,
+                        "attempts": old.attempts,
+                        "now": now,
+                        "payload": held.model_dump_json(),
+                    },
+                )
+                return None
             if old.attempts >= 3:
                 exhausted = old.model_copy(
                     update={
@@ -212,4 +245,4 @@ if __name__ == "__main__":
     engine = engine_for(Settings.from_env())
     migrate(engine)
     engine.dispose()
-    print("Schema revision 1 ready")
+    print(f"Schema revision {REVISION} ready")

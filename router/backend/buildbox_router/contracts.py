@@ -302,7 +302,14 @@ class Job(Contract):
     id: Identifier
     workflow_id: Identifier
     workflow_version: int
-    status: Literal["queued", "running", "succeeded", "failed"]
+    status: Literal["queued", "running", "succeeded", "failed", "cancelled", "uncertain"]
+    operation: Literal["recommendation", "planning"] = "recommendation"
+    served_configuration: dict[str, str | int | float] = Field(default_factory=dict)
+    phase: str = "queued"
+    progress: tuple[str, ...] = ()
+    reserved_usd: float = Field(default=0, ge=0, allow_inf_nan=False)
+    accounted_usd: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    accounting: Literal["not_started", "reserved", "known", "uncertain"] = "not_started"
     attempts: int = 0
     recommendation_id: Identifier | None = None
     error: ErrorResponse | None = None
