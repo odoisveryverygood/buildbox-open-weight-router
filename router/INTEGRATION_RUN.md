@@ -104,7 +104,7 @@ playwright-cli --session router snapshot
 playwright-cli --session router run-code --filename scripts/browser_checks.js
 playwright-cli --session router run-code --filename scripts/browser_local_runtime.js
 playwright-cli --session router console warning
-playwright-cli --session router network
+playwright-cli --session router requests
 ```
 
 `browser_checks.js` includes one real public metadata request. It is not an offline

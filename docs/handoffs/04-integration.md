@@ -140,12 +140,14 @@ playwright-cli --session router snapshot
 playwright-cli --session router run-code --filename scripts/browser_checks.js
 playwright-cli --session router run-code --filename scripts/browser_local_runtime.js
 playwright-cli --session router console warning
-playwright-cli --session router network
+playwright-cli --session router requests
 ```
 
 This host used `/Users/aradhyamishra/.codex/skills/playwright/scripts/playwright_cli.sh`
 as the CLI wrapper. Live checks are opt-in, not part of offline CI. Failure/auth
 checks use the explicitly test-only server and public synthetic test identities.
+The installed CLI uses `requests` for its network inventory; the skill reference's
+older `network` command is unavailable and was corrected after inspecting CLI help.
 
 PostgreSQL was independently initialized under `/tmp/buildbox-router-pg.ckgqA6`,
 bound to 127.0.0.1:55484; database `buildbox_check` was created UTF-8 from template0.
