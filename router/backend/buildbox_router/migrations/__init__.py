@@ -2,7 +2,7 @@
 
 from sqlalchemy import Connection, Engine, text
 
-REVISION = 2
+REVISION = 3
 
 
 def migrate(engine: Engine) -> None:
@@ -19,6 +19,73 @@ def migrate(engine: Engine) -> None:
         if current < 2:
             revision_two(conn)
             conn.execute(text("INSERT INTO schema_revisions(version) VALUES (2)"))
+        if current < 3:
+            revision_three(conn, engine.dialect.name)
+            conn.execute(text("INSERT INTO schema_revisions(version) VALUES (3)"))
+
+
+def revision_three(conn: Connection, dialect: str) -> None:
+    # v1 records are untouched. v2 natural IDs (aliases/prompts) are tenant-local.
+    conn.execute(
+        text("""CREATE TABLE sandbox_records (
+        owner VARCHAR(80) NOT NULL, kind VARCHAR(40) NOT NULL, id VARCHAR(80) NOT NULL,
+        version INTEGER NOT NULL CHECK(version > 0), payload TEXT NOT NULL,
+        PRIMARY KEY(owner, kind, id, version))""")
+    )
+    conn.execute(
+        text("""CREATE TABLE sandbox_heads (
+        owner VARCHAR(80) NOT NULL, policy_id VARCHAR(80) NOT NULL,
+        policy_version INTEGER NOT NULL, sequence INTEGER NOT NULL CHECK(sequence > 0),
+        PRIMARY KEY(owner, policy_id, policy_version))""")
+    )
+    conn.execute(
+        text("""CREATE TABLE sandbox_budgets (
+        owner VARCHAR(80) NOT NULL, id VARCHAR(80) NOT NULL,
+        cap_micro BIGINT NOT NULL CHECK(cap_micro >= 0),
+        held_micro BIGINT NOT NULL CHECK(held_micro >= 0),
+        PRIMARY KEY(owner, id))""")
+    )
+    conn.execute(
+        text("""CREATE TABLE sandbox_reservations (
+        owner VARCHAR(80) NOT NULL, id VARCHAR(80) NOT NULL, budget_id VARCHAR(80) NOT NULL,
+        request_id VARCHAR(80) NOT NULL, reserved_micro BIGINT NOT NULL CHECK(reserved_micro >= 0),
+        actual_micro BIGINT CHECK(actual_micro >= 0),
+        state VARCHAR(20) NOT NULL CHECK(state IN ('reserved','uncertain','reconciled')),
+        PRIMARY KEY(owner, id), UNIQUE(owner, request_id),
+        FOREIGN KEY(owner, budget_id) REFERENCES sandbox_budgets(owner, id))""")
+    )
+    conn.execute(
+        text("""CREATE TABLE application_key_verifiers (
+        owner VARCHAR(80) NOT NULL, id VARCHAR(80) NOT NULL, verifier TEXT NOT NULL,
+        PRIMARY KEY(owner, id))""")
+    )
+    conn.execute(
+        text("""CREATE TABLE sandbox_payloads (
+        owner VARCHAR(80) NOT NULL, kind VARCHAR(40) NOT NULL, id VARCHAR(80) NOT NULL,
+        expires_at DOUBLE PRECISION NOT NULL, payload TEXT NOT NULL,
+        PRIMARY KEY(owner, kind, id))""")
+    )
+    conn.execute(text("CREATE INDEX sandbox_payload_expiry ON sandbox_payloads(expires_at)"))
+    conn.execute(
+        text("""CREATE TABLE sandbox_requests (
+        owner VARCHAR(80) NOT NULL, request_key VARCHAR(80) NOT NULL,
+        request_id VARCHAR(80) NOT NULL, input_hash VARCHAR(64) NOT NULL,
+        state VARCHAR(20) NOT NULL CHECK(state IN ('queued','running','awaiting_approval','succeeded','failed','cancelled','uncertain')),
+        PRIMARY KEY(owner,request_key), UNIQUE(owner,request_id))""")
+    )
+    if dialect == "sqlite":
+        for action in ("UPDATE", "DELETE"):
+            conn.execute(
+                text(
+                    f"CREATE TRIGGER immutable_sandbox_{action.lower()} BEFORE {action} ON sandbox_records BEGIN SELECT RAISE(ABORT, 'Sandbox records are immutable'); END"
+                )
+            )
+    else:
+        conn.execute(
+            text(
+                "CREATE TRIGGER immutable_sandbox BEFORE UPDATE OR DELETE ON sandbox_records FOR EACH ROW EXECUTE FUNCTION reject_record_mutation()"
+            )
+        )
 
 
 def revision_two(conn: Connection) -> None:

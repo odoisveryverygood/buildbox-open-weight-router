@@ -8,6 +8,7 @@ router/.ruff_cache/
 router/.mypy_cache/
 router/output/
 router/.playwright-cli/
+.playwright-cli/
 **/__pycache__/
 **/*.egg-info/
 router/.env

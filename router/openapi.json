@@ -1,6 +1,97 @@
 {
   "components": {
     "schemas": {
+      "ApplicationKeyMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "alias_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Alias Ids",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "prefix": {
+            "pattern": "^bbx_[a-zA-Z0-9]{8}$",
+            "title": "Prefix",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revoked At"
+          },
+          "scopes": {
+            "items": {
+              "enum": [
+                "models:read",
+                "chat:complete",
+                "workflow:run",
+                "runs:read",
+                "runs:cancel"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Scopes",
+            "type": "array"
+          },
+          "tenant_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "workflow_policies": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/VersionRef"
+            },
+            "title": "Workflow Policies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "prefix",
+          "scopes",
+          "created_at",
+          "expires_at"
+        ],
+        "title": "ApplicationKeyMetadata",
+        "type": "object"
+      },
       "ArtifactRecord": {
         "additionalProperties": false,
         "properties": {
@@ -256,6 +347,225 @@
         "title": "CatalogSnapshot",
         "type": "object"
       },
+      "ChatCompletion": {
+        "additionalProperties": false,
+        "properties": {
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/CompletionChoice"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Choices",
+            "type": "array"
+          },
+          "created": {
+            "minimum": 0.0,
+            "title": "Created",
+            "type": "integer"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "model": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Model",
+            "type": "string"
+          },
+          "object": {
+            "const": "chat.completion",
+            "default": "chat.completion",
+            "title": "Object",
+            "type": "string"
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompletionUsage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "model",
+          "choices"
+        ],
+        "title": "ChatCompletion",
+        "type": "object"
+      },
+      "ChatCompletionChunk": {
+        "additionalProperties": false,
+        "properties": {
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/ChunkChoice"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Choices",
+            "type": "array"
+          },
+          "created": {
+            "minimum": 0,
+            "title": "Created",
+            "type": "integer"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "model": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Model",
+            "type": "string"
+          },
+          "object": {
+            "const": "chat.completion.chunk",
+            "default": "chat.completion.chunk",
+            "title": "Object",
+            "type": "string"
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompletionUsage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "model",
+          "choices"
+        ],
+        "title": "ChatCompletionChunk",
+        "type": "object"
+      },
+      "ChatCompletionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "max_tokens": {
+            "maximum": 16384.0,
+            "minimum": 1.0,
+            "title": "Max Tokens",
+            "type": "integer"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "maxItems": 32,
+            "minItems": 1,
+            "title": "Messages",
+            "type": "array"
+          },
+          "model": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Model",
+            "type": "string"
+          },
+          "stream": {
+            "default": false,
+            "title": "Stream",
+            "type": "boolean"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          }
+        },
+        "required": [
+          "model",
+          "messages",
+          "max_tokens"
+        ],
+        "title": "ChatCompletionRequest",
+        "type": "object"
+      },
+      "ChatMessage": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "maxLength": 16000,
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "system",
+              "user",
+              "assistant"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "ChatMessage",
+        "type": "object"
+      },
+      "ChunkChoice": {
+        "additionalProperties": false,
+        "properties": {
+          "delta": {
+            "$ref": "#/components/schemas/CompletionDelta"
+          },
+          "finish_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "stop",
+                  "length",
+                  "content_filter"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Finish Reason"
+          },
+          "index": {
+            "const": 0,
+            "default": 0,
+            "title": "Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "delta"
+        ],
+        "title": "ChunkChoice",
+        "type": "object"
+      },
       "ClaimRecord": {
         "additionalProperties": false,
         "properties": {
@@ -449,31 +759,295 @@
         "title": "ClarificationAnswer",
         "type": "object"
       },
+      "ComparisonCell": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "output_reference": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Output Reference"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Run Id"
+          },
+          "sample_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Sample Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "not_run",
+              "completed",
+              "failed",
+              "blocked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UsageReconciliation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "sample_id",
+          "policy",
+          "status"
+        ],
+        "title": "ComparisonCell",
+        "type": "object"
+      },
+      "ComparisonRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "budget": {
+            "$ref": "#/components/schemas/ExecutionBudget"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "policies": {
+            "items": {
+              "$ref": "#/components/schemas/VersionRef"
+            },
+            "maxItems": 4,
+            "minItems": 2,
+            "title": "Policies",
+            "type": "array"
+          },
+          "sample_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Sample Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "sample_ids",
+          "policies",
+          "budget"
+        ],
+        "title": "ComparisonRequest",
+        "type": "object"
+      },
+      "ComparisonResult": {
+        "additionalProperties": false,
+        "properties": {
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonCell"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "quality_claim": {
+            "const": "exploratory_not_quality_validation",
+            "default": "exploratory_not_quality_validation",
+            "title": "Quality Claim",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/ComparisonRequest"
+          }
+        },
+        "required": [
+          "id",
+          "request",
+          "cells"
+        ],
+        "title": "ComparisonResult",
+        "type": "object"
+      },
+      "CompletionChoice": {
+        "additionalProperties": false,
+        "properties": {
+          "finish_reason": {
+            "enum": [
+              "stop",
+              "length",
+              "content_filter"
+            ],
+            "title": "Finish Reason",
+            "type": "string"
+          },
+          "index": {
+            "const": 0,
+            "default": 0,
+            "title": "Index",
+            "type": "integer"
+          },
+          "message": {
+            "$ref": "#/components/schemas/CompletionMessage"
+          }
+        },
+        "required": [
+          "message",
+          "finish_reason"
+        ],
+        "title": "CompletionChoice",
+        "type": "object"
+      },
+      "CompletionDelta": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "maxLength": 65536,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Content"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "const": "assistant",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Role"
+          }
+        },
+        "title": "CompletionDelta",
+        "type": "object"
+      },
+      "CompletionMessage": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "maxLength": 1048576,
+            "title": "Content",
+            "type": "string"
+          },
+          "role": {
+            "const": "assistant",
+            "default": "assistant",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "title": "CompletionMessage",
+        "type": "object"
+      },
+      "CompletionUsage": {
+        "additionalProperties": false,
+        "properties": {
+          "completion_tokens": {
+            "minimum": 0,
+            "title": "Completion Tokens",
+            "type": "integer"
+          },
+          "prompt_tokens": {
+            "minimum": 0,
+            "title": "Prompt Tokens",
+            "type": "integer"
+          },
+          "total_tokens": {
+            "minimum": 0,
+            "title": "Total Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "prompt_tokens",
+          "completion_tokens",
+          "total_tokens"
+        ],
+        "title": "CompletionUsage",
+        "type": "object"
+      },
       "Constraints": {
         "additionalProperties": false,
         "properties": {
           "max_cost_per_1k_tokens": {
             "anyOf": [
               {
-                "minimum": 0.0,
+                "minimum": 0,
                 "type": "number"
               },
               {
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Max Cost Per 1K Tokens"
           },
           "max_latency_ms": {
             "anyOf": [
               {
-                "minimum": 0.0,
+                "minimum": 0,
                 "type": "number"
               },
               {
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Max Latency Ms"
           },
           "open_weight_required": {
@@ -494,6 +1068,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Required Region"
           },
           "schema_version": {
@@ -507,6 +1082,137 @@
           "provenance"
         ],
         "title": "Constraints",
+        "type": "object"
+      },
+      "DecisionTrace": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Admission Id",
+            "type": "string"
+          },
+          "alias_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Alias Id"
+          },
+          "catalog_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Catalog Id",
+            "type": "string"
+          },
+          "configuration_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Configuration Id"
+          },
+          "evidence_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "node_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "quality": {
+            "enum": [
+              "untested_provisional",
+              "measured_not_production_approved"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "requested_endpoint": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Requested Endpoint"
+          },
+          "served_endpoint": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "served_model": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "tenant_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "transition_sequence": {
+            "minimum": 1,
+            "title": "Transition Sequence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "request_id",
+          "tenant_id",
+          "policy",
+          "transition_sequence",
+          "node_id",
+          "catalog_id",
+          "admission_id",
+          "evidence_ids",
+          "served_model",
+          "served_endpoint",
+          "quality"
+        ],
+        "title": "DecisionTrace",
         "type": "object"
       },
       "DraftPolicy": {
@@ -893,6 +1599,365 @@
         "title": "Example",
         "type": "object"
       },
+      "ExecutablePolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "budget": {
+            "$ref": "#/components/schemas/ExecutionBudget"
+          },
+          "catalog_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Catalog Id",
+            "type": "string"
+          },
+          "environment": {
+            "const": "sandbox",
+            "default": "sandbox",
+            "title": "Environment",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_types": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "enum": [
+                  "text",
+                  "json",
+                  "boolean",
+                  "number"
+                ],
+                "type": "string"
+              }
+            },
+            "title": "Input Types",
+            "type": "object"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "production_approved": {
+            "const": false,
+            "default": false,
+            "title": "Production Approved",
+            "type": "boolean"
+          },
+          "prompts": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PromptRevision"
+            },
+            "maxItems": 30,
+            "title": "Prompts",
+            "type": "array"
+          },
+          "quality": {
+            "default": "untested_provisional",
+            "enum": [
+              "untested_provisional",
+              "measured_not_production_approved"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/ExecutableStage"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "title": "Stages",
+            "type": "array"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/Workflow"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "plan",
+          "workflow",
+          "catalog_id",
+          "input_types",
+          "stages",
+          "budget"
+        ],
+        "title": "ExecutablePolicy",
+        "type": "object"
+      },
+      "ExecutableStage": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_tool_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Allowed Tool Ids",
+            "type": "array"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/ExecutionBudget"
+          },
+          "configuration_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Configuration Id"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "input_types": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "enum": [
+                  "text",
+                  "json",
+                  "boolean",
+                  "number"
+                ],
+                "type": "string"
+              }
+            },
+            "title": "Input Types",
+            "type": "object"
+          },
+          "node_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "text.trim.v1",
+                  "text.lowercase.v1",
+                  "text.uppercase.v1",
+                  "text.sort_lines.v1",
+                  "text.deduplicate_lines.v1"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Operation"
+          },
+          "output_types": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "enum": [
+                  "text",
+                  "json",
+                  "boolean",
+                  "number"
+                ],
+                "type": "string"
+              }
+            },
+            "title": "Output Types",
+            "type": "object"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "stop": {
+            "$ref": "#/components/schemas/StopConditions"
+          }
+        },
+        "required": [
+          "node_id",
+          "input_types",
+          "output_types",
+          "budget"
+        ],
+        "title": "ExecutableStage",
+        "type": "object"
+      },
+      "ExecutionBudget": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "max_cost_micro_usd": {
+            "maximum": 1000000,
+            "minimum": 0,
+            "title": "Max Cost Micro Usd",
+            "type": "integer"
+          },
+          "max_input_tokens": {
+            "maximum": 131072,
+            "minimum": 1,
+            "title": "Max Input Tokens",
+            "type": "integer"
+          },
+          "max_model_calls": {
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Max Model Calls",
+            "type": "integer"
+          },
+          "max_output_tokens": {
+            "maximum": 16384,
+            "minimum": 1,
+            "title": "Max Output Tokens",
+            "type": "integer"
+          },
+          "max_retries": {
+            "const": 0,
+            "default": 0,
+            "title": "Max Retries",
+            "type": "integer"
+          },
+          "max_tool_calls": {
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Max Tool Calls",
+            "type": "integer"
+          },
+          "timeout_ms": {
+            "maximum": 120000,
+            "minimum": 100,
+            "title": "Timeout Ms",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "max_cost_micro_usd",
+          "max_model_calls",
+          "max_tool_calls",
+          "max_input_tokens",
+          "max_output_tokens",
+          "timeout_ms"
+        ],
+        "title": "ExecutionBudget",
+        "type": "object"
+      },
+      "ExecutionSchemaBundle": {
+        "additionalProperties": false,
+        "description": "Generates every contract through the central OpenAPI schema, including SSE.",
+        "properties": {
+          "admission": {
+            "$ref": "#/components/schemas/SandboxAdmission"
+          },
+          "alias": {
+            "$ref": "#/components/schemas/RouteAlias"
+          },
+          "attempt": {
+            "$ref": "#/components/schemas/RunAttempt"
+          },
+          "chunk": {
+            "$ref": "#/components/schemas/ChatCompletionChunk"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/ComparisonResult"
+          },
+          "credential": {
+            "$ref": "#/components/schemas/ProviderCredentialReference"
+          },
+          "event": {
+            "discriminator": {
+              "mapping": {
+                "run.error": "#/components/schemas/RunErrorEvent",
+                "run.status": "#/components/schemas/RunStatusEvent",
+                "run.usage": "#/components/schemas/RunUsageEvent"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RunStatusEvent"
+              },
+              {
+                "$ref": "#/components/schemas/RunUsageEvent"
+              },
+              {
+                "$ref": "#/components/schemas/RunErrorEvent"
+              }
+            ],
+            "title": "Event"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "grant": {
+            "$ref": "#/components/schemas/RuntimeGrant"
+          },
+          "key": {
+            "$ref": "#/components/schemas/ApplicationKeyMetadata"
+          },
+          "output": {
+            "$ref": "#/components/schemas/StoredOutput"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/PolicyView"
+          },
+          "target": {
+            "$ref": "#/components/schemas/TargetConfiguration"
+          }
+        },
+        "required": [
+          "policy",
+          "alias",
+          "admission",
+          "key",
+          "credential",
+          "chunk",
+          "event",
+          "attempt",
+          "comparison",
+          "target",
+          "output",
+          "grant"
+        ],
+        "title": "ExecutionSchemaBundle",
+        "type": "object"
+      },
       "ExecutionTool": {
         "additionalProperties": false,
         "properties": {
@@ -947,6 +2012,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Unknown Reason"
           },
           "value": {
@@ -958,6 +2024,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Value"
           }
         },
@@ -988,6 +2055,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Unknown Reason"
           },
           "value": {
@@ -999,6 +2067,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Value"
           }
         },
@@ -1029,6 +2098,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Unknown Reason"
           },
           "value": {
@@ -1040,6 +2110,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Value"
           }
         },
@@ -1070,6 +2141,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Unknown Reason"
           },
           "value": {
@@ -1081,6 +2153,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Value"
           }
         },
@@ -1111,6 +2184,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Unknown Reason"
           },
           "value": {
@@ -1125,6 +2199,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Value"
           }
         },
@@ -1216,6 +2291,190 @@
           }
         },
         "title": "FreshnessPolicy",
+        "type": "object"
+      },
+      "GatewayError": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/GatewayErrorDetail"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "GatewayError",
+        "type": "object"
+      },
+      "GatewayErrorDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "unsupported_parameter",
+              "invalid_request",
+              "unauthorized",
+              "sandbox_disabled",
+              "admission_denied",
+              "budget_exhausted",
+              "runtime_unavailable",
+              "cancelled",
+              "timeout",
+              "accounting_uncertain"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "param": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Param"
+          },
+          "type": {
+            "enum": [
+              "invalid_request_error",
+              "authentication_error",
+              "permission_error",
+              "rate_limit_error",
+              "server_error"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "type",
+          "code"
+        ],
+        "title": "GatewayErrorDetail",
+        "type": "object"
+      },
+      "ImportedSample": {
+        "additionalProperties": false,
+        "properties": {
+          "data_class": {
+            "enum": [
+              "synthetic",
+              "tenant_private"
+            ],
+            "title": "Data Class",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expected_output": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "imported_at": {
+            "format": "date-time",
+            "title": "Imported At",
+            "type": "string"
+          },
+          "inputs": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "$ref": "#/components/schemas/JsonValue"
+              }
+            },
+            "title": "Inputs",
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "sample",
+              "trace"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "observed_output": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "original_observed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Observed At"
+          },
+          "processing": {
+            "default": "local_only",
+            "enum": [
+              "local_only",
+              "approved_hosted"
+            ],
+            "title": "Processing",
+            "type": "string"
+          },
+          "provenance": {
+            "const": "user_imported_not_verified",
+            "default": "user_imported_not_verified",
+            "title": "Provenance",
+            "type": "string"
+          },
+          "retention_days": {
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Retention Days",
+            "type": "integer"
+          },
+          "source_label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "inputs",
+          "source_label",
+          "imported_at",
+          "data_class",
+          "retention_days"
+        ],
+        "title": "ImportedSample",
         "type": "object"
       },
       "Intake": {
@@ -1485,6 +2744,54 @@
         "title": "Job",
         "type": "object"
       },
+      "JsonValue": {},
+      "LocalDeployment": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter_id": {
+            "const": "local_ollama",
+            "default": "local_ollama",
+            "title": "Adapter Id",
+            "type": "string"
+          },
+          "context_tokens": {
+            "$ref": "#/components/schemas/Fact_int_"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "max_output_tokens": {
+            "$ref": "#/components/schemas/Fact_int_"
+          },
+          "model_tag": {
+            "pattern": "^[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+$",
+            "title": "Model Tag",
+            "type": "string"
+          },
+          "privacy": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "supported_parameters": {
+            "$ref": "#/components/schemas/Fact_tuple_str__________"
+          },
+          "weights_digest": {
+            "$ref": "#/components/schemas/Fact_str_"
+          }
+        },
+        "required": [
+          "model_tag",
+          "weights_digest",
+          "supported_parameters",
+          "context_tokens",
+          "max_output_tokens",
+          "privacy"
+        ],
+        "title": "LocalDeployment",
+        "type": "object"
+      },
       "ModelArtifact": {
         "additionalProperties": false,
         "properties": {
@@ -1526,6 +2833,62 @@
           "provenance"
         ],
         "title": "ModelArtifact",
+        "type": "object"
+      },
+      "ModelList": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ModelListing"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "object": {
+            "const": "list",
+            "default": "list",
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ModelList",
+        "type": "object"
+      },
+      "ModelListing": {
+        "additionalProperties": false,
+        "properties": {
+          "created": {
+            "minimum": 0.0,
+            "title": "Created",
+            "type": "integer"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "object": {
+            "const": "model",
+            "default": "model",
+            "title": "Object",
+            "type": "string"
+          },
+          "owned_by": {
+            "const": "buildbox-sandbox",
+            "default": "buildbox-sandbox",
+            "title": "Owned By",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created"
+        ],
+        "title": "ModelListing",
         "type": "object"
       },
       "Node": {
@@ -1575,27 +2938,29 @@
           "max_iterations": {
             "anyOf": [
               {
-                "maximum": 10.0,
-                "minimum": 1.0,
+                "maximum": 10,
+                "minimum": 1,
                 "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Max Iterations"
           },
           "max_model_calls": {
             "anyOf": [
               {
-                "maximum": 20.0,
-                "minimum": 1.0,
+                "maximum": 20,
+                "minimum": 1,
                 "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Max Model Calls"
           },
           "outputs": {
@@ -1629,6 +2994,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Tool Id"
           }
         },
@@ -1974,6 +3340,95 @@
         "title": "PlanningResult",
         "type": "object"
       },
+      "PolicyTransition": {
+        "additionalProperties": false,
+        "properties": {
+          "actor_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Actor Id",
+            "type": "string"
+          },
+          "admission_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Admission Id"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "production_approved": {
+            "const": false,
+            "default": false,
+            "title": "Production Approved",
+            "type": "boolean"
+          },
+          "sequence": {
+            "minimum": 1,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "sandbox_enabled",
+              "disabled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy",
+          "sequence",
+          "status",
+          "actor_id",
+          "occurred_at"
+        ],
+        "title": "PolicyTransition",
+        "type": "object"
+      },
+      "PolicyView": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/ExecutablePolicy"
+          },
+          "transition": {
+            "$ref": "#/components/schemas/PolicyTransition"
+          }
+        },
+        "required": [
+          "policy",
+          "transition"
+        ],
+        "title": "PolicyView",
+        "type": "object"
+      },
       "PriceComponent": {
         "additionalProperties": false,
         "properties": {
@@ -2014,6 +3469,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "Usd Per Million Tokens"
           }
         },
@@ -2072,6 +3528,73 @@
         "title": "ProcessingPolicy",
         "type": "object"
       },
+      "PromptRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "engine": {
+            "const": "literal_placeholders_v1",
+            "default": "literal_placeholders_v1",
+            "title": "Engine",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "template": {
+            "maxLength": 16000,
+            "minLength": 1,
+            "title": "Template",
+            "type": "string"
+          },
+          "variables": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "enum": [
+                  "text",
+                  "json",
+                  "boolean",
+                  "number"
+                ],
+                "type": "string"
+              }
+            },
+            "title": "Variables",
+            "type": "object"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "template",
+          "variables"
+        ],
+        "title": "PromptRevision",
+        "type": "object"
+      },
       "Provenance": {
         "additionalProperties": false,
         "properties": {
@@ -2113,6 +3636,67 @@
           "source"
         ],
         "title": "Provenance",
+        "type": "object"
+      },
+      "ProviderCredentialReference": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter_id": {
+            "enum": [
+              "openrouter",
+              "local_ollama"
+            ],
+            "title": "Adapter Id",
+            "type": "string"
+          },
+          "approval_reference": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Approval Reference",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "secret_reference": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Secret Reference"
+          },
+          "tenant_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "adapter_id",
+          "approval_reference",
+          "expires_at"
+        ],
+        "title": "ProviderCredentialReference",
         "type": "object"
       },
       "Recommendation": {
@@ -2313,6 +3897,517 @@
         "title": "ResearchTool",
         "type": "object"
       },
+      "RouteAlias": {
+        "additionalProperties": false,
+        "properties": {
+          "configuration_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Configuration Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "environment": {
+            "const": "sandbox",
+            "default": "sandbox",
+            "title": "Environment",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "node_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/VersionRef"
+          }
+        },
+        "required": [
+          "id",
+          "policy",
+          "node_id",
+          "configuration_id",
+          "created_at"
+        ],
+        "title": "RouteAlias",
+        "type": "object"
+      },
+      "RunAttempt": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "const": 1,
+            "default": 1,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GatewayError"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "node_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "output_reference": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Output Reference"
+          },
+          "run_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "reserved",
+              "dispatched",
+              "succeeded",
+              "failed",
+              "cancelled",
+              "uncertain"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trace": {
+            "$ref": "#/components/schemas/DecisionTrace"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/UsageReconciliation"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "node_id",
+          "status",
+          "trace",
+          "usage"
+        ],
+        "title": "RunAttempt",
+        "type": "object"
+      },
+      "RunErrorEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/GatewayError"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 1,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "run.error",
+            "default": "run.error",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "sequence",
+          "error"
+        ],
+        "title": "RunErrorEvent",
+        "type": "object"
+      },
+      "RunStatusEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "run": {
+            "$ref": "#/components/schemas/SandboxRun"
+          },
+          "run_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 1,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "run.status",
+            "default": "run.status",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "sequence",
+          "run"
+        ],
+        "title": "RunStatusEvent",
+        "type": "object"
+      },
+      "RunUsageEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 1,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "const": "run.usage",
+            "default": "run.usage",
+            "title": "Type",
+            "type": "string"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/UsageReconciliation"
+          }
+        },
+        "required": [
+          "run_id",
+          "sequence",
+          "usage"
+        ],
+        "title": "RunUsageEvent",
+        "type": "object"
+      },
+      "RuntimeGrant": {
+        "additionalProperties": false,
+        "description": "Operator approval for TARGET sandbox calls; planning roles cannot substitute.",
+        "properties": {
+          "allowed_data_classes": {
+            "items": {
+              "enum": [
+                "synthetic",
+                "tenant_private"
+              ],
+              "type": "string"
+            },
+            "title": "Allowed Data Classes",
+            "type": "array"
+          },
+          "budget_reference": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Budget Reference",
+            "type": "string"
+          },
+          "configuration_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Configuration Ids",
+            "type": "array"
+          },
+          "credential_reference_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Credential Reference Ids",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "permission_reference": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Permission Reference",
+            "type": "string"
+          },
+          "purpose": {
+            "const": "target_sandbox",
+            "default": "target_sandbox",
+            "title": "Purpose",
+            "type": "string"
+          },
+          "tenant_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "configuration_ids",
+          "credential_reference_ids",
+          "allowed_data_classes",
+          "budget_reference",
+          "permission_reference",
+          "expires_at"
+        ],
+        "title": "RuntimeGrant",
+        "type": "object"
+      },
+      "SandboxAdmission": {
+        "additionalProperties": false,
+        "description": "Operator-only record; never accepted from a studio/public HTTP payload.",
+        "properties": {
+          "allowed_tool_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Allowed Tool Ids",
+            "type": "array"
+          },
+          "authorization_reference": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Authorization Reference",
+            "type": "string"
+          },
+          "budget_reference": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Budget Reference",
+            "type": "string"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/Fact_bool_"
+          },
+          "configuration_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Configuration Ids",
+            "type": "array"
+          },
+          "credential_reference_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Credential Reference Ids",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "license_policy": {
+            "$ref": "#/components/schemas/Fact_bool_"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "policy_digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Policy Digest",
+            "type": "string"
+          },
+          "privacy": {
+            "$ref": "#/components/schemas/Fact_bool_"
+          },
+          "spending": {
+            "$ref": "#/components/schemas/Fact_bool_"
+          },
+          "tenant_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "weights_access": {
+            "$ref": "#/components/schemas/Fact_bool_"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "policy",
+          "policy_digest",
+          "configuration_ids",
+          "authorization_reference",
+          "budget_reference",
+          "privacy",
+          "license_policy",
+          "weights_access",
+          "capabilities",
+          "spending",
+          "expires_at"
+        ],
+        "title": "SandboxAdmission",
+        "type": "object"
+      },
+      "SandboxRun": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Attempt Ids",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "environment": {
+            "const": "sandbox",
+            "default": "sandbox",
+            "title": "Environment",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "output_reference": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Output Reference"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "quality": {
+            "enum": [
+              "untested_provisional",
+              "measured_not_production_approved"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "awaiting_approval",
+              "succeeded",
+              "failed",
+              "cancelled",
+              "uncertain"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "policy",
+          "status",
+          "created_at",
+          "quality"
+        ],
+        "title": "SandboxRun",
+        "type": "object"
+      },
       "SourceCapture": {
         "additionalProperties": false,
         "properties": {
@@ -2418,6 +4513,92 @@
         "title": "Status",
         "type": "string"
       },
+      "StopConditions": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "on_budget_exhausted": {
+            "const": "stop",
+            "default": "stop",
+            "title": "On Budget Exhausted",
+            "type": "string"
+          },
+          "on_cancel": {
+            "const": "stop_before_next_dispatch",
+            "default": "stop_before_next_dispatch",
+            "title": "On Cancel",
+            "type": "string"
+          },
+          "on_error": {
+            "const": "stop",
+            "default": "stop",
+            "title": "On Error",
+            "type": "string"
+          },
+          "on_human_approval": {
+            "const": "pause",
+            "default": "pause",
+            "title": "On Human Approval",
+            "type": "string"
+          }
+        },
+        "title": "StopConditions",
+        "type": "object"
+      },
+      "StoredOutput": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "node_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/JsonValue"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "node_id",
+          "value",
+          "created_at",
+          "expires_at"
+        ],
+        "title": "StoredOutput",
+        "type": "object"
+      },
       "Submission": {
         "additionalProperties": false,
         "properties": {
@@ -2451,6 +4632,72 @@
           "interpretation"
         ],
         "title": "Submission",
+        "type": "object"
+      },
+      "TargetConfiguration": {
+        "additionalProperties": false,
+        "description": "Canonical catalog extension: advertised facts != observations from our runs.",
+        "properties": {
+          "catalog_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Catalog Id",
+            "type": "string"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/CandidateConfiguration"
+          },
+          "endpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EndpointRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Limitations",
+            "type": "array"
+          },
+          "local": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalDeployment"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "observed_run_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Observed Run Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "configuration",
+          "catalog_id",
+          "limitations"
+        ],
+        "title": "TargetConfiguration",
         "type": "object"
       },
       "TargetRequirements": {
@@ -2492,6 +4739,142 @@
           }
         },
         "title": "TargetRequirements",
+        "type": "object"
+      },
+      "TransitionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admission Id"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expected_sequence": {
+            "minimum": 1.0,
+            "title": "Expected Sequence",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "sandbox_enabled",
+              "disabled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_sequence",
+          "status"
+        ],
+        "title": "TransitionRequest",
+        "type": "object"
+      },
+      "UsageReconciliation": {
+        "additionalProperties": false,
+        "properties": {
+          "actual_micro_usd": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Actual Micro Usd"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "reservation_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Reservation Id",
+            "type": "string"
+          },
+          "reserved_micro_usd": {
+            "minimum": 0,
+            "title": "Reserved Micro Usd",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "reserved",
+              "reconciled",
+              "uncertain"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "tokens": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompletionUsage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "reservation_id",
+          "reserved_micro_usd",
+          "state",
+          "observed_at"
+        ],
+        "title": "UsageReconciliation",
+        "type": "object"
+      },
+      "VersionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version"
+        ],
+        "title": "VersionRef",
         "type": "object"
       },
       "Workflow": {
@@ -2544,7 +4927,7 @@
             "type": "array"
           },
           "version": {
-            "minimum": 1.0,
+            "minimum": 1,
             "title": "Version",
             "type": "integer"
           }
@@ -2559,6 +4942,47 @@
           "provenance"
         ],
         "title": "Workflow",
+        "type": "object"
+      },
+      "WorkflowRunRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "inputs": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "$ref": "#/components/schemas/JsonValue"
+              }
+            },
+            "title": "Inputs",
+            "type": "object"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "sample_reference": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Reference"
+          }
+        },
+        "required": [
+          "policy",
+          "inputs"
+        ],
+        "title": "WorkflowRunRequest",
         "type": "object"
       },
       "WorkflowTool": {
@@ -2598,6 +5022,13 @@
         ],
         "title": "WorkflowTool",
         "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "SandboxApplicationKey": {
+        "description": "Tenant application key with scopes and exact alias/policy allowlist; not an upstream provider key.",
+        "scheme": "bearer",
+        "type": "http"
       }
     }
   },
@@ -3754,6 +6185,1437 @@
         "summary": "Export Policy"
       }
     },
+    "/api/sandbox/runs": {
+      "post": {
+        "operationId": "run_workflow_api_sandbox_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SandboxRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Run Workflow",
+        "tags": [
+          "Sandbox workflow runs v2"
+        ]
+      }
+    },
+    "/api/sandbox/runs/{run_id}": {
+      "get": {
+        "operationId": "get_run_api_sandbox_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SandboxRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Run",
+        "tags": [
+          "Sandbox workflow runs v2"
+        ]
+      }
+    },
+    "/api/sandbox/runs/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancel_run_api_sandbox_runs__run_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SandboxRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Cancel Run",
+        "tags": [
+          "Sandbox workflow runs v2"
+        ]
+      }
+    },
+    "/api/sandbox/runs/{run_id}/events": {
+      "get": {
+        "operationId": "run_events_api_sandbox_runs__run_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_sequence",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "After Sequence",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "text/event-stream": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RunStatusEvent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RunUsageEvent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RunErrorEvent"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Run Events",
+        "tags": [
+          "Sandbox workflow runs v2"
+        ]
+      }
+    },
+    "/api/sandbox/runs/{run_id}/outputs/{output_id}": {
+      "get": {
+        "operationId": "run_output_api_sandbox_runs__run_id__outputs__output_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "output_id",
+            "required": true,
+            "schema": {
+              "title": "Output Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredOutput"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Run Output",
+        "tags": [
+          "Sandbox workflow runs v2"
+        ]
+      }
+    },
+    "/api/sandbox/traces/{request_id}": {
+      "get": {
+        "operationId": "runtime_trace_api_sandbox_traces__request_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionTrace"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Runtime Trace",
+        "tags": [
+          "Sandbox workflow runs v2"
+        ]
+      }
+    },
+    "/api/studio/aliases": {
+      "post": {
+        "operationId": "create_alias_api_studio_aliases_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteAlias"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteAlias"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Create Alias",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/aliases/{alias_id}": {
+      "get": {
+        "operationId": "get_alias_api_studio_aliases__alias_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "alias_id",
+            "required": true,
+            "schema": {
+              "title": "Alias Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteAlias"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Alias",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/comparisons": {
+      "post": {
+        "operationId": "compare_api_studio_comparisons_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComparisonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Compare",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/comparisons/{comparison_id}": {
+      "get": {
+        "operationId": "get_comparison_api_studio_comparisons__comparison_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "title": "Comparison Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Comparison",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/imports": {
+      "post": {
+        "operationId": "import_sample_api_studio_imports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportedSample"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportedSample"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Import Sample",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/imports/{sample_id}": {
+      "get": {
+        "operationId": "get_sample_api_studio_imports__sample_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sample_id",
+            "required": true,
+            "schema": {
+              "title": "Sample Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportedSample"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Sample",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/outputs/{output_id}": {
+      "get": {
+        "operationId": "get_output_api_studio_outputs__output_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "output_id",
+            "required": true,
+            "schema": {
+              "title": "Output Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredOutput"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Output",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/policies": {
+      "post": {
+        "operationId": "create_policy_api_studio_policies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecutablePolicy"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Create Policy",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/policies/{policy_id}/versions/{version}": {
+      "get": {
+        "operationId": "get_policy_api_studio_policies__policy_id__versions__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Policy",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/policies/{policy_id}/versions/{version}/transitions": {
+      "post": {
+        "operationId": "transition_api_studio_policies__policy_id__versions__version__transitions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Transition",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/prompts": {
+      "post": {
+        "operationId": "save_prompt_api_studio_prompts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptRevision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptRevision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Save Prompt",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/prompts/{prompt_id}/versions/{version}": {
+      "get": {
+        "operationId": "get_prompt_api_studio_prompts__prompt_id__versions__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prompt_id",
+            "required": true,
+            "schema": {
+              "title": "Prompt Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptRevision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Prompt",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/traces/{request_id}": {
+      "get": {
+        "operationId": "get_trace_api_studio_traces__request_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionTrace"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Trace",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
     "/api/workflows/{workflow_id}/versions": {
       "post": {
         "operationId": "append_version_api_workflows__workflow_id__versions_post",
@@ -3909,6 +7771,293 @@
           }
         },
         "summary": "Get Workflow"
+      }
+    },
+    "/v1/chat/completions": {
+      "post": {
+        "operationId": "complete_v1_chat_completions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatCompletionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCompletion"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCompletionChunk"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "SandboxApplicationKey": []
+          }
+        ],
+        "summary": "Complete",
+        "tags": [
+          "Chat Completions compatible SUBSET"
+        ]
+      }
+    },
+    "/v1/models": {
+      "get": {
+        "operationId": "models_v1_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "SandboxApplicationKey": []
+          }
+        ],
+        "summary": "Models",
+        "tags": [
+          "Chat Completions compatible SUBSET"
+        ]
       }
     }
   }

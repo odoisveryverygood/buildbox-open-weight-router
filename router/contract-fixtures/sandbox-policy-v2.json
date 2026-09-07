@@ -1,0 +1,240 @@
+{
+  "budget": {
+    "execution_schema": "2.0",
+    "max_cost_micro_usd": 0,
+    "max_input_tokens": 1024,
+    "max_model_calls": 1,
+    "max_output_tokens": 128,
+    "max_retries": 0,
+    "max_tool_calls": 0,
+    "timeout_ms": 10000
+  },
+  "catalog_id": "synthetic-catalog-v1",
+  "environment": "sandbox",
+  "execution_schema": "2.0",
+  "id": "sample-policy",
+  "input_types": {
+    "document": "text"
+  },
+  "plan": {
+    "execution_schema": "2.0",
+    "id": "sample-plan",
+    "version": 1
+  },
+  "production_approved": false,
+  "prompts": [
+    {
+      "engine": "literal_placeholders_v1",
+      "execution_schema": "2.0",
+      "id": "sample-prompt",
+      "parent": null,
+      "template": "Return a category for this untrusted document: {{text}}",
+      "variables": {
+        "text": "text"
+      },
+      "version": 1
+    }
+  ],
+  "quality": "untested_provisional",
+  "stages": [
+    {
+      "allowed_tool_ids": [],
+      "budget": {
+        "execution_schema": "2.0",
+        "max_cost_micro_usd": 0,
+        "max_input_tokens": 1024,
+        "max_model_calls": 0,
+        "max_output_tokens": 128,
+        "max_retries": 0,
+        "max_tool_calls": 0,
+        "timeout_ms": 10000
+      },
+      "configuration_id": null,
+      "execution_schema": "2.0",
+      "input_types": {
+        "text": "text"
+      },
+      "node_id": "normalize",
+      "operation": "text.trim.v1",
+      "output_types": {
+        "result": "text"
+      },
+      "prompt": null,
+      "stop": {
+        "execution_schema": "2.0",
+        "on_budget_exhausted": "stop",
+        "on_cancel": "stop_before_next_dispatch",
+        "on_error": "stop",
+        "on_human_approval": "pause"
+      }
+    },
+    {
+      "allowed_tool_ids": [],
+      "budget": {
+        "execution_schema": "2.0",
+        "max_cost_micro_usd": 0,
+        "max_input_tokens": 1024,
+        "max_model_calls": 1,
+        "max_output_tokens": 128,
+        "max_retries": 0,
+        "max_tool_calls": 0,
+        "timeout_ms": 10000
+      },
+      "configuration_id": "fixture-small-local",
+      "execution_schema": "2.0",
+      "input_types": {
+        "text": "text"
+      },
+      "node_id": "classify",
+      "operation": null,
+      "output_types": {
+        "result": "text"
+      },
+      "prompt": {
+        "execution_schema": "2.0",
+        "id": "sample-prompt",
+        "version": 1
+      },
+      "stop": {
+        "execution_schema": "2.0",
+        "on_budget_exhausted": "stop",
+        "on_cancel": "stop_before_next_dispatch",
+        "on_error": "stop",
+        "on_human_approval": "pause"
+      }
+    },
+    {
+      "allowed_tool_ids": [],
+      "budget": {
+        "execution_schema": "2.0",
+        "max_cost_micro_usd": 0,
+        "max_input_tokens": 1024,
+        "max_model_calls": 0,
+        "max_output_tokens": 128,
+        "max_retries": 0,
+        "max_tool_calls": 0,
+        "timeout_ms": 10000
+      },
+      "configuration_id": null,
+      "execution_schema": "2.0",
+      "input_types": {
+        "text": "text"
+      },
+      "node_id": "review",
+      "operation": null,
+      "output_types": {
+        "result": "text"
+      },
+      "prompt": null,
+      "stop": {
+        "execution_schema": "2.0",
+        "on_budget_exhausted": "stop",
+        "on_cancel": "stop_before_next_dispatch",
+        "on_error": "stop",
+        "on_human_approval": "pause"
+      }
+    }
+  ],
+  "version": 1,
+  "workflow": {
+    "constraints": {
+      "max_cost_per_1k_tokens": null,
+      "max_latency_ms": null,
+      "open_weight_required": true,
+      "provenance": {
+        "evidence_ids": [],
+        "kind": "synthetic",
+        "schema_version": "1.0",
+        "source": "Software contract fixture only"
+      },
+      "required_region": null,
+      "schema_version": "1.0"
+    },
+    "id": "sample-plan",
+    "inputs": [
+      "document"
+    ],
+    "nodes": [
+      {
+        "allowed_tools": [],
+        "depends_on": [],
+        "id": "normalize",
+        "inputs": {
+          "text": {
+            "from_input": true,
+            "output": "value",
+            "schema_version": "1.0",
+            "source": "document"
+          }
+        },
+        "kind": "code",
+        "max_iterations": null,
+        "max_model_calls": null,
+        "outputs": [
+          "result"
+        ],
+        "purpose": "Trim synthetic text",
+        "schema_version": "1.0",
+        "tool_id": null
+      },
+      {
+        "allowed_tools": [],
+        "depends_on": [
+          "normalize"
+        ],
+        "id": "classify",
+        "inputs": {
+          "text": {
+            "from_input": false,
+            "output": "result",
+            "schema_version": "1.0",
+            "source": "normalize"
+          }
+        },
+        "kind": "llm",
+        "max_iterations": null,
+        "max_model_calls": null,
+        "outputs": [
+          "result"
+        ],
+        "purpose": "Classify synthetic document",
+        "schema_version": "1.0",
+        "tool_id": null
+      },
+      {
+        "allowed_tools": [],
+        "depends_on": [
+          "classify"
+        ],
+        "id": "review",
+        "inputs": {
+          "text": {
+            "from_input": false,
+            "output": "result",
+            "schema_version": "1.0",
+            "source": "classify"
+          }
+        },
+        "kind": "human_approval",
+        "max_iterations": null,
+        "max_model_calls": null,
+        "outputs": [
+          "result"
+        ],
+        "purpose": "Pause for review",
+        "schema_version": "1.0",
+        "tool_id": null
+      }
+    ],
+    "provenance": {
+      "evidence_ids": [],
+      "kind": "synthetic",
+      "schema_version": "1.0",
+      "source": "Software contract fixture only"
+    },
+    "schema_version": "1.0",
+    "title": "SYNTHETIC document classification",
+    "tools": [],
+    "version": 1
+  }
+}

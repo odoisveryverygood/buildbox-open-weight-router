@@ -29,14 +29,22 @@ from .contracts import (
     Workflow,
 )
 from .errors import DomainError
+from .execution_api import gateway, gateway_failure, studio, workflow_routes
+from .execution_contracts import GatewayError, GatewayErrorDetail
+from .execution_ports import ExecutionServices
 from .intelligence.selection.policy import SafeDraftCompiler
+from .openapi_schema import enrich_schema
 from .planning import planning_examples
 from .planning_contracts import PlanInput, PlanningCapabilities, PlanView
 from .planning_storage import PlanningStorage
 from .storage import SqlStorage, engine_for
 
 
-def create_app(settings: Settings | None = None, services: Services | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    services: Services | None = None,
+    execution_services: ExecutionServices | None = None,
+) -> FastAPI:
     config = settings or Settings.from_env()
     authenticator = (
         Authenticator(config.auth_file)
@@ -69,6 +77,7 @@ def create_app(settings: Settings | None = None, services: Services | None = Non
             422: {"model": ErrorResponse},
         },
     )
+    app.state.execution_services = execution_services
     app.add_middleware(
         TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"]
     )
@@ -87,7 +96,10 @@ def create_app(settings: Settings | None = None, services: Services | None = Non
                 },
             )
         request.state.owner = config.fixture_owner
-        if authenticator:
+        runtime_bearer = request.url.path.startswith("/api/sandbox/") and request.headers.get(
+            "authorization", ""
+        ).startswith("Bearer ")
+        if authenticator and not request.url.path.startswith("/v1/") and not runtime_bearer:
             identity = authenticator.owner(request.headers.get("authorization", ""))
             if identity is None:
                 return JSONResponse(
@@ -102,6 +114,8 @@ def create_app(settings: Settings | None = None, services: Services | None = Non
         if request.method == "POST":
             length = request.headers.get("content-length", "")
             if not length.isdecimal() or int(length) > 65536:
+                if request.url.path.startswith("/v1/"):
+                    return gateway_failure(413)
                 return JSONResponse(
                     status_code=413,
                     content={
@@ -111,7 +125,9 @@ def create_app(settings: Settings | None = None, services: Services | None = Non
         if (
             (config.identity_mode == "shared" or config.mode == "live")
             and request.url.path.startswith("/api/")
-            and not request.url.path.startswith(("/api/plans", "/api/planning-"))
+            and not request.url.path.startswith(
+                ("/api/plans", "/api/planning-", "/api/studio/", "/api/sandbox/")
+            )
         ):
             return JSONResponse(
                 status_code=404,
@@ -137,6 +153,8 @@ def create_app(settings: Settings | None = None, services: Services | None = Non
             response = await call_next(request)
         except Exception:
             # Do not let server traceback logging expose request/provider/SQL payloads.
+            if request.url.path.startswith("/v1/"):
+                return gateway_failure(500)
             response = JSONResponse(
                 status_code=500,
                 content=ErrorResponse(
@@ -150,10 +168,26 @@ def create_app(settings: Settings | None = None, services: Services | None = Non
 
     @app.exception_handler(DomainError)
     async def domain_error(request: Request, exc: DomainError) -> JSONResponse:
+        if request.url.path.startswith("/v1/"):
+            return gateway_failure(exc.status)
         return JSONResponse(status_code=exc.status, content=exc.detail.model_dump())
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+        if request.url.path.startswith("/v1/"):
+            unsupported = any(error["type"] == "extra_forbidden" for error in exc.errors())
+            return JSONResponse(
+                status_code=400,
+                content=GatewayError(
+                    error=GatewayErrorDetail(
+                        type="invalid_request_error",
+                        code="unsupported_parameter" if unsupported else "invalid_request",
+                        message="Unsupported parameter in the Chat Completions subset"
+                        if unsupported
+                        else "Request violates the Chat Completions subset",
+                    )
+                ).model_dump(),
+            )
         return JSONResponse(
             status_code=422,
             content=ErrorResponse(
@@ -371,4 +405,13 @@ def create_app(settings: Settings | None = None, services: Services | None = Non
             return DraftPolicy.model_validate_json(svc().storage.get(owner, "policy", policy.id))
         return policy
 
+    app.include_router(studio)
+    app.include_router(workflow_routes)
+    app.include_router(gateway)
+    original_openapi = app.openapi
+
+    def shared_openapi() -> dict[str, object]:
+        return enrich_schema(original_openapi())
+
+    app.openapi = shared_openapi  # type: ignore[method-assign]
     return app

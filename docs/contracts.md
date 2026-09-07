@@ -1,5 +1,25 @@
 # Frozen foundation interfaces · v1.0
 
+## Sandbox upgrade 2.0 — additive, not a v1 activation flag
+
+`router/backend/buildbox_router/execution_contracts.py` composes existing Workflow,
+CandidateConfiguration, Fact and EndpointRecord. It does not duplicate them or
+change v1 DraftPolicy. `execution_ports.py` is the frozen lane boundary;
+`execution_security.py` and `execution_storage.py` are shared guards/transactions.
+`execution_api.py` declares working studio persistence and fail-closed future
+execution endpoints. Runtime dispatch is deliberately not installed in milestone 06.
+
+Migration 3 preserves existing records/jobs/provider calls, adding tenant-local
+immutable sandbox records, CAS transition heads, budget reservations, application
+key verifier storage and separately expiring private payloads. Aliases cannot be
+repinned; a new policy version stays draft and never changes existing aliases.
+
+Generated OpenAPI (including contract-only SSE/event/trace types) and TypeScript
+come from `openapi_schema.py`. Python is pinned to 3.12 for repeatable generation.
+The synthetic cross-lane policy fixture is `router/contract-fixtures/sandbox-policy-v2.json`.
+See `upgrades/router-v2.md` for wire semantics, identity, admission, retention,
+streaming, cancellation, idempotency and operational permissions.
+
 ## Integration planning API 1.1
 
 `router/backend/buildbox_router/planning_contracts.py` composes the canonical v1

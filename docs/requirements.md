@@ -1,5 +1,29 @@
 # Requirements and grounding
 
+## Current scope — September 7, 2026 (supersedes recommendation-only restriction)
+
+The running internship Doc was reread through Google Drive, read-only. Its private
+content is not copied here. The original research assignment and subsequent
+workload-specific model exploration motivate the product; the user's current
+instruction separately authorizes a workflow-aware **sandbox** upgrade. Neither
+the assignment nor this milestone establishes model quality or production approval.
+
+Milestone 06 audits the integrated alpha and delivers shared executable contracts,
+revision-3 migrations and independent lane boundaries. It does not complete or
+launch lanes 7/8. Product path: describe → clarify → propose/edit stages and
+configurations → compare real outputs → sandbox-enable a pinned route → call a
+single stage API or supported sample workflow → inspect outputs/usage.
+
+Sandbox drafts may have untested quality, visibly provisional. Server-side license,
+weights access, privacy, capabilities, credentials, authorization and spending
+checks remain mandatory; unknown hard requirements fail closed. Existing strict
+recommendation selection stays intact. A sandbox candidate for testing is not a
+production migration recommendation. See `upgrades/router-v2.md` for exact rules.
+
+Production routing, public deployment, hosted charges without explicit approvals,
+new accounts/resources and customer business-tool side effects remain prohibited.
+The historical foundation paragraphs below describe the original milestone only.
+
 Verified September 6, 2026 during foundation work.
 
 ## Confirmed scope

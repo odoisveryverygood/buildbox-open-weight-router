@@ -1,5 +1,33 @@
 # Tool access and runtime boundary
 
+## Upgrade-base refresh — September 7, 2026
+
+This section is current; older checks below are historical, not renewed claims.
+
+| Integration | Current development access / actual check | Deployed runtime boundary |
+|---|---|---|
+| Git / GitHub | Local refs/worktrees inspected; no remote configured. GitHub repository-list connector succeeded, returning no repositories. | No GitHub backend integration or push target configured. |
+| Google Drive | Named running internship Doc reread successfully through the native document connector, read-only; its private text is not copied into this repo. | No Drive credentials or private assignment text in app/search. |
+| Browser | Installed Playwright CLI/wrapper, real app on 5196/8026; fixture extraction, correction/reload and visible limitations audited, screenshot inspected, zero console errors/warnings. | Development tooling, not permission for a customer browser tool. |
+| Bright Data / Exa | Search/extraction/status and Exa search discovered in the current tool inventory. Prior Bright Data setup is retained. No search/extraction/billable call made or credit balance assumed. | No authorized Bright Data/Exa runtime key/zone/budget. Prefer the prior setup if later public research is approved; do not require both. |
+| Hugging Face / OpenRouter | Existing exact public-source parsers, public fixtures and protected runtime HTTP inspected. No new catalog/model-quality research performed. | Existing Hugging Face metadata worker path preserved, opt-in only. OpenRouter hosted planning adapter remains offline-tested, not live-verified; target runtime is a separate Lane 7 implementation. |
+| Local inference | Existing Ollama adapter and saved September 6 run evidence inspected; offline regression checks pass. Audit app intentionally has no model configured, as shown in its UI. | No new local inference, model download or hosted target call in milestone 06. Earlier planning opt-in is not target-workload approval. |
+| Database | Native PostgreSQL 17 binaries available. Separate loopback cluster verified clean migration and v2→v3 upgrade, old record preservation and concurrent caps. SQLite baseline/upgrade tests also pass. | No selected/approved Neon or Supabase project in app configuration. Both connectors are discoverable, not runtime authorization; no cloud provisioning or second database provider added. |
+| Hosting | Vercel team/project read connectors succeeded; no Buildbox-named project in returned list. No existing app deployment link/config or Git remote. | No deployment selected, changed or performed. Managed credentials/TLS/retention review required before shared/public use. |
+| Figma | No Figma URL/assets in selected app docs/config; no new design project needed for shared contracts. | Not a runtime dependency; no claim of design-file access. |
+
+Official Chat Completions/model-list documentation was read only to define the
+compatible subset; this is not an OpenAI provider integration or paid API call.
+No account/key/zone creation, credential discovery, hidden credential-file search,
+session-token copying, purchases, balance checks or production writes occurred.
+
+Missing operational permissions should be requested together when a live target
+test is next needed: exact target/model revision/provider endpoint, independent
+server credential reference, approved data class/retention/egress, accepted license
+policy and capability evidence, test count/token/deadline and maximum total spend.
+For hosted execution, recorded operator approval is mandatory even if a key exists.
+Milestone 06 does not need these permissions to finish offline contract work.
+
 ## Integration update — September 6, 2026
 
 The foundation inventory below is historical. Integration verified actual local

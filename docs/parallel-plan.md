@@ -1,5 +1,9 @@
 # Parallel ownership handoff
 
+**Historical lanes 2/3 below are integrated. For current lanes 7/8 use
+`docs/upgrades/router-v2.md` and `docs/handoffs/06-upgrade-base.md`. Do not restart
+the old lanes or create new worktrees from the foundation commit.**
+
 Both lanes start from the **same foundation commit**, resolved in
 `docs/handoffs/01-foundation.md`. No lane has been started, branched or delegated.
 
