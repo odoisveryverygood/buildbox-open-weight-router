@@ -1,0 +1,22 @@
+{
+  "implementation_commit": "080af77c841cef17a3e8b44950c5dd0c48122d00",
+  "branch": "codex/router-integration",
+  "foundation": "b36437fc91b717b3978f977ec3cdf084c8206a5b",
+  "verification_date": "2026-09-06",
+  "offline_tests_passed": 250,
+  "lint_types_build_generated_contracts": "PASS",
+  "sqlite_clean_migration": "PASS",
+  "postgresql_17_11_clean_migration_and_concurrency": "PASS",
+  "browser_cases": ["extraction_and_policy", "correction_reload_staleness", "support_tool", "company_research_bounded_missing_evidence", "image_requirement", "self_hosted_requirement", "strict_egress", "deterministic_no_model", "retained_public_snapshot_missing_configuration", "live_runtime_public_research", "injected_provider_failure", "shared_tenant_isolation", "cancellation"],
+  "authenticated_live_runtime_plan": "f3073d61e0e549518d51fd16dbc16392",
+  "runtime_result": "blocked_missing_verified_target_configuration",
+  "local_interpretation": {"status": "PASS", "provider": "ollama-loopback", "model": "qwen2.5:0.5b", "model_digest": "a8b0c51577010a279d933d14c2a8ab4b268079d44c5c8830c0a93900f1827c67", "reported_prompt_tokens": 779, "reported_output_tokens": 63, "max_output_tokens": 1400},
+  "runtime_public_research": {"status": "PASS", "url": "https://huggingface.co/api/models/Qwen/Qwen3-8B", "observed_at": "2026-09-06T23:44:36.267525Z"},
+  "paid_provider_usd": 0,
+  "openrouter_live": "NOT_VERIFIED_PERMISSION_GATE",
+  "target_configuration_eligibility": "BLOCKED",
+  "evaluation": "NOT_RUN",
+  "public_deployment": false,
+  "production_routing": false,
+  "statistical_representativeness_claimed": false
+}
