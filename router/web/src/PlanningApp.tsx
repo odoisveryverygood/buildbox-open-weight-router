@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { components } from './generated/api';
+import Studio from './studio/Studio';
+import CatalogExplorer from './studio/CatalogExplorer';
+import { diff } from './studio/model';
 type S = components['schemas'];
 const defaultsProcessing: S['ProcessingPolicy'] = {schema_version:'1.0', interpretation_role:'interpretation', research_role:'research', inference:'local_only', public_research:false, max_planning_usd:0};
 const defaultsRequirements: S['TargetRequirements'] = {schema_version:'1.0', input_modality:'text', deployment:'any', structured_output:false, tool_calling:false};
@@ -24,11 +27,15 @@ export default function PlanningApp() {
   const [editing, setEditing] = useState(false);
   const [workflowText, setWorkflowText] = useState('');
   const [policy, setPolicy] = useState<S['DraftPolicy']>();
+  const [previous, setPrevious] = useState<S['PlanView']>();
+  const [reviewing, setReviewing] = useState(false);
   const pollCount = useRef(0);
   function accept(value: S['PlanView'], hydrate = false) {
     setView(value);
     if (hydrate) { setDraft(value.plan.input); setEditing(false); setPolicy(undefined); pollCount.current = 0; }
-    window.history.replaceState(null, '', `?plan=${value.plan.id}&version=${value.plan.version}`);
+    const query = new URLSearchParams(window.location.search);
+    query.set('plan', value.plan.id); query.set('version', String(value.plan.version));
+    window.history.replaceState(null, '', `?${query}`);
   }
   useEffect(() => {
     let disposed = false;
@@ -71,6 +78,7 @@ export default function PlanningApp() {
       const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(path + JSON.stringify(body))))).map(x => x.toString(16).padStart(2, '0')).join('');
       const key = sessionStorage.getItem(`request-${hash}`) ?? crypto.randomUUID();
       sessionStorage.setItem(`request-${hash}`, key);
+      setPrevious(view); setReviewing(false);
       accept(await api<S['PlanView']>(path, body, key), true);
       sessionStorage.removeItem(`request-${hash}`);
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
@@ -92,13 +100,13 @@ export default function PlanningApp() {
   const pending = view && !terminal.includes(view.job.status);
   const dirty = !!view && (editing || JSON.stringify(draft) !== JSON.stringify(view.plan.input));
   return <div className="shell">
-    <aside><a className="brand" href="/">▧ buildbox</a><p className="nav-label">WORKSPACE</p><div className="nav-current">Planning router</div><p className="aside-note">{capabilities?.authentication ?? 'Connecting…'}<br/>Execution tools disconnected</p><span className="mode">PLANNING ALPHA</span></aside>
+    <aside><a className="brand" href="/">▧ buildbox</a><p className="nav-label">WORKSPACE</p><div className="nav-current">Workflow studio</div><p className="aside-note">{capabilities?.authentication ?? 'Connecting…'}<br/>Sandbox requires server admission</p><a className="aside-link" href="#describe">Describe & plan</a><a className="aside-link" href="#explorer">Model evidence</a><a className="aside-link" href="#execution-studio">Compare & route</a><span className="mode">WORKFLOW ROUTER · SANDBOX</span></aside>
     <main><header><span>BUILD / EXPLORE / VERIFY</span><span className="pill">{capabilities?.mode === 'fixture' ? 'FIXTURE MODE' : 'Permission-gated runtime'}</span></header>
-      <h1>A small stack.<br/><span>A clear decision trail.</span></h1>
-      <p className="intro">Plan a workflow and retain the evidence behind a configuration decision. Nothing here executes your workflow or routes production traffic.</p>
+      <h1>Your workflow.<br/><span>A considered model stack.</span></h1>
+      <p className="intro">Describe → clarify and edit → inspect the model combination → compare samples → explicitly enable sandbox routing → inspect results. No production traffic.</p>
       <div className="notice"><strong>{capabilities?.mode === 'fixture' ? 'Fixture mode — synthetic configurations, not verified models.' : 'Live alpha verification is incomplete.'}</strong>Explicit examples replay recorded interpretations. Edited free text needs an approved runtime model unless it is a supported deterministic instruction. {capabilities?.live_gate}</div>
       {loading && <p role="status">Loading saved planning state…</p>}{error && <p role="alert" className="error">{error}</p>}
-      <section><h2>1. Describe and constrain</h2>
+      <section id="describe"><h2>1. Describe and constrain</h2>
         <div className="actions">{examples.map(ex => <button className="secondary" key={ex.id} disabled={busy || !!pending} onClick={() => {setDraft({...initial, intake: ex.intake, catalog_mode: capabilities?.mode === 'fixture' ? 'fixture' : 'public_snapshot'}); setView(undefined); setEditing(false); setPolicy(undefined); setError(''); window.history.replaceState(null, '', '/');}}>{ex.title}</button>)}</div>
         <label>Workflow description<textarea rows={5} value={draft.intake.description} onChange={e => setDraft({...draft, intake: {...draft.intake, description: e.target.value}})} placeholder="Inputs, transformations, tools, outputs, and approval. Or try: lowercase text" /></label>
         <div className="form-grid">
@@ -122,7 +130,10 @@ export default function PlanningApp() {
         {result?.interpretation.questions?.map(q => <label key={q.field}>{q.question}<input value={draft.answers?.find(a => a.question_id === q.field)?.answer ?? ''} onChange={e => setDraft({...draft, answers:[...(draft.answers ?? []).filter(a => a.question_id !== q.field), ...(e.target.value ? [{question_id:q.field, answer:e.target.value, schema_version:'1.0' as const}] : [])]})} /></label>)}
         <label>Preserved answer / correction note<textarea rows={2} value={draft.answers?.find(a => a.question_id === 'user-note')?.answer ?? ''} onChange={e => setDraft({...draft, answers:[...(draft.answers ?? []).filter(a => a.question_id !== 'user-note'), ...(e.target.value ? [{question_id:'user-note', answer:e.target.value, schema_version:'1.0' as const}] : [])]})} /></label>
         {workflow && <><button className="secondary" onClick={() => {setEditing(!editing); setWorkflowText(JSON.stringify(workflow, null, 2));}}>{editing ? 'Discard graph edit' : 'Edit validated workflow JSON'}</button>{editing && <label>Workflow JSON — current constraints and next version are bound on save<textarea rows={18} value={workflowText} onChange={e => setWorkflowText(e.target.value)} /></label>}</>}
-        <div className="actions"><button disabled={loading || busy || !!pending || !draft.intake.description.trim() || !!view?.stale} onClick={save}>{busy ? 'Saving…' : view ? 'Save changed constraints / answers as new version' : 'Save and plan'}</button>{pending && <button className="secondary" onClick={cancel}>Cancel planning</button>}</div>
+        {workflow?.nodes.some(n=>n.kind==='code'&&n.outputs.length===1&&n.outputs[0]==='text')&&<><p>Planning text operations currently name their output “text”; the sandbox contract requires “result”. Review a graph-only rename before preparing an executable draft.</p><button className="secondary" onClick={()=>{const ids=new Set(workflow.nodes.filter(n=>n.kind==='code'&&n.outputs.length===1&&n.outputs[0]==='text').map(n=>n.id));setWorkflowText(JSON.stringify({...workflow,nodes:workflow.nodes.map(n=>({...n,outputs:ids.has(n.id)?['result']:n.outputs,inputs:Object.fromEntries(Object.entries(n.inputs??{}).map(([key,b])=>[key,!b.from_input&&ids.has(b.source)&&b.output==='text'?{...b,output:'result'}:b]))}))},null,2));setEditing(true);setReviewing(true);}}>Propose sandbox-compatible text bindings</button></>}
+        <p className="hint">A note such as “keep the research model but make extraction cheaper” is preserved for clarification. It cannot silently pin a model or override hard constraints; those targeted server-side edit fields are not available yet. You can answer “unknown” without inventing a value.</p>
+        <div className="actions"><button disabled={loading || busy || !!pending || !draft.intake.description.trim() || !!view?.stale} onClick={()=>view?setReviewing(true):void save()}>{busy ? 'Saving…' : view ? 'Review plan changes' : 'Save and plan'}</button>{pending && <button className="secondary" onClick={cancel}>Cancel planning</button>}</div>
+        {reviewing&&view&&<div className="notice"><h3>Proposed changes → plan version {view.plan.version+1}</h3><pre>{diff(view.plan.input,draft).join('\n') || (editing?'Workflow graph edited; server validates on save.':'No input changes. Replanning uses the selected cache/refresh policy.')}</pre>{editing&&<details><summary>Proposed workflow graph</summary><pre>{workflowText}</pre></details>}<p>Old evaluation and activation claims do not apply to the new draft. Enabled aliases remain pinned to their saved versions.</p><button disabled={busy||!!pending} onClick={save}>Confirm new plan version</button><button className="secondary" onClick={()=>setReviewing(false)}>Keep editing</button></div>}
       </section>
       <section><h2>4. Saved state and decision trail</h2>{!view ? <p>No saved plan yet. Results will appear here.</p> : <>
         <p role="status">Version {view.plan.version} · latest {view.latest_version} · Job {view.job.status} · {view.job.phase}</p>
@@ -136,12 +147,12 @@ export default function PlanningApp() {
         {result && <><h3>Result: {result.status}</h3>{result.missing_facts?.map(x => <p className="notice" key={x}>{x}</p>)}{result.assumptions?.map(x => <p key={x}>{x}</p>)}
           {rec && <><h3>{result.catalog?.synthetic ? 'Synthetic' : 'Evidence-backed'} configuration mapping</h3>{rec.assignments.length ? rec.assignments.map(a => <div className="assignment" key={a.node_id}><strong>{a.node_id} → {a.configuration_id}</strong><p>{a.reason}</p></div>) : <p>No model assignments: deterministic/code/approval stages need no model.</p>}<p>Alternatives: {rec.alternatives?.join(', ') || 'None retained; no automatic fallback'}</p>{rec.limitations?.map(x => <p key={x}>{x}</p>)}</>}
           <details><summary>Exclusions and missing configuration facts</summary>{Object.entries(result.exclusions ?? {}).map(([id, reasons]) => <p key={id}><strong>{id}</strong>: {reasons.join('; ')}</p>)}</details>
-          <details><summary>Evidence and pinned catalog</summary><p>Snapshot: {result.catalog?.id ?? 'No snapshot'}</p>{result.catalog?.evidence.map(e => <article key={e.id}><h3>{e.title}</h3><p>{e.claim}</p><small>{e.provenance.kind} · {e.captured_at}</small>{e.source_url && /^https:\/\/(huggingface\.co|openrouter\.ai)\//.test(e.source_url) && <p><a href={e.source_url} target="_blank" rel="noreferrer">Official source</a></p>}</article>)}{result.research && <pre>{JSON.stringify(result.research, null, 2)}</pre>}</details>
-          <button disabled={!rec || view.stale || dirty || result.status === 'blocked'} onClick={exportDraft}>Download inactive policy</button>
+          <details><summary>Legacy recommendation export (not an executable route)</summary><button disabled={!rec || view.stale || dirty || result.status === 'blocked'} onClick={exportDraft}>Download inactive policy</button></details>
         </>}
       </>}</section>
       {policy && <section className="policy"><h2>Downloaded inactive draft</h2><p>No secrets, no active routing, no connected execution tools.</p><pre>{JSON.stringify(policy, null, 2)}</pre></section>}
-      <footer>No measured quality, savings, benchmark badges or production-readiness claims. Evaluation milestone remains unrun.</footer>
+      {view&&<><CatalogExplorer view={view} previous={previous} busy={busy||!!pending||dirty} refresh={()=>{setDraft({...view.plan.input,catalog_mode:capabilities?.public_runtime_available?'runtime_public':'public_snapshot'});setReviewing(true);document.getElementById('describe')?.scrollIntoView({behavior:'smooth'});}}/><div id="execution-studio"><Studio key={view.plan.id} view={view} dirty={dirty}/></div></>}
+      <footer>Quality untested / provisional unless measured evidence is explicitly recorded. Server-side hard constraints always apply. No production approval.</footer>
     </main>
   </div>;
 }

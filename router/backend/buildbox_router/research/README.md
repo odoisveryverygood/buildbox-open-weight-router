@@ -34,8 +34,8 @@ are shared integration requirements, not claimed capabilities of this lane.
 
 ## Evidence and catalog semantics
 
-`records.py` contains private ledger records that compose canonical `ModelArtifact`,
-`Evidence` and `Fact`; it does not replace the public schema. `observed_at` and
+`records.py` re-exports integration-owned ledger records from `evidence_contracts.py`,
+which compose canonical `ModelArtifact`, `Evidence` and `Fact`. `observed_at` and
 `expires_at` are retained per field, with configurable freshness policy. Publication
 validates proposals against original captured bytes and reviewed locators. Source
 conflicts and missing coverage remain explicit. No averaged ranking is produced.
