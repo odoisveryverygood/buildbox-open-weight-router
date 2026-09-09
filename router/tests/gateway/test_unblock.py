@@ -497,6 +497,28 @@ def test_product_auth_to_queue_restart_worker_to_persisted_runtime(rt, loopback,
             ).status_code
             == 200
         )
+        loopback.parts = [
+            sse({"content": "synthetic HTTP SSE"}),
+            sse({}, "stop"),
+            sse(usage={"prompt_tokens": 10, "completion_tokens": 2, "total_tokens": 12, "cost": 0}),
+            b"data: [DONE]\n\n",
+        ]
+        streamed = client.post(
+            "/v1/chat/completions", headers=bearer, json=rt.request.model_dump() | {"stream": True}
+        )
+        assert streamed.status_code == 200 and streamed.headers["content-type"].startswith(
+            "text/event-stream"
+        )
+        assert "synthetic HTTP SSE" in streamed.text and "[DONE]" in streamed.text
+        loopback.parts = [b'data: {"error":{"code":500,"message":"synthetic failure"}}\n\n']
+        failed = client.post(
+            "/v1/chat/completions", headers=bearer, json=rt.request.model_dump() | {"stream": True}
+        )
+        assert failed.status_code == 502 and failed.headers["content-type"].startswith(
+            "application/json"
+        )
+        assert failed.json()["error"]["code"] == "accounting_uncertain"
+        loopback.parts = None
         client.auth = ("fixture", "synthetic-test-password")
         assert (
             client.post(
