@@ -15,6 +15,8 @@ class Settings(BaseModel):
     fixture_owner: Literal["local-fixture-user"] = "local-fixture-user"
     auth_file: str | None = Field(default=None, repr=False)
     approvals_file: str | None = Field(default=None, repr=False)
+    runtime_registry_file: str | None = Field(default=None, repr=False)
+    runtime_retention_seconds: int = Field(default=3600, ge=1, le=2592000)
     local_interpretation_model: str | None = Field(
         default=None, pattern=r"^[a-zA-Z0-9_.-]+:[a-zA-Z0-9_.-]+$"
     )
@@ -24,6 +26,10 @@ class Settings(BaseModel):
 
     @model_validator(mode="after")
     def safe_configuration(self) -> "Settings":
+        if self.runtime_registry_file and (self.mode != "live" or self.identity_mode != "shared"):
+            raise ValueError(
+                "Operator runtime registry requires explicit live mode and shared authentication; fixture mode never dispatches live inference"
+            )
         if self.identity_mode == "shared" and not self.auth_file:
             raise ValueError(
                 "Shared mode requires a real verified authentication adapter; none is installed"
@@ -51,6 +57,8 @@ class Settings(BaseModel):
                 "database_url": os.getenv("ROUTER_DATABASE_URL", "sqlite:///.local/router.db"),
                 "auth_file": os.getenv("ROUTER_AUTH_FILE"),
                 "approvals_file": os.getenv("ROUTER_APPROVALS_FILE"),
+                "runtime_registry_file": os.getenv("ROUTER_RUNTIME_REGISTRY_FILE"),
+                "runtime_retention_seconds": os.getenv("ROUTER_RUNTIME_RETENTION_SECONDS", "3600"),
                 "local_interpretation_model": os.getenv("ROUTER_LOCAL_INTERPRETATION_MODEL"),
                 "web_origin": os.getenv("ROUTER_WEB_ORIGIN", "http://127.0.0.1:5173"),
             }

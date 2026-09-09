@@ -21,6 +21,7 @@ from ..execution_contracts import (
 from ..execution_ports import RequestContext
 from ..execution_security import authorize_sandbox
 from ..execution_storage import SandboxStorage
+from ..planning_storage import PlanningStorage
 from ..ports import Selector
 
 
@@ -92,12 +93,18 @@ class Authority:
         *,
         alias: str | None = None,
         data_class: str = "tenant_private",
+        configuration_id: str | None = None,
     ) -> AuthorizedStage:
         policy, admission, sequence = self.policy(context, ref)
         stage = next((s for s in policy.stages if s.node_id == node_id), None)
         if stage is None or not stage.configuration_id:
             denied("Only pinned LLM stages can use inference")
         assert stage is not None and stage.configuration_id
+        if configuration_id is not None:
+            if configuration_id not in (stage.configuration_id,) + stage.fallback_configuration_ids:
+                denied("Configuration is not a pinned primary or fallback")
+            stage = stage.model_copy(update={"configuration_id": configuration_id})
+        assert stage.configuration_id is not None
         target = self.target(context.tenant_id, stage.configuration_id)
         if (
             target.configuration.id != stage.configuration_id
@@ -105,8 +112,23 @@ class Authority:
         ):
             denied("Target does not match immutable catalog pin")
         catalog = self.catalog(context.tenant_id, policy.catalog_id)
+        if not self.store.offline_contract_test:
+            saved = PlanningStorage(self.store.engine).view(
+                context.tenant_id, policy.plan.id, policy.plan.version
+            )
+            if not saved.result or saved.result.catalog != catalog:
+                denied("Runtime registry drift from immutable owned planning catalog")
         if catalog.synthetic and not self.store.offline_contract_test:
             denied("Synthetic catalog is not an operational target")
+        if not self.store.offline_contract_test and (
+            target.expires_at is None
+            or target.expires_at <= datetime.now(UTC)
+            or not target.token_envelope_approved
+            or target.token_envelope_approved.value is not True
+            or not target.token_envelope_approved.provenance.evidence_ids
+            or target.token_envelope_approved.provenance.kind not in ("observed", "documented")
+        ):
+            denied("Current approved target/token envelope evidence required")
         if catalog.id != policy.catalog_id or target.configuration not in catalog.configurations:
             denied("Configuration drift from pinned catalog")
         filtered = self.selector.filter(policy.workflow, catalog)
@@ -129,7 +151,14 @@ class Authority:
             credential.id not in references
             or credential.tenant_id != context.tenant_id
             or credential.expires_at <= datetime.now(UTC)
-            or credential.adapter_id != ("local_ollama" if target.local else "openrouter")
+            or credential.adapter_id
+            != (
+                "local_ollama"
+                if target.local
+                else "openai_compatible"
+                if target.approved_endpoint_id
+                else "openrouter"
+            )
         ):
             denied("Credential scope or adapter mismatch")
         trace = DecisionTrace(
@@ -170,7 +199,7 @@ class Authority:
 
 def input_bound(request: ChatCompletionRequest) -> int:
     # Conservative UTF-8 byte envelope plus bounded message overhead, NOT token measurement.
-    return sum(len(m.content.encode("utf-8")) + 32 for m in request.messages) + 128
+    return len(request.model_dump_json(exclude_none=True).encode()) + 128
 
 
 def cost_bound(target: TargetConfiguration, input_tokens: int, output_tokens: int) -> int:
@@ -232,6 +261,36 @@ def preflight(value: AuthorizedStage, request: ChatCompletionRequest) -> int:
         if endpoint.routing_model_id == "openrouter/auto" or ":" in endpoint.routing_model_id:
             denied("Opaque router/model variants are forbidden")
     required = {"max_tokens"} | ({"temperature"} if request.temperature is not None else set())
+    if target.approved_endpoint_id and request.stream:
+        required.add("stream")
+    if request.tools:
+        required.add("tools")
+    if request.tool_choice is not None:
+        required.add("tool_choice")
+    if request.response_format:
+        required.add("response_format")
+    restrictions = value.stage.route_requirements
+    if restrictions:
+        required.update(restrictions.required_parameters)
+        endpoint_id = target.approved_endpoint_id or (
+            target.endpoint.id if target.endpoint else "ollama-loopback-11444"
+        )
+        if (
+            restrictions.allowed_endpoint_ids
+            and endpoint_id not in restrictions.allowed_endpoint_ids
+        ):
+            denied("Endpoint excluded by stage policy")
+        if restrictions.local_only and target.local is None:
+            denied("Stage requires local inference")
+        if (
+            restrictions.required_region
+            and target.configuration.region.value != restrictions.required_region
+        ):
+            denied("Stage region unknown or mismatched")
+    if target.local and (request.tools or request.response_format or request.stream):
+        denied(
+            "Native Ollama subset does not support these parameters; select an approved OpenAI-compatible endpoint"
+        )
     if parameters is None or not required <= set(parameters):
         denied("Endpoint cannot satisfy all requested parameters")
     amount = cost_bound(target, count, request.max_tokens)

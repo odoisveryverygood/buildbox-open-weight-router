@@ -149,7 +149,9 @@ class WorkflowRunner:
             yield event
             expected += 1
 
-    async def submit(self, context: RequestContext, value: WorkflowRunRequest) -> SandboxRun:
+    async def submit(
+        self, context: RequestContext, value: WorkflowRunRequest, *, worker_claimed: bool = False
+    ) -> SandboxRun:
         # Ownership and exact key policy allowlist precede operational admission.
         policy = self.store.policy(context.tenant_id, value.policy).policy
         self._check(context, policy, "workflow:run")
@@ -171,10 +173,17 @@ class WorkflowRunner:
         # Validate all unsupported output shapes/tools BEFORE any predecessor call.
         for node in policy.workflow.nodes:
             stage = next(s for s in policy.stages if s.node_id == node.id)
-            if node.kind == "llm" and stage.output_types != {"result": "text"}:
+            if node.kind == "llm" and not (
+                stage.output_types == {"result": "text"}
+                or (
+                    stage.output_types == {"result": "json"}
+                    and stage.response_format is not None
+                    and stage.response_format.type != "text"
+                )
+            ):
                 raise DomainError(
                     ErrorCode.UNSUPPORTED,
-                    "Typed JSON/multi-output LLM stages require a shared response-format contract",
+                    "LLM outputs require one result field and an explicit JSON format for typed JSON",
                     403,
                 )
             if node.kind == "tool" and (
@@ -206,7 +215,9 @@ class WorkflowRunner:
                 value.model_dump(mode="json"),
             ),
         )
-        if not created:
+        if worker_claimed and not self.store.queue_claimed(context.tenant_id, identifier):
+            raise DomainError(ErrorCode.CONFLICT, "Worker claim required", 409)
+        if not created and not worker_claimed:
             return await self.get(context, identifier)  # Never redispatch after restart.
         if context.application_key:
             self.gateway.keys.reserve(context, policy.budget.max_cost_micro_usd, "workflow:run")
@@ -382,12 +393,20 @@ class WorkflowRunner:
                 model="workflow-stage",
                 messages=(ChatMessage(role="system", content=render(prompt, bound)),),
                 max_tokens=stage.budget.max_output_tokens,
+                response_format=stage.response_format,
             )
             result, attempt = await self.gateway.infer(
                 child, authorized, request, context.request_id
             )
             # Persist usage events sequentially at wave checkpoints, not from concurrent tasks.
             output = {"result": result.completion.choices[0].message.content}
+            if stage.output_types == {"result": "json"}:
+                from ..json_contracts import parse_json
+
+                content = result.completion.choices[0].message.content
+                if content is None:
+                    raise ValueError("Missing JSON output")
+                output = {"result": parse_json(content)}
         else:
             raise DomainError(ErrorCode.UNSUPPORTED, "Unsupported execution stage", 403)
         validate_inputs(stage.output_types, output)

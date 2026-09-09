@@ -4,7 +4,7 @@ No lane imports a sibling implementation. Tenant/principal comes from verified
 server auth, never request JSON. No default implementation executes a model.
 """
 
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, AsyncIterator, Callable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
@@ -28,6 +28,8 @@ from .execution_contracts import (
     RouteAlias,
     RunEvent,
     SandboxRun,
+    Scope,
+    StreamObservation,
     TargetConfiguration,
     VersionRef,
     WorkflowRunRequest,
@@ -68,7 +70,7 @@ class RuntimeInferencePort(Protocol):
     async def complete(self, context: RequestContext, call: InferenceCall) -> InferenceResult: ...
     def stream(
         self, context: RequestContext, call: InferenceCall
-    ) -> AsyncIterator[ChatCompletionChunk | GatewayError]: ...
+    ) -> AsyncIterator[ChatCompletionChunk | GatewayError | StreamObservation]: ...
 
 
 class GatewayPort(Protocol):
@@ -78,7 +80,7 @@ class GatewayPort(Protocol):
     ) -> ChatCompletion: ...
     def stream(
         self, context: RequestContext, value: ChatCompletionRequest
-    ) -> AsyncIterator[ChatCompletionChunk | GatewayError]: ...
+    ) -> AsyncGenerator[ChatCompletionChunk | GatewayError, None]: ...
 
 
 class WorkflowRunnerPort(Protocol):
@@ -101,6 +103,16 @@ class ToolDispatcherPort(Protocol):
 
 
 class ApplicationKeyPort(Protocol):
+    def issue(
+        self,
+        context: RequestContext,
+        *,
+        expires_at: datetime,
+        scopes: tuple[Scope, ...],
+        aliases: tuple[str, ...] = (),
+        policies: tuple[VersionRef, ...] = (),
+        max_cost_micro_usd: int,
+    ) -> tuple[ApplicationKeyMetadata, str]: ...
     async def authenticate(self, bearer: str, now: datetime) -> ApplicationKeyMetadata: ...
     async def revoke(self, context: RequestContext, key_id: str) -> ApplicationKeyMetadata: ...
 

@@ -6,6 +6,7 @@ Admission provisioning is operator-only and deliberately has no HTTP endpoint.
 
 import hashlib
 import re
+from contextlib import nullcontext
 from datetime import UTC, datetime, timedelta
 
 from pydantic import TypeAdapter
@@ -32,9 +33,11 @@ from .execution_contracts import (
     StoredOutput,
     TransitionRequest,
     VersionRef,
+    WorkflowRunRequest,
 )
 from .execution_security import validate_admission, validate_alias
 from .planning_storage import PlanningStorage
+from .runtime_contracts import QueuedContext
 from .storage import SqlStorage
 
 
@@ -75,6 +78,170 @@ class SandboxStorage(SqlStorage):
     def __init__(self, engine: Engine, *, offline_contract_test: bool = False) -> None:
         super().__init__(engine)
         self.offline_contract_test = offline_contract_test
+
+    def records(self, tenant: str, kind: str) -> tuple[str, ...]:
+        with self.engine.connect() as conn:
+            rows = (
+                conn.execute(
+                    text(
+                        "SELECT r.payload FROM sandbox_records r WHERE r.owner=:owner AND r.kind=:kind AND r.version=(SELECT MAX(s.version) FROM sandbox_records s WHERE s.owner=r.owner AND s.kind=r.kind AND s.id=r.id) ORDER BY r.id LIMIT 1000"
+                    ),
+                    dict(owner=tenant, kind=kind),
+                )
+                .scalars()
+                .all()
+            )
+        return tuple(str(v) for v in rows)
+
+    def enqueue_runtime(
+        self, context: QueuedContext, value: WorkflowRunRequest, run: SandboxRun, input_hash: str
+    ) -> tuple[str, bool]:
+        now = datetime.now(UTC)
+        with self.engine.begin() as conn:
+            identifier, created = self.register_request(
+                context.tenant_id, context.idempotency_key, run.id, input_hash, connection=conn
+            )
+            if not created:
+                return identifier, False
+            append(conn, context.tenant_id, "run", run.id, 1, run)
+            append(conn, context.tenant_id, "queued_context", run.id, 1, context)
+            conn.execute(
+                text(
+                    "INSERT INTO sandbox_payloads(owner,kind,id,expires_at,payload) VALUES(:owner,'queued_input',:id,:expires,:payload)"
+                ),
+                dict(
+                    owner=context.tenant_id,
+                    id=run.id,
+                    expires=(now + timedelta(seconds=120)).timestamp(),
+                    payload=value.model_dump_json(),
+                ),
+            )
+
+            conn.execute(
+                text(
+                    "INSERT INTO runtime_queue(owner,id,request_key,principal_id,key_id,deadline,state) VALUES(:owner,:id,:key,:principal,:key_id,:deadline,'queued')"
+                ),
+                dict(
+                    owner=context.tenant_id,
+                    id=run.id,
+                    key=context.idempotency_key,
+                    principal=context.principal_id,
+                    key_id=context.application_key.id if context.application_key else None,
+                    deadline=context.deadline.timestamp(),
+                ),
+            )
+        return run.id, True
+
+    def attempts(self, tenant: str, run_id: str) -> tuple[RunAttempt, ...]:
+        # Filter before the list bound, so older workspace activity cannot hide
+        # the attempts/costs of the specifically authorized run being inspected.
+        field = (
+            "json_extract(r.payload,'$.run_id')"
+            if self.engine.dialect.name == "sqlite"
+            else "CAST(r.payload AS jsonb)->>'run_id'"
+        )
+        with self.engine.connect() as conn:
+            values = (
+                conn.execute(
+                    text(
+                        f"SELECT r.payload FROM sandbox_records r WHERE r.owner=:owner AND r.kind='attempt' AND {field}=:run AND r.version=(SELECT MAX(s.version) FROM sandbox_records s WHERE s.owner=r.owner AND s.kind=r.kind AND s.id=r.id) ORDER BY r.id LIMIT 1000"
+                    ),
+                    dict(owner=tenant, run=run_id),
+                )
+                .scalars()
+                .all()
+            )
+        return tuple(RunAttempt.model_validate_json(v) for v in values)
+
+    def claim_runtime(self) -> tuple[QueuedContext, WorkflowRunRequest] | None:
+        now = datetime.now(UTC).timestamp()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text("DELETE FROM sandbox_payloads WHERE kind='queued_input' AND expires_at<=:now"),
+                dict(now=now),
+            )
+            # A lease expiry is uncertainty, never permission to redispatch.
+            expired = conn.execute(
+                text(
+                    "SELECT owner,id FROM runtime_queue WHERE (state='running' AND lease_until<:now) OR (state='queued' AND deadline<:now)"
+                ),
+                dict(now=now),
+            ).all()
+            for owner, identifier in expired:
+                conn.execute(
+                    text(
+                        "UPDATE runtime_queue SET state='uncertain' WHERE owner=:owner AND id=:id"
+                    ),
+                    dict(owner=owner, id=identifier),
+                )
+                conn.execute(
+                    text(
+                        "UPDATE sandbox_requests SET state='uncertain' WHERE owner=:owner AND request_id=:id AND state IN ('queued','running')"
+                    ),
+                    dict(owner=owner, id=identifier),
+                )
+            rows = conn.execute(
+                text(
+                    "SELECT owner,id FROM runtime_queue WHERE state='queued' AND deadline>:now ORDER BY deadline LIMIT 20"
+                ),
+                dict(now=now),
+            ).all()
+            selected = None
+            for owner, identifier in rows:
+                result = conn.execute(
+                    text(
+                        "UPDATE runtime_queue SET state='running',lease_until=:lease WHERE owner=:owner AND id=:id AND state='queued'"
+                    ),
+                    dict(owner=owner, id=identifier, lease=now + 125),
+                )
+                if result.rowcount == 1:
+                    selected = str(owner), str(identifier)
+                    break
+        if selected is None:
+            return None
+        tenant, identifier = selected
+        try:
+            return (
+                QueuedContext.model_validate_json(self.read(tenant, "queued_context", identifier)),
+                WorkflowRunRequest.model_validate_json(
+                    self._read_payload(tenant, "queued_input", identifier)
+                ),
+            )
+        except DomainError:
+            self.finish_runtime(tenant, identifier, uncertain=True)
+            return None
+
+    def queue_claimed(self, tenant: str, identifier: str) -> bool:
+        with self.engine.connect() as conn:
+            return (
+                conn.execute(
+                    text("SELECT state FROM runtime_queue WHERE owner=:owner AND id=:id"),
+                    dict(owner=tenant, id=identifier),
+                ).scalar()
+                == "running"
+            )
+
+    def finish_runtime(self, tenant: str, identifier: str, *, uncertain: bool = False) -> None:
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    "UPDATE runtime_queue SET state=:state WHERE owner=:owner AND id=:id AND state='running'"
+                ),
+                dict(owner=tenant, id=identifier, state="uncertain" if uncertain else "done"),
+            )
+            if uncertain:
+                conn.execute(
+                    text(
+                        "UPDATE sandbox_requests SET state='uncertain' WHERE owner=:owner AND request_id=:id AND state IN ('running','queued')"
+                    ),
+                    dict(owner=tenant, id=identifier),
+                )
+            conn.execute(
+                text(
+                    "DELETE FROM sandbox_payloads WHERE owner=:owner AND id=:id AND kind='queued_input'"
+                ),
+                dict(owner=tenant, id=identifier),
+            )
 
     def request_state(self, tenant: str, request_id: str) -> str:
         with self.engine.connect() as conn:
@@ -152,7 +319,12 @@ class SandboxStorage(SqlStorage):
         return tuple(TypeAdapter(RunEvent).validate_json(str(raw)) for raw in rows)
 
     def save_application_key(
-        self, tenant: str, value: ApplicationKeyMetadata, verifier: str
+        self,
+        tenant: str,
+        value: ApplicationKeyMetadata,
+        verifier: str,
+        *,
+        cap_micro: int | None = None,
     ) -> None:
         """Lane 7 supplies an independently issued random secret's verifier, never raw key."""
         if value.tenant_id != tenant or not re.fullmatch(
@@ -161,6 +333,8 @@ class SandboxStorage(SqlStorage):
             raise ValueError("Tenant or key verifier format denied")
         try:
             with self.engine.begin() as conn:
+                if cap_micro is not None:
+                    self.provision_budget(tenant, "key-" + value.id, cap_micro, connection=conn)
                 append(conn, tenant, "application_key", value.id, 1, value)
                 conn.execute(
                     text(
@@ -199,7 +373,13 @@ class SandboxStorage(SqlStorage):
         return value
 
     def register_request(
-        self, tenant: str, key: str, request_id: str, input_hash: str
+        self,
+        tenant: str,
+        key: str,
+        request_id: str,
+        input_hash: str,
+        *,
+        connection: Connection | None = None,
     ) -> tuple[str, bool]:
         """Persist before dispatch. True=created; False=return saved run, never redispatch."""
         if not re.fullmatch(r"[A-Za-z0-9_-]{8,80}", key) or not re.fullmatch(
@@ -207,7 +387,7 @@ class SandboxStorage(SqlStorage):
         ):
             raise DomainError(ErrorCode.INVALID, "Invalid idempotency key or digest", 422)
         try:
-            with self.engine.begin() as conn:
+            with nullcontext(connection) if connection is not None else self.engine.begin() as conn:
                 row = (
                     conn.execute(
                         text(
@@ -262,7 +442,12 @@ class SandboxStorage(SqlStorage):
                 409,
             )
         configs = {c.id for c in view.result.catalog.configurations}
-        if any(s.configuration_id and s.configuration_id not in configs for s in value.stages):
+        if any(
+            c not in configs
+            for s in value.stages
+            for c in ((s.configuration_id,) if s.configuration_id else ())
+            + s.fallback_configuration_ids
+        ):
             raise DomainError(ErrorCode.INVALID, "Configuration is not in the pinned catalog", 422)
         return self._append_policy(tenant, value)
 
@@ -489,17 +674,27 @@ class SandboxStorage(SqlStorage):
     def trace(self, tenant: str, request_id: str) -> DecisionTrace:
         return DecisionTrace.model_validate_json(self.read(tenant, "trace", request_id))
 
-    def provision_budget(self, tenant: str, identifier: str, cap_micro: int) -> None:
+    def provision_budget(
+        self, tenant: str, identifier: str, cap_micro: int, *, connection: Connection | None = None
+    ) -> None:
         """Operator-only. Existing caps are immutable, not increased by request fields."""
         if type(cap_micro) is not int or not 0 <= cap_micro <= 1_000_000:
             raise ValueError("Invalid approved sandbox cap")
-        with self.engine.begin() as conn:
+        with nullcontext(connection) if connection is not None else self.engine.begin() as conn:
             conn.execute(
                 text(
                     "INSERT INTO sandbox_budgets(owner,id,cap_micro,held_micro) VALUES(:owner,:id,:cap,0)"
                 ),
                 dict(owner=tenant, id=identifier, cap=cap_micro),
             )
+
+    def budget_cap(self, tenant: str, identifier: str) -> int:
+        with self.engine.connect() as conn:
+            value = conn.execute(
+                text("SELECT cap_micro FROM sandbox_budgets WHERE owner=:owner AND id=:id"),
+                dict(owner=tenant, id=identifier),
+            ).scalar_one()
+        return int(value)
 
     def reserve(
         self, tenant: str, budget_id: str, reservation_id: str, request_id: str, amount_micro: int

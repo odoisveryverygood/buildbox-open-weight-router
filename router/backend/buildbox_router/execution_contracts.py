@@ -13,11 +13,17 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, JsonValue, mod
 
 from .contracts import CandidateConfiguration, Fact, Identifier, Workflow
 from .evidence_contracts import EndpointRecord
+from .json_contracts import JsonSchema
 
 
 class Wire(BaseModel):
     model_config = ConfigDict(
-        extra="forbid", frozen=True, hide_input_in_errors=True, allow_inf_nan=False
+        extra="forbid",
+        frozen=True,
+        hide_input_in_errors=True,
+        allow_inf_nan=False,
+        populate_by_name=True,
+        serialize_by_alias=True,
     )
 
 
@@ -26,8 +32,30 @@ class ExecutionContract(Wire):
 
 
 def digest(value: BaseModel) -> str:
+    def legacy_defaults(item: object) -> object:
+        # Additive defaults must not invalidate an already signed 2.0 policy.
+        defaults = {
+            "fallback_configuration_ids": (),
+            "route_requirements": None,
+            "variant": None,
+            "response_format": None,
+            "max_attempts": 1,
+        }
+        if isinstance(item, dict):
+            return {
+                k: legacy_defaults(v)
+                for k, v in item.items()
+                if k not in defaults
+                or (v != defaults[k] and not (k == "fallback_configuration_ids" and v == []))
+            }
+        if isinstance(item, list):
+            return [legacy_defaults(v) for v in item]
+        return item
+
     return hashlib.sha256(
-        json.dumps(value.model_dump(mode="json"), sort_keys=True, separators=(",", ":")).encode()
+        json.dumps(
+            legacy_defaults(value.model_dump(mode="json")), sort_keys=True, separators=(",", ":")
+        ).encode()
     ).hexdigest()
 
 
@@ -56,6 +84,7 @@ class ExecutionBudget(ExecutionContract):
     max_output_tokens: int = Field(ge=1, le=16384, strict=True)
     timeout_ms: int = Field(ge=100, le=120000, strict=True)
     max_retries: Literal[0] = 0
+    max_attempts: int = Field(default=1, ge=1, le=3, strict=True)
 
 
 class StopConditions(ExecutionContract):
@@ -84,12 +113,34 @@ class PromptRevision(ExecutionContract):
         return self
 
 
+class RouteRequirements(ExecutionContract):
+    allowed_endpoint_ids: tuple[Identifier, ...] = ()
+    required_parameters: tuple[str, ...] = ()
+    local_only: bool = False
+    required_region: str | None = None
+
+
+class PolicyVariant(ExecutionContract):
+    mode: Literal["quality", "balanced", "cost_conscious"]
+    rule_version: Literal["sandbox-heuristic-1"] = "sandbox-heuristic-1"
+    rationale: tuple[str, ...]
+    quality_validated: Literal[False] = False
+
+
+class VariantRequest(ExecutionContract):
+    id: Identifier
+    mode: Literal["quality", "balanced", "cost_conscious"]
+
+
 class ExecutableStage(ExecutionContract):
     node_id: Identifier
     input_types: dict[Identifier, ValueType]
     output_types: dict[Identifier, ValueType]
     prompt: VersionRef | None = None
     configuration_id: Identifier | None = None
+    fallback_configuration_ids: tuple[Identifier, ...] = Field(default=(), max_length=2)
+    route_requirements: RouteRequirements | None = None
+    response_format: "ResponseFormat | None" = None
     operation: Operation | None = None
     allowed_tool_ids: tuple[Identifier, ...] = ()
     budget: ExecutionBudget
@@ -111,6 +162,7 @@ class ExecutablePolicy(ExecutionContract):
     )
     environment: Literal["sandbox"] = "sandbox"
     production_approved: Literal[False] = False
+    variant: PolicyVariant | None = None
 
     @model_validator(mode="after")
     def executable_bindings(self) -> "ExecutablePolicy":
@@ -126,6 +178,18 @@ class ExecutablePolicy(ExecutionContract):
         used_prompts = set()
         for name, stage in stages.items():
             node = nodes[name]
+            if (
+                len(set(stage.fallback_configuration_ids)) != len(stage.fallback_configuration_ids)
+                or stage.configuration_id in stage.fallback_configuration_ids
+            ):
+                raise ValueError("Fallback pins must be distinct")
+            if stage.fallback_configuration_ids and (
+                node.kind != "llm"
+                or len(stage.fallback_configuration_ids) + 1 > stage.budget.max_attempts
+            ):
+                raise ValueError("Fallbacks require explicit bounded model attempts")
+            if stage.response_format is not None and node.kind != "llm":
+                raise ValueError("Only LLM stages have response formats")
             if node.kind == "bounded_agent":
                 raise ValueError("Bounded agents remain planning-only in sandbox v2.0")
             if (
@@ -156,8 +220,13 @@ class ExecutablePolicy(ExecutionContract):
                 if key not in prompts or prompts[key].variables != stage.input_types:
                     raise ValueError("Prompt revision/variables do not match stage")
                 used_prompts.add(key)
-                if stage.budget.max_model_calls != 1 or stage.budget.max_tool_calls != 0:
-                    raise ValueError("One LLM stage calls one model and never business tools")
+                if (
+                    stage.budget.max_model_calls != stage.budget.max_attempts
+                    or stage.budget.max_tool_calls != 0
+                ):
+                    raise ValueError(
+                        "LLM stages budget every possible attempt and never business tools"
+                    )
             elif stage.budget.max_model_calls != 0:
                 raise ValueError("Non-model stage cannot budget model calls")
             if (node.kind == "code") != (stage.operation is not None):
@@ -264,7 +333,7 @@ class ApplicationKeyMetadata(ExecutionContract):
 class ProviderCredentialReference(ExecutionContract):
     id: Identifier
     tenant_id: Identifier
-    adapter_id: Literal["openrouter", "local_ollama"]
+    adapter_id: Literal["openrouter", "local_ollama", "openai_compatible"]
     secret_reference: Identifier | None = Field(default=None, repr=False)
     approval_reference: Identifier
     expires_at: AwareDatetime
@@ -304,6 +373,9 @@ class TargetConfiguration(ExecutionContract):
     local: LocalDeployment | None = None
     observed_run_ids: tuple[Identifier, ...] = ()
     limitations: tuple[str, ...] = Field(min_length=1)
+    approved_endpoint_id: Identifier | None = None
+    expires_at: AwareDatetime | None = None
+    token_envelope_approved: Fact[bool] | None = None
 
     @model_validator(mode="after")
     def deployment(self) -> "TargetConfiguration":
@@ -314,17 +386,115 @@ class TargetConfiguration(ExecutionContract):
         return self
 
 
+class FunctionDefinition(Wire):
+    name: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    description: str | None = Field(default=None, max_length=1000)
+    parameters: JsonSchema
+    strict: Literal[True] = True
+
+
+class ToolDefinition(Wire):
+    type: Literal["function"] = "function"
+    function: FunctionDefinition
+
+
+class FunctionChoice(Wire):
+    name: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+
+
+class NamedToolChoice(Wire):
+    type: Literal["function"] = "function"
+    function: FunctionChoice
+
+
+class FunctionCall(Wire):
+    name: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    arguments: str = Field(max_length=65536, repr=False)
+
+
+class ToolCall(Wire):
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,120}$")
+    type: Literal["function"] = "function"
+    function: FunctionCall
+
+
+class JsonSchemaFormat(Wire):
+    name: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    strict: Literal[True] = True
+    schema_: JsonSchema = Field(alias="schema")
+
+
+class ResponseFormat(Wire):
+    type: Literal["text", "json_object", "json_schema"]
+    json_schema: JsonSchemaFormat | None = None
+
+    @model_validator(mode="after")
+    def schema_required(self) -> "ResponseFormat":
+        if (self.type == "json_schema") != (self.json_schema is not None):
+            raise ValueError("JSON schema format requires exactly its schema")
+        return self
+
+
 class ChatMessage(Wire):
-    role: Literal["system", "user", "assistant"]
-    content: str = Field(min_length=1, max_length=16000, repr=False)
+    role: Literal["system", "user", "assistant", "tool"]
+    content: str | None = Field(default=None, max_length=16000, repr=False)
+    tool_calls: tuple[ToolCall, ...] | None = Field(default=None, min_length=1, max_length=8)
+    tool_call_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,120}$")
+
+    @model_validator(mode="after")
+    def role_fields(self) -> "ChatMessage":
+        if self.role != "assistant" and self.tool_calls is not None:
+            raise ValueError("Only assistant messages contain tool calls")
+        if (self.role == "tool") != (self.tool_call_id is not None):
+            raise ValueError("Tool results require call ID")
+        if self.content is None and not self.tool_calls:
+            raise ValueError("Message needs text or tool calls")
+        return self
 
 
 class ChatCompletionRequest(Wire):
     model: Identifier  # tenant-scoped alias, NOT arbitrary provider/model name
     messages: tuple[ChatMessage, ...] = Field(min_length=1, max_length=32)
     max_tokens: int = Field(ge=1, le=16384, strict=True)
-    temperature: float | None = Field(default=None, ge=0, le=2)
+    temperature: float | None = Field(default=None, ge=0, le=2, strict=True, allow_inf_nan=False)
     stream: bool = Field(default=False, strict=True)
+    tools: tuple[ToolDefinition, ...] | None = Field(default=None, min_length=1, max_length=8)
+    tool_choice: Literal["auto", "none", "required"] | NamedToolChoice | None = None
+    response_format: ResponseFormat | None = None
+
+    @model_validator(mode="after")
+    def combinations(self) -> "ChatCompletionRequest":
+        names = [t.function.name for t in self.tools or ()]
+        if len(set(names)) != len(names) or (self.tool_choice is not None and not names):
+            raise ValueError("Unique declared tools required by tool_choice")
+        if (
+            isinstance(self.tool_choice, NamedToolChoice)
+            and self.tool_choice.function.name not in names
+        ):
+            raise ValueError("Named tool is undeclared")
+        if (
+            self.response_format
+            and self.response_format.type != "text"
+            and (self.stream or self.tools)
+        ):
+            raise ValueError("Strict JSON delivery supports nonstream without tools only")
+        pending: set[str] = set()
+        seen: set[str] = set()
+        for message in self.messages:
+            if pending and message.role != "tool":
+                raise ValueError("Supply every pending tool result before continuing")
+            if message.role == "tool":
+                if message.tool_call_id not in pending:
+                    raise ValueError("Tool result does not match a pending call")
+                pending.remove(message.tool_call_id)
+            for call in message.tool_calls or ():
+                if call.id in seen or call.function.name not in names:
+                    raise ValueError("Tool history has duplicate ID or undeclared tool")
+                pending.add(call.id)
+                seen.add(call.id)
+        if pending:
+            raise ValueError("Cannot submit an unresolved tool invocation")
+        return self
 
 
 class CompletionUsage(Wire):
@@ -341,13 +511,14 @@ class CompletionUsage(Wire):
 
 class CompletionMessage(Wire):
     role: Literal["assistant"] = "assistant"
-    content: str = Field(max_length=1_048_576, repr=False)
+    content: str | None = Field(default=None, max_length=1_048_576, repr=False)
+    tool_calls: tuple[ToolCall, ...] | None = Field(default=None, min_length=1, max_length=8)
 
 
 class CompletionChoice(Wire):
     index: Literal[0] = 0
     message: CompletionMessage
-    finish_reason: Literal["stop", "length", "content_filter"]
+    finish_reason: Literal["stop", "length", "content_filter", "tool_calls"]
 
 
 class ChatCompletion(Wire):
@@ -359,15 +530,28 @@ class ChatCompletion(Wire):
     usage: CompletionUsage | None = None  # unknown is not zero
 
 
+class FunctionDelta(Wire):
+    name: str | None = None
+    arguments: str | None = Field(default=None, max_length=65536, repr=False)
+
+
+class ToolCallDelta(Wire):
+    index: int = Field(ge=0, le=7)
+    id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,120}$")
+    type: Literal["function"] | None = None
+    function: FunctionDelta | None = None
+
+
 class CompletionDelta(Wire):
     role: Literal["assistant"] | None = None
     content: str | None = Field(default=None, max_length=65536, repr=False)
+    tool_calls: tuple[ToolCallDelta, ...] | None = Field(default=None, min_length=1, max_length=8)
 
 
 class ChunkChoice(Wire):
     index: Literal[0] = 0
     delta: CompletionDelta
-    finish_reason: Literal["stop", "length", "content_filter"] | None = None
+    finish_reason: Literal["stop", "length", "content_filter", "tool_calls"] | None = None
 
 
 class ChatCompletionChunk(Wire):
@@ -375,7 +559,7 @@ class ChatCompletionChunk(Wire):
     object: Literal["chat.completion.chunk"] = "chat.completion.chunk"
     created: int = Field(ge=0)
     model: Identifier
-    choices: tuple[ChunkChoice, ...] = Field(min_length=1, max_length=1)
+    choices: tuple[ChunkChoice, ...] = Field(max_length=1)
     usage: CompletionUsage | None = None
 
 
@@ -412,6 +596,8 @@ class GatewayErrorDetail(Wire):
         "cancelled",
         "timeout",
         "accounting_uncertain",
+        "partial_failure",
+        "upstream_error",
     ]
 
 
@@ -457,12 +643,55 @@ class RunAttempt(ExecutionContract):
     id: Identifier
     run_id: Identifier
     node_id: Identifier
-    attempt: Literal[1] = 1
+    attempt: int = Field(default=1, ge=1, le=3)
     status: Literal["reserved", "dispatched", "succeeded", "failed", "cancelled", "uncertain"]
     trace: DecisionTrace
     usage: UsageReconciliation
     output_reference: Identifier | None = None
     error: GatewayError | None = None
+    latency_ms: int | None = Field(default=None, ge=0)
+    latency_definition: Literal["reservation_to_finalization_wall_clock"] = (
+        "reservation_to_finalization_wall_clock"
+    )
+
+
+class StreamObservation(ExecutionContract):
+    type: Literal["observation"] = "observation"
+    usage: CompletionUsage | None = None
+    actual_micro_usd: int | None = Field(default=None, ge=0, strict=True)
+    trace: DecisionTrace
+
+
+class ApprovedEndpoint(ExecutionContract):
+    id: Identifier
+    tenant_id: Identifier
+    url: str = Field(max_length=300, repr=False)
+    network: Literal["public_https", "loopback"]
+    adapter_id: Literal["openrouter", "openai_compatible"]
+    credential_reference_id: Identifier
+    expires_at: AwareDatetime
+    authorization_reference: Identifier
+
+
+class KeyIssueRequest(ExecutionContract):
+    expires_at: AwareDatetime
+    scopes: tuple[Scope, ...] = Field(min_length=1)
+    alias_ids: tuple[Identifier, ...] = ()
+    workflow_policies: tuple[VersionRef, ...] = ()
+    max_cost_micro_usd: int = Field(ge=0, le=1000000, strict=True)
+
+
+class IssuedKey(ExecutionContract):
+    metadata: ApplicationKeyMetadata
+    secret: str = Field(repr=False)
+
+
+class RuntimeStatus(ExecutionContract):
+    installed: bool
+    mode: Literal["disabled", "approved", "synthetic_test"]
+    live_verified: Literal[False] = False
+    target_count: int | None = Field(default=None, ge=0)
+    detail: str
 
 
 class WorkflowRunRequest(ExecutionContract):
@@ -549,6 +778,14 @@ class ComparisonRequest(ExecutionContract):
     policies: tuple[VersionRef, ...] = Field(min_length=2, max_length=4)
     budget: ExecutionBudget
 
+    @model_validator(mode="after")
+    def distinct(self) -> "ComparisonRequest":
+        if len(set(self.sample_ids)) != len(self.sample_ids) or len(
+            {(p.id, p.version) for p in self.policies}
+        ) != len(self.policies):
+            raise ValueError("Comparison samples and pinned policies must be distinct")
+        return self
+
 
 class ComparisonCell(ExecutionContract):
     sample_id: Identifier
@@ -557,11 +794,12 @@ class ComparisonCell(ExecutionContract):
     status: Literal["not_run", "completed", "failed", "blocked"]
     output_reference: Identifier | None = None
     usage: UsageReconciliation | None = None
+    attempt_usages: tuple[UsageReconciliation, ...] = ()
 
     @model_validator(mode="after")
     def real_output(self) -> "ComparisonCell":
         if self.status == "completed" and (
-            not self.run_id or not self.output_reference or not self.usage
+            not self.run_id or not self.output_reference or not (self.usage or self.attempt_usages)
         ):
             raise ValueError("Completed comparison needs an actual run/output/usage record")
         return self
@@ -591,3 +829,5 @@ class ExecutionSchemaBundle(ExecutionContract):
     target: TargetConfiguration
     output: StoredOutput
     grant: RuntimeGrant
+    stream_observation: StreamObservation
+    approved_endpoint: ApprovedEndpoint

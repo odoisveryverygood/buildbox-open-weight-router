@@ -34,7 +34,9 @@ def endpoint(rt):
         metadata_url="https://openrouter.ai/api/v1/models/synthetic/test/endpoints",
         serving_url=fact("https://untrusted.example/never-follow"),
         served_revision=fact("test"),
-        supported_parameters=fact(("max_tokens", "temperature")),
+        supported_parameters=fact(
+            ("max_tokens", "temperature", "stream", "tools", "tool_choice", "response_format")
+        ),
         context_tokens=fact(4096),
         max_prompt_tokens=fact(2048),
         max_completion_tokens=fact(128),
@@ -159,6 +161,7 @@ def test_missing_or_unbounded_prices_block(rt, change):
 
 
 def test_sdk_shaped_http_auth_and_live_sse_injected_port(rt, monkeypatch):
+    hosted(rt)  # Recorded compatible-provider stream; native Ollama stays text-only.
     from buildbox_router import execution_api
 
     # Explicit test-only admission plumbing, keeping SYNTHETIC facts. Normal

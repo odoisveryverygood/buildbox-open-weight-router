@@ -1,5 +1,12 @@
 # Router v2 — frozen sandbox upgrade boundary
 
+**7B integration note:** the central integration branch has preserved both lane
+histories and extended the shared boundary. Current runtime behavior and supported
+subset are in `docs/API_COMPATIBILITY.md`; audit and results are in
+`docs/handoffs/07b-runtime-unblock-plan.md` and `07b-runtime-complete.md`.
+The milestone-06 scope/ownership below remains the historical lane starting contract,
+not a statement that runtime ports or the studio are still unimplemented.
+
 Milestone 06, September 7, 2026. Base: `a3f8c28ed42d461ed570800b7addcd2a4c487f36`.
 The upgrade-base commit containing this document is the common lane starting point.
 Resolve the final commit from `codex/router-upgrade-base` after its handoff. Do not

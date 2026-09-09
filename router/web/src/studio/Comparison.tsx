@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { request } from './api';
 import { budget, identifier, money, parseRef, policyPath, ref, refKey, type S } from './model';
+function Usage({cell}:{cell:S['ComparisonCell']}) {
+  const usages=cell.attempt_usages?.length?cell.attempt_usages:cell.usage?[cell.usage]:[];
+  const actual=usages.length&&usages.every(u=>u.actual_micro_usd!=null)?usages.reduce((n,u)=>n+u.actual_micro_usd!,0):undefined;
+  return <p>Attempts {usages.length} · reserved {money(usages.length?usages.reduce((n,u)=>n+u.reserved_micro_usd,0):undefined)} · actual {money(actual)} · {usages.filter(u=>u.state!=='reconciled').length} pending/uncertain. No missing usage is treated as free.</p>;
+}
 export default function Comparison({samples, current}: {samples:S['ImportedSample'][]; current?:S['PolicyView']}) {
   const [references,setReferences]=useState(''), [sampleIds,setSampleIds]=useState(''), [cap,setCap]=useState(0), [confirmed,setConfirmed]=useState(false);
   const [views,setViews]=useState<S['PolicyView'][]>([]), [result,setResult]=useState<S['ComparisonResult']>(), [outputs,setOutputs]=useState<Record<string,S['StoredOutput']>>({}), [errors,setErrors]=useState<Record<string,string>>({});
@@ -30,6 +35,6 @@ export default function Comparison({samples, current}: {samples:S['ImportedSampl
     {views.some(v=>v.transition.status!=='sandbox_enabled')&&<p>Blocked: enable these exact versions after operator admission in Routes. No results have been invented.</p>}
     <div className="form-grid"><label>Open persisted comparison ID<input value={lookup} onChange={e=>setLookup(e.target.value)} /></label><button className="secondary" disabled={busy||!identifier.test(lookup)} onClick={()=>void act(async()=>display(await request<S['ComparisonResult']>(`/api/studio/comparisons/${lookup}`)))}>Load / refresh comparison (no execution)</button></div>
     {error&&<p role="alert" className="error">{error}</p>}
-    {result&&<><p role="status">Experiment {result.id} · {result.request.sample_ids.length} samples · exploratory, not quality validation. No automatic winner.</p><div className="comparison-grid">{result.cells.map((cell,i)=><article className="model-card" key={i}><h3>{refKey(cell.policy)}</h3><p>Sample {cell.sample_id} · <strong>{cell.status}</strong></p><p>Reserved {money(cell.usage?.reserved_micro_usd)} · actual {money(cell.usage?.actual_micro_usd)} · {cell.usage?.state??'No usage report'}</p><p>Tokens: {cell.usage?.tokens?.total_tokens??'Unknown'}</p><p>Time to first content / completion time: not exposed by the current comparison contract.</p>{cell.output_reference&&outputs[cell.output_reference]?<><h4>Returned output</h4><pre>{JSON.stringify(outputs[cell.output_reference].value,null,2)}</pre><p>Persisted output loaded; not a rubric score. Sample size alone does not establish quality.</p></>:<p>{cell.output_reference?errors[cell.output_reference]??'Loading persisted output…':'No returned output. Failed/blocked cells remain visible.'}</p>}</article>)}</div></>}
+    {result&&<><p role="status">Experiment {result.id} · {result.request.sample_ids.length} samples · exploratory, not quality validation. No automatic winner.</p><div className="comparison-grid">{result.cells.map((cell,i)=><article className="model-card" key={i}><h3>{refKey(cell.policy)}</h3><p>Sample {cell.sample_id} · <strong>{cell.status}</strong></p><Usage cell={cell}/><p>Time to first content / completion time: not exposed by the current comparison contract.</p>{cell.output_reference&&outputs[cell.output_reference]?<><h4>Returned output</h4><pre>{JSON.stringify(outputs[cell.output_reference].value,null,2)}</pre><p>Persisted output loaded; not a rubric score. Sample size alone does not establish quality.</p></>:<p>{cell.output_reference?errors[cell.output_reference]??'Loading persisted output…':'No returned output. Failed/blocked cells remain visible.'}</p>}</article>)}</div></>}
   </section>;
 }

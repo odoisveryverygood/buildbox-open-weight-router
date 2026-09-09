@@ -3,7 +3,8 @@
 async page => {
   const failures=[];
   page.on('pageerror',e=>failures.push(e.message));
-  const base='http://127.0.0.1:5198';
+  const base=await page.evaluate(()=>location.origin);
+  if(!/^http:\/\/127\.0\.0\.1:\d+$/.test(base))throw new Error('Loopback test app required');
   await page.goto(base);
   await page.getByRole('textbox',{name:'Workflow description',exact:true}).fill('lowercase text');
   await page.getByRole('button',{name:'Save and plan',exact:true}).click();
@@ -42,7 +43,8 @@ async page => {
   if(!(await page.request.get(base+'/api/studio/imports/'+imported.id)).ok())throw new Error('Import not persisted');
   await page.getByRole('textbox',{name:'Open persisted comparison ID',exact:true}).fill('uninstalled-runtime');
   await page.getByRole('button',{name:'Load / refresh comparison (no execution)',exact:true}).click();
-  await page.getByRole('alert').filter({hasText:'Sandbox runtime port not installed'}).waitFor();
+  const runtimeStatus=await (await page.request.get(base+'/api/studio/runtime')).json();
+  await page.getByRole('alert').filter({hasText:runtimeStatus.installed?'Sandbox resource not found':'Sandbox runtime port not installed'}).waitFor();
   await page.locator('#compare').screenshot({path:'output/playwright/lane8-real-comparison-blocked.png'});
   // Load a retained public snapshot. No public_research opt-in or runtime fetch.
   await page.getByRole('button',{name:'Document extraction',exact:true}).click();
