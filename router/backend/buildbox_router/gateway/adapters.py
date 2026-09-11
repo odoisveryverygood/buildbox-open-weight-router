@@ -1,21 +1,35 @@
 """Target adapters reuse shared guarded transports; no live clients on import.
 
-Network streaming is intentionally unavailable until the shared transport port
-can yield bytes. Never turn a buffered completion into fake token streaming.
+Shared approved-target transport yields incremental network bytes. Buffered JSON
+completion is never represented as live token streaming.
 """
 
 import asyncio
-import json
 import re
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Iterator
 from decimal import ROUND_CEILING, Decimal, InvalidOperation
-from typing import Any
+
+from pydantic import JsonValue
 
 from ..contracts import ErrorCode, Fact, Provenance
 from ..errors import DomainError
-from ..execution_contracts import ChatCompletion, ChatCompletionChunk, CompletionUsage, GatewayError
+from ..execution_contracts import (
+    ApprovedEndpoint,
+    ChatCompletion,
+    ChatCompletionChunk,
+    ChunkChoice,
+    CompletionChoice,
+    CompletionDelta,
+    CompletionMessage,
+    CompletionUsage,
+    GatewayError,
+    StreamObservation,
+)
 from ..execution_ports import InferenceCall, InferenceResult, RequestContext
+from ..inference_transport import exchange
+from ..json_contracts import parse_json
 from ..local_inference import local_request
+from ..provider_contracts import ProviderControls, ProviderFrame, ProviderRequest
 from ..runtime import guarded_request
 
 
@@ -66,14 +80,24 @@ def actual_cost(value: object) -> int | None:
 
 
 class TargetAdapters:
-    def __init__(self, secret: Callable[[str, str], str]) -> None:
+    def __init__(
+        self,
+        secret: Callable[[str, str], str],
+        endpoints: Callable[[str, str], ApprovedEndpoint] | None = None,
+    ) -> None:
         self.secret = secret  # Operator-injected secret manager, not environment discovery.
+        self.endpoints = endpoints
 
     async def complete(self, context: RequestContext, call: InferenceCall) -> InferenceResult:
         context.check_cancelled()
         try:
             if call.target.local:
                 return await asyncio.to_thread(self._local, context, call)
+            if call.target.approved_endpoint_id:
+                raw = b""
+                async for part in self._exchange(context, call, False):
+                    raw += part
+                return self._result(context, call, ProviderFrame.model_validate_json(raw))
             return await asyncio.to_thread(self._hosted, context, call)
         except asyncio.CancelledError:
             raise
@@ -90,70 +114,135 @@ class TargetAdapters:
             or not call.credential.secret_reference
         ):
             raise ValueError("Hosted credential missing")
-        # Fixed guarded destination. Ignore metadata serving_url; never route to user URLs.
-        payload: dict[str, object] = {
-            "model": endpoint.routing_model_id,
-            "stream": False,
-            "messages": [m.model_dump() for m in call.messages.messages],
-            "max_tokens": call.messages.max_tokens,
-            "provider": {
-                "only": [endpoint.endpoint_tag],
-                "order": [endpoint.endpoint_tag],
-                "allow_fallbacks": False,
-                "require_parameters": True,
-                "data_collection": "deny",
-                "zdr": True,
-                "max_price": {
-                    p.component: float(p.usd_per_million_tokens or "0")
-                    for p in endpoint.prices
-                    if p.component in ("prompt", "completion")
-                },
-            },
-        }
-        if call.messages.temperature is not None:
-            payload["temperature"] = call.messages.temperature
+        payload = self._request(call, False).model_dump(mode="json", exclude_none=True)
         response = guarded_request(
             "https://openrouter.ai/api/v1/chat/completions",
             payload=payload,
             key=self.secret(context.tenant_id, call.credential.secret_reference),
             check=context.check_cancelled,
         )
-        if "error" in response or response.get("model") != endpoint.routing_model_id:
+        return self._result(context, call, ProviderFrame.model_validate(response))
+
+    def _result(
+        self, context: RequestContext, call: InferenceCall, frame: ProviderFrame
+    ) -> InferenceResult:
+        endpoint = call.target.endpoint
+        if not endpoint or frame.error or frame.model != endpoint.routing_model_id:
             raise ValueError("Upstream error or model identity mismatch")
-        choices = response.get("choices")
-        if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], dict):
+        if len(frame.choices) != 1:
             raise ValueError("Invalid upstream choices")
-        choice = choices[0]
-        message = choice.get("message")
+        choice = frame.choices[0]
         if (
-            not isinstance(message, dict)
-            or message.get("tool_calls")
-            or message.get("function_call")
+            choice.message is None
+            or choice.message.refusal
+            or choice.finish_reason in (None, "error")
         ):
-            raise ValueError("Unexpected tool output is not supported")
-        result = ChatCompletion.model_validate(
-            {
-                "id": context.request_id,
-                "created": response.get("created", 0),
-                "model": call.messages.model,
-                "choices": [
-                    {
-                        "index": 0,
-                        "message": {"role": "assistant", "content": message.get("content")},
-                        "finish_reason": choice.get("finish_reason"),
-                    }
-                ],
-                "usage": usage(response.get("usage")),
-            }
+            raise ValueError("Invalid upstream completion")
+        assert choice.finish_reason is not None and choice.finish_reason != "error"
+        observed = usage(frame.usage.model_dump() if frame.usage else None)
+        result = ChatCompletion(
+            id=context.request_id,
+            created=frame.created,
+            model=call.messages.model,
+            choices=(
+                CompletionChoice(
+                    message=CompletionMessage(
+                        content=choice.message.content, tool_calls=choice.message.tool_calls
+                    ),
+                    finish_reason=choice.finish_reason,
+                ),
+            ),
+            usage=observed,
         )
         trace = call.trace.model_copy(
             update={
-                "served_model": identity(response.get("model"), context.request_id),
-                "served_endpoint": identity(response.get("provider"), context.request_id),
+                "served_model": identity(frame.model, context.request_id),
+                "served_endpoint": identity(frame.provider, context.request_id),
             }
         )
         # Provider name is recorded, not misrepresented as exact endpoint/revision proof.
-        return InferenceResult(result, actual_cost(response.get("usage")), result.usage, trace)
+        return InferenceResult(
+            result,
+            actual_cost(frame.usage.model_dump() if frame.usage else None),
+            result.usage,
+            trace,
+        )
+
+    def _request(self, call: InferenceCall, stream: bool) -> ProviderRequest:
+        endpoint = call.target.endpoint
+        if not endpoint:
+            raise ValueError("OpenAI-compatible deployment required")
+        controls = None
+        if call.credential.adapter_id == "openrouter":
+            controls = ProviderControls(
+                only=(endpoint.endpoint_tag,),
+                order=(endpoint.endpoint_tag,),
+                max_price={
+                    "prompt": next(
+                        float(p.usd_per_million_tokens or "0")
+                        for p in endpoint.prices
+                        if p.component == "prompt"
+                    ),
+                    "completion": next(
+                        float(p.usd_per_million_tokens or "0")
+                        for p in endpoint.prices
+                        if p.component == "completion"
+                    ),
+                },
+            )
+        return ProviderRequest(
+            model=endpoint.routing_model_id,
+            messages=call.messages.messages,
+            max_tokens=call.messages.max_tokens,
+            temperature=call.messages.temperature,
+            stream=stream,
+            tools=call.messages.tools,
+            tool_choice=call.messages.tool_choice,
+            response_format=call.messages.response_format,
+            provider=controls,
+        )
+
+    async def _exchange(
+        self, context: RequestContext, call: InferenceCall, stream: bool
+    ) -> AsyncIterator[bytes]:
+        if call.target.approved_endpoint_id:
+            if self.endpoints is None:
+                raise ValueError("No approved endpoint registry")
+            endpoint = self.endpoints(context.tenant_id, call.target.approved_endpoint_id)
+            if (
+                endpoint.id != call.target.approved_endpoint_id
+                or endpoint.adapter_id != call.credential.adapter_id
+            ):
+                raise ValueError("Approved endpoint pin mismatch")
+        else:
+            endpoint = ApprovedEndpoint(
+                id="openrouter",
+                tenant_id=context.tenant_id,
+                url="https://openrouter.ai/api/v1/chat/completions",
+                network="public_https",
+                adapter_id="openrouter",
+                credential_reference_id=call.credential.id,
+                expires_at=call.credential.expires_at,
+                authorization_reference=call.credential.approval_reference,
+            )
+        if (
+            endpoint.tenant_id != context.tenant_id
+            or endpoint.credential_reference_id != call.credential.id
+        ):
+            raise ValueError("Endpoint workspace/credential mismatch")
+        key = (
+            self.secret(context.tenant_id, call.credential.secret_reference)
+            if call.credential.secret_reference
+            else None
+        )
+        async for part in exchange(
+            endpoint,
+            self._request(call, stream),
+            key,
+            context.check_cancelled,
+            call.budget.timeout_ms / 1000,
+        ):
+            yield part
 
     def _local(self, context: RequestContext, call: InferenceCall) -> InferenceResult:
         local = call.target.local
@@ -235,13 +324,63 @@ class TargetAdapters:
 
     async def stream(
         self, context: RequestContext, call: InferenceCall
-    ) -> AsyncIterator[ChatCompletionChunk | GatewayError]:
-        raise DomainError(
-            ErrorCode.UNSUPPORTED,
-            "Shared guarded byte-stream transport not available; no upstream call",
-            503,
-        )
-        yield  # pragma: no cover
+    ) -> AsyncIterator[ChatCompletionChunk | GatewayError | StreamObservation]:
+        decoder = SSEDecoder()
+        observed = None
+        actual = None
+        trace = call.trace
+        terminal = False
+        async for block in self._exchange(context, call, True):
+            for event in decoder.iter_feed(block):
+                if event == "[DONE]":
+                    continue
+                frame = ProviderFrame.model_validate(event)
+                if frame.error or (
+                    frame.model is not None
+                    and call.target.endpoint
+                    and frame.model != call.target.endpoint.routing_model_id
+                ):
+                    raise ValueError("Upstream stream error/model mismatch")
+                if frame.model:
+                    trace = trace.model_copy(
+                        update={"served_model": identity(frame.model, context.request_id)}
+                    )
+                if frame.provider:
+                    trace = trace.model_copy(
+                        update={"served_endpoint": identity(frame.provider, context.request_id)}
+                    )
+                if frame.usage:
+                    observed = usage(frame.usage.model_dump())
+                    actual = actual_cost(frame.usage.model_dump())
+                choices = []
+                for choice in frame.choices:
+                    if choice.finish_reason == "error" or (choice.delta and choice.delta.refusal):
+                        raise ValueError("Upstream terminal error")
+                    terminal = terminal or choice.finish_reason is not None
+                    choices.append(
+                        ChunkChoice(
+                            index=choice.index,
+                            delta=CompletionDelta(
+                                content=choice.delta.content,
+                                role=choice.delta.role,
+                                tool_calls=choice.delta.tool_calls,
+                            )
+                            if choice.delta
+                            else CompletionDelta(),
+                            finish_reason=choice.finish_reason,
+                        )
+                    )
+                yield ChatCompletionChunk(
+                    id=context.request_id,
+                    created=frame.created,
+                    model=call.messages.model,
+                    choices=tuple(choices),
+                    usage=observed if frame.usage else None,
+                )
+        decoder.finish()
+        if not terminal:
+            raise ValueError("Upstream stream lacks finish reason")
+        yield StreamObservation(usage=observed, actual_micro_usd=actual, trace=trace)
 
 
 class SSEDecoder:
@@ -253,12 +392,14 @@ class SSEDecoder:
         self.size = 0
         self.done = False
 
-    def feed(self, chunk: bytes) -> list[dict[str, Any] | str]:
+    def feed(self, chunk: bytes) -> list[dict[str, JsonValue] | str]:
+        return list(self.iter_feed(chunk))
+
+    def iter_feed(self, chunk: bytes) -> Iterator[dict[str, JsonValue] | str]:
         self.size += len(chunk)
         if self.size > 1048576:
             raise ValueError("Stream exceeds total bound")
         self.buffer += chunk
-        result: list[dict[str, Any] | str] = []
         while b"\n" in self.buffer:
             raw, self.buffer = self.buffer.split(b"\n", 1)
             line = raw.rstrip(b"\r").decode("utf-8", errors="strict")
@@ -273,15 +414,14 @@ class SSEDecoder:
                     raise ValueError("Data after terminal event")
                 if payload == "[DONE]":
                     self.done = True
-                    result.append(payload)
+                    yield payload
                 else:
-                    value = json.loads(payload)
+                    value = parse_json(payload)
                     if not isinstance(value, dict) or "error" in value:
                         raise ValueError("Upstream stream error")
-                    result.append(value)
+                    yield value
         if len(self.buffer) > 65536:
             raise ValueError("Stream frame exceeds bound")
-        return result
 
     def finish(self) -> None:
         if self.buffer.strip() or self.data or not self.done:

@@ -1,17 +1,38 @@
-"""One worker from the same backend package; no workflow execution engine."""
+"""One existing worker: planning plus explicitly configured bounded runtime jobs."""
 
 import argparse
+import asyncio
 import time
 
 from .composition import Services, fixture_services
 from .config import Settings
 from .contracts import Workflow
+from .execution_jobs import QueuedWorkflows
+from .execution_ports import ExecutionServices
 from .planning import PlanningService
 from .planning_storage import PlanningStorage
 from .storage import SqlStorage, engine_for
 
 
-def run_once(services: Services, settings: Settings | None = None) -> bool:
+def run_once(
+    services: Services,
+    settings: Settings | None = None,
+    *,
+    execution: ExecutionServices | None = None,
+) -> bool:
+    if settings and settings.runtime_registry_file and isinstance(services.storage, SqlStorage):
+        from .execution_composition import configured_execution
+        from .execution_storage import SandboxStorage
+
+        execution = configured_execution(
+            settings, SandboxStorage(services.storage.engine), services.selector
+        )
+    if (
+        execution
+        and isinstance(execution.workflows, QueuedWorkflows)
+        and asyncio.run(execution.workflows.work_once())
+    ):
+        return True
     claimed = services.storage.claim()
     if claimed is None:
         return False

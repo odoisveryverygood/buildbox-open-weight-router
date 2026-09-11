@@ -60,9 +60,11 @@ class ApplicationKeys:
         raw = f"{prefix}.{context.tenant_id}.{identifier}.{secrets.token_hex(32)}"
         salt = secrets.token_hex(16)
         verifier = hashlib.pbkdf2_hmac("sha256", raw.encode(), salt.encode(), 310000).hex()
-        self.store.provision_budget(context.tenant_id, "key-" + identifier, max_cost_micro_usd)
         self.store.save_application_key(
-            context.tenant_id, value, f"pbkdf2_sha256:310000:{salt}:{verifier}"
+            context.tenant_id,
+            value,
+            f"pbkdf2_sha256:310000:{salt}:{verifier}",
+            cap_micro=max_cost_micro_usd,
         )
         return value, raw  # Caller reveals once; no retained raw secret.
 

@@ -480,6 +480,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/studio/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Keys */
+        get: operations["keys_api_studio_keys_get"];
+        put?: never;
+        /** Issue Key */
+        post: operations["issue_key_api_studio_keys_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/keys/{key_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke Key */
+        post: operations["revoke_key_api_studio_keys__key_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/studio/outputs/{output_id}": {
         parameters: {
             query?: never;
@@ -548,6 +583,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/studio/policies/{policy_id}/versions/{version}/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Variant */
+        post: operations["create_variant_api_studio_policies__policy_id__versions__version__variants_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/studio/prompts": {
         parameters: {
             query?: never;
@@ -574,6 +626,57 @@ export interface paths {
         };
         /** Get Prompt */
         get: operations["get_prompt_api_studio_prompts__prompt_id__versions__version__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Studio Runs */
+        get: operations["studio_runs_api_studio_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/runs/{run_id}/attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Attempts */
+        get: operations["attempts_api_studio_runs__run_id__attempts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/runtime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Runtime Status */
+        get: operations["runtime_status_api_studio_runtime_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -712,6 +815,40 @@ export interface components {
              * @default []
              */
             workflow_policies: components["schemas"]["VersionRef"][];
+        };
+        /** ApprovedEndpoint */
+        ApprovedEndpoint: {
+            /**
+             * Adapter Id
+             * @enum {string}
+             */
+            adapter_id: "openrouter" | "openai_compatible";
+            /** Authorization Reference */
+            authorization_reference: string;
+            /** Credential Reference Id */
+            credential_reference_id: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Id */
+            id: string;
+            /**
+             * Network
+             * @enum {string}
+             */
+            network: "public_https" | "loopback";
+            /** Tenant Id */
+            tenant_id: string;
+            /** Url */
+            url: string;
         };
         /** ArtifactRecord */
         ArtifactRecord: {
@@ -860,6 +997,7 @@ export interface components {
             messages: components["schemas"]["ChatMessage"][];
             /** Model */
             model: string;
+            response_format?: components["schemas"]["ResponseFormat-Input"] | null;
             /**
              * Stream
              * @default false
@@ -867,16 +1005,24 @@ export interface components {
             stream: boolean;
             /** Temperature */
             temperature?: number | null;
+            /** Tool Choice */
+            tool_choice?: ("auto" | "none" | "required") | components["schemas"]["NamedToolChoice"] | null;
+            /** Tools */
+            tools?: components["schemas"]["ToolDefinition"][] | null;
         };
         /** ChatMessage */
         ChatMessage: {
             /** Content */
-            content: string;
+            content?: string | null;
             /**
              * Role
              * @enum {string}
              */
-            role: "system" | "user" | "assistant";
+            role: "system" | "user" | "assistant" | "tool";
+            /** Tool Call Id */
+            tool_call_id?: string | null;
+            /** Tool Calls */
+            tool_calls?: components["schemas"]["ToolCall"][] | null;
         };
         /** ChunkChoice */
         ChunkChoice: {
@@ -885,7 +1031,7 @@ export interface components {
              * Finish Reason
              * @default null
              */
-            finish_reason: ("stop" | "length" | "content_filter") | null;
+            finish_reason: ("stop" | "length" | "content_filter" | "tool_calls") | null;
             /**
              * Index
              * @default 0
@@ -982,6 +1128,11 @@ export interface components {
         /** ComparisonCell */
         ComparisonCell: {
             /**
+             * Attempt Usages
+             * @default []
+             */
+            attempt_usages: components["schemas"]["UsageReconciliation"][];
+            /**
              * Execution Schema
              * @default 2.0
              * @constant
@@ -1048,7 +1199,7 @@ export interface components {
              * Finish Reason
              * @enum {string}
              */
-            finish_reason: "stop" | "length" | "content_filter";
+            finish_reason: "stop" | "length" | "content_filter" | "tool_calls";
             /**
              * Index
              * @default 0
@@ -1069,17 +1220,24 @@ export interface components {
              * @default null
              */
             role: "assistant" | null;
+            /**
+             * Tool Calls
+             * @default null
+             */
+            tool_calls: components["schemas"]["ToolCallDelta"][] | null;
         };
         /** CompletionMessage */
         CompletionMessage: {
             /** Content */
-            content: string;
+            content?: string | null;
             /**
              * Role
              * @default assistant
              * @constant
              */
             role: "assistant";
+            /** Tool Calls */
+            tool_calls?: components["schemas"]["ToolCall"][] | null;
         };
         /** CompletionUsage */
         CompletionUsage: {
@@ -1391,6 +1549,104 @@ export interface components {
             quality: "untested_provisional" | "measured_not_production_approved";
             /** Stages */
             stages: components["schemas"]["ExecutableStage"][];
+            /** @default null */
+            variant: components["schemas"]["PolicyVariant"] | null;
+            /** Version */
+            version: number;
+            workflow: components["schemas"]["Workflow"];
+        };
+        /** ExecutablePolicy */
+        "ExecutablePolicy-Input": {
+            budget: components["schemas"]["ExecutionBudget"];
+            /** Catalog Id */
+            catalog_id: string;
+            /**
+             * Environment
+             * @default sandbox
+             * @constant
+             */
+            environment: "sandbox";
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Id */
+            id: string;
+            /** Input Types */
+            input_types: {
+                [key: string]: "text" | "json" | "boolean" | "number";
+            };
+            plan: components["schemas"]["VersionRef"];
+            /**
+             * Production Approved
+             * @default false
+             * @constant
+             */
+            production_approved: false;
+            /**
+             * Prompts
+             * @default []
+             */
+            prompts: components["schemas"]["PromptRevision"][];
+            /**
+             * Quality
+             * @default untested_provisional
+             * @enum {string}
+             */
+            quality: "untested_provisional" | "measured_not_production_approved";
+            /** Stages */
+            stages: components["schemas"]["ExecutableStage-Input"][];
+            variant?: components["schemas"]["PolicyVariant"] | null;
+            /** Version */
+            version: number;
+            workflow: components["schemas"]["Workflow"];
+        };
+        /** ExecutablePolicy */
+        "ExecutablePolicy-Output": {
+            budget: components["schemas"]["ExecutionBudget"];
+            /** Catalog Id */
+            catalog_id: string;
+            /**
+             * Environment
+             * @default sandbox
+             * @constant
+             */
+            environment: "sandbox";
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Id */
+            id: string;
+            /** Input Types */
+            input_types: {
+                [key: string]: "text" | "json" | "boolean" | "number";
+            };
+            plan: components["schemas"]["VersionRef"];
+            /**
+             * Production Approved
+             * @default false
+             * @constant
+             */
+            production_approved: false;
+            /**
+             * Prompts
+             * @default []
+             */
+            prompts: components["schemas"]["PromptRevision"][];
+            /**
+             * Quality
+             * @default untested_provisional
+             * @enum {string}
+             */
+            quality: "untested_provisional" | "measured_not_production_approved";
+            /** Stages */
+            stages: components["schemas"]["ExecutableStage-Output"][];
+            variant?: components["schemas"]["PolicyVariant"] | null;
             /** Version */
             version: number;
             workflow: components["schemas"]["Workflow"];
@@ -1414,6 +1670,11 @@ export interface components {
              * @constant
              */
             execution_schema: "2.0";
+            /**
+             * Fallback Configuration Ids
+             * @default []
+             */
+            fallback_configuration_ids: string[];
             /** Input Types */
             input_types: {
                 [key: string]: "text" | "json" | "boolean" | "number";
@@ -1431,6 +1692,86 @@ export interface components {
             };
             /** @default null */
             prompt: components["schemas"]["VersionRef"] | null;
+            /** @default null */
+            response_format: components["schemas"]["ResponseFormat"] | null;
+            /** @default null */
+            route_requirements: components["schemas"]["RouteRequirements"] | null;
+            stop?: components["schemas"]["StopConditions"];
+        };
+        /** ExecutableStage */
+        "ExecutableStage-Input": {
+            /**
+             * Allowed Tool Ids
+             * @default []
+             */
+            allowed_tool_ids: string[];
+            budget: components["schemas"]["ExecutionBudget"];
+            /** Configuration Id */
+            configuration_id?: string | null;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Fallback Configuration Ids
+             * @default []
+             */
+            fallback_configuration_ids: string[];
+            /** Input Types */
+            input_types: {
+                [key: string]: "text" | "json" | "boolean" | "number";
+            };
+            /** Node Id */
+            node_id: string;
+            /** Operation */
+            operation?: ("text.trim.v1" | "text.lowercase.v1" | "text.uppercase.v1" | "text.sort_lines.v1" | "text.deduplicate_lines.v1") | null;
+            /** Output Types */
+            output_types: {
+                [key: string]: "text" | "json" | "boolean" | "number";
+            };
+            prompt?: components["schemas"]["VersionRef"] | null;
+            response_format?: components["schemas"]["ResponseFormat-Input"] | null;
+            route_requirements?: components["schemas"]["RouteRequirements"] | null;
+            stop?: components["schemas"]["StopConditions"];
+        };
+        /** ExecutableStage */
+        "ExecutableStage-Output": {
+            /**
+             * Allowed Tool Ids
+             * @default []
+             */
+            allowed_tool_ids: string[];
+            budget: components["schemas"]["ExecutionBudget"];
+            /** Configuration Id */
+            configuration_id?: string | null;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Fallback Configuration Ids
+             * @default []
+             */
+            fallback_configuration_ids: string[];
+            /** Input Types */
+            input_types: {
+                [key: string]: "text" | "json" | "boolean" | "number";
+            };
+            /** Node Id */
+            node_id: string;
+            /** Operation */
+            operation?: ("text.trim.v1" | "text.lowercase.v1" | "text.uppercase.v1" | "text.sort_lines.v1" | "text.deduplicate_lines.v1") | null;
+            /** Output Types */
+            output_types: {
+                [key: string]: "text" | "json" | "boolean" | "number";
+            };
+            prompt?: components["schemas"]["VersionRef"] | null;
+            response_format?: components["schemas"]["ResponseFormat-Output"] | null;
+            route_requirements?: components["schemas"]["RouteRequirements"] | null;
             stop?: components["schemas"]["StopConditions"];
         };
         /** ExecutionBudget */
@@ -1441,6 +1782,11 @@ export interface components {
              * @constant
              */
             execution_schema: "2.0";
+            /**
+             * Max Attempts
+             * @default 1
+             */
+            max_attempts: number;
             /** Max Cost Micro Usd */
             max_cost_micro_usd: number;
             /** Max Input Tokens */
@@ -1467,6 +1813,7 @@ export interface components {
         ExecutionSchemaBundle: {
             admission: components["schemas"]["SandboxAdmission"];
             alias: components["schemas"]["RouteAlias"];
+            approved_endpoint: components["schemas"]["ApprovedEndpoint"];
             attempt: components["schemas"]["RunAttempt"];
             chunk: components["schemas"]["ChatCompletionChunk"];
             comparison: components["schemas"]["ComparisonResult"];
@@ -1483,6 +1830,7 @@ export interface components {
             key: components["schemas"]["ApplicationKeyMetadata"];
             output: components["schemas"]["StoredOutput"];
             policy: components["schemas"]["PolicyView"];
+            stream_observation: components["schemas"]["StreamObservation"];
             target: components["schemas"]["TargetConfiguration"];
         };
         /** ExecutionTool */
@@ -1660,6 +2008,45 @@ export interface components {
              */
             version: string;
         };
+        /** FunctionCall */
+        FunctionCall: {
+            /** Arguments */
+            arguments: string;
+            /** Name */
+            name: string;
+        };
+        /** FunctionChoice */
+        FunctionChoice: {
+            /** Name */
+            name: string;
+        };
+        /** FunctionDefinition */
+        FunctionDefinition: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+            parameters: components["schemas"]["JsonSchema-Input"];
+            /**
+             * Strict
+             * @default true
+             * @constant
+             */
+            strict: true;
+        };
+        /** FunctionDelta */
+        FunctionDelta: {
+            /**
+             * Arguments
+             * @default null
+             */
+            arguments: string | null;
+            /**
+             * Name
+             * @default null
+             */
+            name: string | null;
+        };
         /** GatewayError */
         GatewayError: {
             error: components["schemas"]["GatewayErrorDetail"];
@@ -1670,7 +2057,7 @@ export interface components {
              * Code
              * @enum {string}
              */
-            code: "unsupported_parameter" | "invalid_request" | "unauthorized" | "sandbox_disabled" | "admission_denied" | "budget_exhausted" | "runtime_unavailable" | "cancelled" | "timeout" | "accounting_uncertain";
+            code: "unsupported_parameter" | "invalid_request" | "unauthorized" | "sandbox_disabled" | "admission_denied" | "budget_exhausted" | "runtime_unavailable" | "cancelled" | "timeout" | "accounting_uncertain" | "partial_failure" | "upstream_error";
             /** Message */
             message: string;
             /**
@@ -1786,6 +2173,18 @@ export interface components {
             /** Subject */
             subject: string;
         };
+        /** IssuedKey */
+        IssuedKey: {
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            metadata: components["schemas"]["ApplicationKeyMetadata"];
+            /** Secret */
+            secret: string;
+        };
         /** Job */
         Job: {
             /** Accounted Usd */
@@ -1851,7 +2250,156 @@ export interface components {
             /** Workflow Version */
             workflow_version: number;
         };
+        /** JsonSchema */
+        JsonSchema: {
+            /**
+             * Additionalproperties
+             * @default null
+             */
+            additionalProperties: false | null;
+            /**
+             * Description
+             * @default null
+             */
+            description: string | null;
+            /**
+             * Enum
+             * @default null
+             */
+            enum: components["schemas"]["JsonValue"][] | null;
+            /** @default null */
+            items: components["schemas"]["JsonSchema"] | null;
+            /**
+             * Properties
+             * @default null
+             */
+            properties: {
+                [key: string]: components["schemas"]["JsonSchema"];
+            } | null;
+            /**
+             * Required
+             * @default []
+             */
+            required: string[];
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "object" | "array" | "string" | "number" | "integer" | "boolean" | "null";
+        };
+        /** JsonSchema */
+        "JsonSchema-Input": {
+            /** Additionalproperties */
+            additionalProperties?: false | null;
+            /** Description */
+            description?: string | null;
+            /** Enum */
+            enum?: components["schemas"]["JsonValue"][] | null;
+            items?: components["schemas"]["JsonSchema-Input"] | null;
+            /** Properties */
+            properties?: {
+                [key: string]: components["schemas"]["JsonSchema-Input"];
+            } | null;
+            /**
+             * Required
+             * @default []
+             */
+            required: string[];
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "object" | "array" | "string" | "number" | "integer" | "boolean" | "null";
+        };
+        /** JsonSchema */
+        "JsonSchema-Output": {
+            /** Additionalproperties */
+            additionalProperties?: false | null;
+            /** Description */
+            description?: string | null;
+            /** Enum */
+            enum?: components["schemas"]["JsonValue"][] | null;
+            items?: components["schemas"]["JsonSchema-Output"] | null;
+            /** Properties */
+            properties?: {
+                [key: string]: components["schemas"]["JsonSchema-Output"];
+            } | null;
+            /**
+             * Required
+             * @default []
+             */
+            required: string[];
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "object" | "array" | "string" | "number" | "integer" | "boolean" | "null";
+        };
+        /** JsonSchemaFormat */
+        JsonSchemaFormat: {
+            /** Name */
+            name: string;
+            schema: components["schemas"]["JsonSchema"];
+            /**
+             * Strict
+             * @default true
+             * @constant
+             */
+            strict: true;
+        };
+        /** JsonSchemaFormat */
+        "JsonSchemaFormat-Input": {
+            /** Name */
+            name: string;
+            schema: components["schemas"]["JsonSchema-Input"];
+            /**
+             * Strict
+             * @default true
+             * @constant
+             */
+            strict: true;
+        };
+        /** JsonSchemaFormat */
+        "JsonSchemaFormat-Output": {
+            /** Name */
+            name: string;
+            schema: components["schemas"]["JsonSchema-Output"];
+            /**
+             * Strict
+             * @default true
+             * @constant
+             */
+            strict: true;
+        };
         JsonValue: unknown;
+        /** KeyIssueRequest */
+        KeyIssueRequest: {
+            /**
+             * Alias Ids
+             * @default []
+             */
+            alias_ids: string[];
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Max Cost Micro Usd */
+            max_cost_micro_usd: number;
+            /** Scopes */
+            scopes: ("models:read" | "chat:complete" | "workflow:run" | "runs:read" | "runs:cancel")[];
+            /**
+             * Workflow Policies
+             * @default []
+             */
+            workflow_policies: components["schemas"]["VersionRef"][];
+        };
         /** LocalDeployment */
         LocalDeployment: {
             /**
@@ -1921,6 +2469,16 @@ export interface components {
              * @constant
              */
             owned_by: "buildbox-sandbox";
+        };
+        /** NamedToolChoice */
+        NamedToolChoice: {
+            function: components["schemas"]["FunctionChoice"];
+            /**
+             * Type
+             * @default function
+             * @constant
+             */
+            type: "function";
         };
         /** Node */
         Node: {
@@ -2166,6 +2724,34 @@ export interface components {
              */
             status: "draft" | "sandbox_enabled" | "disabled";
         };
+        /** PolicyVariant */
+        PolicyVariant: {
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "quality" | "balanced" | "cost_conscious";
+            /**
+             * Quality Validated
+             * @default false
+             * @constant
+             */
+            quality_validated: false;
+            /** Rationale */
+            rationale: string[];
+            /**
+             * Rule Version
+             * @default sandbox-heuristic-1
+             * @constant
+             */
+            rule_version: "sandbox-heuristic-1";
+        };
         /** PolicyView */
         PolicyView: {
             /**
@@ -2289,7 +2875,7 @@ export interface components {
              * Adapter Id
              * @enum {string}
              */
-            adapter_id: "openrouter" | "local_ollama";
+            adapter_id: "openrouter" | "local_ollama" | "openai_compatible";
             /** Approval Reference */
             approval_reference: string;
             /**
@@ -2414,6 +3000,34 @@ export interface components {
              */
             schema_version: "1.0";
         };
+        /** ResponseFormat */
+        ResponseFormat: {
+            /** @default null */
+            json_schema: components["schemas"]["JsonSchemaFormat"] | null;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "text" | "json_object" | "json_schema";
+        };
+        /** ResponseFormat */
+        "ResponseFormat-Input": {
+            json_schema?: components["schemas"]["JsonSchemaFormat-Input"] | null;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "text" | "json_object" | "json_schema";
+        };
+        /** ResponseFormat */
+        "ResponseFormat-Output": {
+            json_schema?: components["schemas"]["JsonSchemaFormat-Output"] | null;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "text" | "json_object" | "json_schema";
+        };
         /** RouteAlias */
         RouteAlias: {
             /** Configuration Id */
@@ -2441,14 +3055,42 @@ export interface components {
             node_id: string;
             policy: components["schemas"]["VersionRef"];
         };
+        /** RouteRequirements */
+        RouteRequirements: {
+            /**
+             * Allowed Endpoint Ids
+             * @default []
+             */
+            allowed_endpoint_ids: string[];
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Local Only
+             * @default false
+             */
+            local_only: boolean;
+            /**
+             * Required Parameters
+             * @default []
+             */
+            required_parameters: string[];
+            /**
+             * Required Region
+             * @default null
+             */
+            required_region: string | null;
+        };
         /** RunAttempt */
         RunAttempt: {
             /**
              * Attempt
              * @default 1
-             * @constant
              */
-            attempt: 1;
+            attempt: number;
             /** @default null */
             error: components["schemas"]["GatewayError"] | null;
             /**
@@ -2459,6 +3101,17 @@ export interface components {
             execution_schema: "2.0";
             /** Id */
             id: string;
+            /**
+             * Latency Definition
+             * @default reservation_to_finalization_wall_clock
+             * @constant
+             */
+            latency_definition: "reservation_to_finalization_wall_clock";
+            /**
+             * Latency Ms
+             * @default null
+             */
+            latency_ms: number | null;
             /** Node Id */
             node_id: string;
             /**
@@ -2569,6 +3222,32 @@ export interface components {
             purpose: "target_sandbox";
             /** Tenant Id */
             tenant_id: string;
+        };
+        /** RuntimeStatus */
+        RuntimeStatus: {
+            /** Detail */
+            detail: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Installed */
+            installed: boolean;
+            /**
+             * Live Verified
+             * @default false
+             * @constant
+             */
+            live_verified: false;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "disabled" | "approved" | "synthetic_test";
+            /** Target Count */
+            target_count?: number | null;
         };
         /**
          * SandboxAdmission
@@ -2769,6 +3448,29 @@ export interface components {
             run_id: string;
             value: components["schemas"]["JsonValue"];
         };
+        /** StreamObservation */
+        StreamObservation: {
+            /**
+             * Actual Micro Usd
+             * @default null
+             */
+            actual_micro_usd: number | null;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            trace: components["schemas"]["DecisionTrace"];
+            /**
+             * Type
+             * @default observation
+             * @constant
+             */
+            type: "observation";
+            /** @default null */
+            usage: components["schemas"]["CompletionUsage"] | null;
+        };
         /** Submission */
         Submission: {
             /** Intake Id */
@@ -2787,6 +3489,11 @@ export interface components {
          * @description Canonical catalog extension: advertised facts != observations from our runs.
          */
         TargetConfiguration: {
+            /**
+             * Approved Endpoint Id
+             * @default null
+             */
+            approved_endpoint_id: string | null;
             /** Catalog Id */
             catalog_id: string;
             configuration: components["schemas"]["CandidateConfiguration"];
@@ -2798,6 +3505,11 @@ export interface components {
              * @constant
              */
             execution_schema: "2.0";
+            /**
+             * Expires At
+             * @default null
+             */
+            expires_at: string | null;
             /** Limitations */
             limitations: string[];
             /** @default null */
@@ -2807,6 +3519,8 @@ export interface components {
              * @default []
              */
             observed_run_ids: string[];
+            /** @default null */
+            token_envelope_approved: components["schemas"]["Fact_bool_"] | null;
         };
         /** TargetRequirements */
         TargetRequirements: {
@@ -2838,6 +3552,45 @@ export interface components {
              * @default false
              */
             tool_calling: boolean;
+        };
+        /** ToolCall */
+        ToolCall: {
+            function: components["schemas"]["FunctionCall"];
+            /** Id */
+            id: string;
+            /**
+             * Type
+             * @default function
+             * @constant
+             */
+            type: "function";
+        };
+        /** ToolCallDelta */
+        ToolCallDelta: {
+            /** @default null */
+            function: components["schemas"]["FunctionDelta"] | null;
+            /**
+             * Id
+             * @default null
+             */
+            id: string | null;
+            /** Index */
+            index: number;
+            /**
+             * Type
+             * @default null
+             */
+            type: "function" | null;
+        };
+        /** ToolDefinition */
+        ToolDefinition: {
+            function: components["schemas"]["FunctionDefinition"];
+            /**
+             * Type
+             * @default function
+             * @constant
+             */
+            type: "function";
         };
         /** TransitionRequest */
         TransitionRequest: {
@@ -2886,6 +3639,22 @@ export interface components {
             state: "reserved" | "reconciled" | "uncertain";
             /** @default null */
             tokens: components["schemas"]["CompletionUsage"] | null;
+        };
+        /** VariantRequest */
+        VariantRequest: {
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Id */
+            id: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "quality" | "balanced" | "cost_conscious";
         };
         /** VersionRef */
         VersionRef: {
@@ -4622,6 +5391,180 @@ export interface operations {
             };
         };
     };
+    keys_api_studio_keys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationKeyMetadata"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    issue_key_api_studio_keys_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KeyIssueRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedKey"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    revoke_key_api_studio_keys__key_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationKeyMetadata"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_output_api_studio_outputs__output_id__get: {
         parameters: {
             query?: never;
@@ -4689,7 +5632,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ExecutablePolicy"];
+                "application/json": components["schemas"]["ExecutablePolicy-Input"];
             };
         };
         responses: {
@@ -4862,6 +5805,69 @@ export interface operations {
             };
         };
     };
+    create_variant_api_studio_policies__policy_id__versions__version__variants_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VariantRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PolicyView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     save_prompt_api_studio_prompts_post: {
         parameters: {
             query?: never;
@@ -4941,6 +5947,176 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PromptRevision"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    studio_runs_api_studio_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SandboxRun"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    attempts_api_studio_runs__run_id__attempts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunAttempt"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    runtime_status_api_studio_runtime_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuntimeStatus"];
                 };
             };
             /** @description Bad Request */
@@ -5273,6 +6449,15 @@ export interface operations {
                     "application/json": components["schemas"]["GatewayError"];
                 };
             };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatewayError"];
+                };
+            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -5385,6 +6570,15 @@ export interface operations {
             };
             /** @description Internal Server Error */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatewayError"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

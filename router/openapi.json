@@ -92,6 +92,75 @@
         "title": "ApplicationKeyMetadata",
         "type": "object"
       },
+      "ApprovedEndpoint": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter_id": {
+            "enum": [
+              "openrouter",
+              "openai_compatible"
+            ],
+            "title": "Adapter Id",
+            "type": "string"
+          },
+          "authorization_reference": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Authorization Reference",
+            "type": "string"
+          },
+          "credential_reference_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Credential Reference Id",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "network": {
+            "enum": [
+              "public_https",
+              "loopback"
+            ],
+            "title": "Network",
+            "type": "string"
+          },
+          "tenant_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "url": {
+            "maxLength": 300,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "url",
+          "network",
+          "adapter_id",
+          "credential_reference_id",
+          "expires_at",
+          "authorization_reference"
+        ],
+        "title": "ApprovedEndpoint",
+        "type": "object"
+      },
       "ArtifactRecord": {
         "additionalProperties": false,
         "properties": {
@@ -408,7 +477,6 @@
               "$ref": "#/components/schemas/ChunkChoice"
             },
             "maxItems": 1,
-            "minItems": 1,
             "title": "Choices",
             "type": "array"
           },
@@ -477,6 +545,16 @@
             "title": "Model",
             "type": "string"
           },
+          "response_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResponseFormat-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "stream": {
             "default": false,
             "title": "Stream",
@@ -494,6 +572,41 @@
               }
             ],
             "title": "Temperature"
+          },
+          "tool_choice": {
+            "anyOf": [
+              {
+                "enum": [
+                  "auto",
+                  "none",
+                  "required"
+                ],
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NamedToolChoice"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Choice"
+          },
+          "tools": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ToolDefinition"
+                },
+                "maxItems": 8,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tools"
           }
         },
         "required": [
@@ -508,24 +621,58 @@
         "additionalProperties": false,
         "properties": {
           "content": {
-            "maxLength": 16000,
-            "minLength": 1,
-            "title": "Content",
-            "type": "string"
+            "anyOf": [
+              {
+                "maxLength": 16000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
           },
           "role": {
             "enum": [
               "system",
               "user",
-              "assistant"
+              "assistant",
+              "tool"
             ],
             "title": "Role",
             "type": "string"
+          },
+          "tool_call_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_-]{1,120}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Call Id"
+          },
+          "tool_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ToolCall"
+                },
+                "maxItems": 8,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Calls"
           }
         },
         "required": [
-          "role",
-          "content"
+          "role"
         ],
         "title": "ChatMessage",
         "type": "object"
@@ -542,7 +689,8 @@
                 "enum": [
                   "stop",
                   "length",
-                  "content_filter"
+                  "content_filter",
+                  "tool_calls"
                 ],
                 "type": "string"
               },
@@ -762,6 +910,14 @@
       "ComparisonCell": {
         "additionalProperties": false,
         "properties": {
+          "attempt_usages": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/UsageReconciliation"
+            },
+            "title": "Attempt Usages",
+            "type": "array"
+          },
           "execution_schema": {
             "const": "2.0",
             "default": "2.0",
@@ -918,7 +1074,8 @@
             "enum": [
               "stop",
               "length",
-              "content_filter"
+              "content_filter",
+              "tool_calls"
             ],
             "title": "Finish Reason",
             "type": "string"
@@ -968,6 +1125,23 @@
             ],
             "default": null,
             "title": "Role"
+          },
+          "tool_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ToolCallDelta"
+                },
+                "maxItems": 8,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tool Calls"
           }
         },
         "title": "CompletionDelta",
@@ -977,20 +1151,40 @@
         "additionalProperties": false,
         "properties": {
           "content": {
-            "maxLength": 1048576,
-            "title": "Content",
-            "type": "string"
+            "anyOf": [
+              {
+                "maxLength": 1048576,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
           },
           "role": {
             "const": "assistant",
             "default": "assistant",
             "title": "Role",
             "type": "string"
+          },
+          "tool_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ToolCall"
+                },
+                "maxItems": 8,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Calls"
           }
         },
-        "required": [
-          "content"
-        ],
         "title": "CompletionMessage",
         "type": "object"
       },
@@ -1678,8 +1872,241 @@
             "title": "Stages",
             "type": "array"
           },
+          "variant": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyVariant"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "version": {
             "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/Workflow"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "plan",
+          "workflow",
+          "catalog_id",
+          "input_types",
+          "stages",
+          "budget"
+        ],
+        "title": "ExecutablePolicy",
+        "type": "object"
+      },
+      "ExecutablePolicy-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "budget": {
+            "$ref": "#/components/schemas/ExecutionBudget"
+          },
+          "catalog_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Catalog Id",
+            "type": "string"
+          },
+          "environment": {
+            "const": "sandbox",
+            "default": "sandbox",
+            "title": "Environment",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_types": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "enum": [
+                  "text",
+                  "json",
+                  "boolean",
+                  "number"
+                ],
+                "type": "string"
+              }
+            },
+            "title": "Input Types",
+            "type": "object"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "production_approved": {
+            "const": false,
+            "default": false,
+            "title": "Production Approved",
+            "type": "boolean"
+          },
+          "prompts": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PromptRevision"
+            },
+            "maxItems": 30,
+            "title": "Prompts",
+            "type": "array"
+          },
+          "quality": {
+            "default": "untested_provisional",
+            "enum": [
+              "untested_provisional",
+              "measured_not_production_approved"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/ExecutableStage-Input"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "title": "Stages",
+            "type": "array"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyVariant"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/Workflow"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "plan",
+          "workflow",
+          "catalog_id",
+          "input_types",
+          "stages",
+          "budget"
+        ],
+        "title": "ExecutablePolicy",
+        "type": "object"
+      },
+      "ExecutablePolicy-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "budget": {
+            "$ref": "#/components/schemas/ExecutionBudget"
+          },
+          "catalog_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Catalog Id",
+            "type": "string"
+          },
+          "environment": {
+            "const": "sandbox",
+            "default": "sandbox",
+            "title": "Environment",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_types": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "enum": [
+                  "text",
+                  "json",
+                  "boolean",
+                  "number"
+                ],
+                "type": "string"
+              }
+            },
+            "title": "Input Types",
+            "type": "object"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "production_approved": {
+            "const": false,
+            "default": false,
+            "title": "Production Approved",
+            "type": "boolean"
+          },
+          "prompts": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PromptRevision"
+            },
+            "maxItems": 30,
+            "title": "Prompts",
+            "type": "array"
+          },
+          "quality": {
+            "default": "untested_provisional",
+            "enum": [
+              "untested_provisional",
+              "measured_not_production_approved"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/ExecutableStage-Output"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "title": "Stages",
+            "type": "array"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyVariant"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "minimum": 1.0,
             "title": "Version",
             "type": "integer"
           },
@@ -1733,6 +2160,16 @@
             "default": "2.0",
             "title": "Execution Schema",
             "type": "string"
+          },
+          "fallback_configuration_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Fallback Configuration Ids",
+            "type": "array"
           },
           "input_types": {
             "patternProperties": {
@@ -1799,6 +2236,306 @@
             ],
             "default": null
           },
+          "response_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResponseFormat"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "route_requirements": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RouteRequirements"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "stop": {
+            "$ref": "#/components/schemas/StopConditions"
+          }
+        },
+        "required": [
+          "node_id",
+          "input_types",
+          "output_types",
+          "budget"
+        ],
+        "title": "ExecutableStage",
+        "type": "object"
+      },
+      "ExecutableStage-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_tool_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Allowed Tool Ids",
+            "type": "array"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/ExecutionBudget"
+          },
+          "configuration_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configuration Id"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "fallback_configuration_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Fallback Configuration Ids",
+            "type": "array"
+          },
+          "input_types": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "enum": [
+                  "text",
+                  "json",
+                  "boolean",
+                  "number"
+                ],
+                "type": "string"
+              }
+            },
+            "title": "Input Types",
+            "type": "object"
+          },
+          "node_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "text.trim.v1",
+                  "text.lowercase.v1",
+                  "text.uppercase.v1",
+                  "text.sort_lines.v1",
+                  "text.deduplicate_lines.v1"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation"
+          },
+          "output_types": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "enum": [
+                  "text",
+                  "json",
+                  "boolean",
+                  "number"
+                ],
+                "type": "string"
+              }
+            },
+            "title": "Output Types",
+            "type": "object"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "response_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResponseFormat-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "route_requirements": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RouteRequirements"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stop": {
+            "$ref": "#/components/schemas/StopConditions"
+          }
+        },
+        "required": [
+          "node_id",
+          "input_types",
+          "output_types",
+          "budget"
+        ],
+        "title": "ExecutableStage",
+        "type": "object"
+      },
+      "ExecutableStage-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_tool_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Allowed Tool Ids",
+            "type": "array"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/ExecutionBudget"
+          },
+          "configuration_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configuration Id"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "fallback_configuration_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Fallback Configuration Ids",
+            "type": "array"
+          },
+          "input_types": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "enum": [
+                  "text",
+                  "json",
+                  "boolean",
+                  "number"
+                ],
+                "type": "string"
+              }
+            },
+            "title": "Input Types",
+            "type": "object"
+          },
+          "node_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "text.trim.v1",
+                  "text.lowercase.v1",
+                  "text.uppercase.v1",
+                  "text.sort_lines.v1",
+                  "text.deduplicate_lines.v1"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation"
+          },
+          "output_types": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "enum": [
+                  "text",
+                  "json",
+                  "boolean",
+                  "number"
+                ],
+                "type": "string"
+              }
+            },
+            "title": "Output Types",
+            "type": "object"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "response_format": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResponseFormat-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "route_requirements": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RouteRequirements"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "stop": {
             "$ref": "#/components/schemas/StopConditions"
           }
@@ -1820,6 +2557,13 @@
             "default": "2.0",
             "title": "Execution Schema",
             "type": "string"
+          },
+          "max_attempts": {
+            "default": 1,
+            "maximum": 3,
+            "minimum": 1,
+            "title": "Max Attempts",
+            "type": "integer"
           },
           "max_cost_micro_usd": {
             "maximum": 1000000,
@@ -1885,6 +2629,9 @@
           "alias": {
             "$ref": "#/components/schemas/RouteAlias"
           },
+          "approved_endpoint": {
+            "$ref": "#/components/schemas/ApprovedEndpoint"
+          },
           "attempt": {
             "$ref": "#/components/schemas/RunAttempt"
           },
@@ -1937,6 +2684,9 @@
           "policy": {
             "$ref": "#/components/schemas/PolicyView"
           },
+          "stream_observation": {
+            "$ref": "#/components/schemas/StreamObservation"
+          },
           "target": {
             "$ref": "#/components/schemas/TargetConfiguration"
           }
@@ -1953,7 +2703,9 @@
           "comparison",
           "target",
           "output",
-          "grant"
+          "grant",
+          "stream_observation",
+          "approved_endpoint"
         ],
         "title": "ExecutionSchemaBundle",
         "type": "object"
@@ -2293,6 +3045,111 @@
         "title": "FreshnessPolicy",
         "type": "object"
       },
+      "FunctionCall": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "maxLength": 65536,
+            "title": "Arguments",
+            "type": "string"
+          },
+          "name": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "arguments"
+        ],
+        "title": "FunctionCall",
+        "type": "object"
+      },
+      "FunctionChoice": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "FunctionChoice",
+        "type": "object"
+      },
+      "FunctionDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/JsonSchema-Input"
+          },
+          "strict": {
+            "const": true,
+            "default": true,
+            "title": "Strict",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "parameters"
+        ],
+        "title": "FunctionDefinition",
+        "type": "object"
+      },
+      "FunctionDelta": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "anyOf": [
+              {
+                "maxLength": 65536,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arguments"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          }
+        },
+        "title": "FunctionDelta",
+        "type": "object"
+      },
       "GatewayError": {
         "additionalProperties": false,
         "properties": {
@@ -2320,7 +3177,9 @@
               "runtime_unavailable",
               "cancelled",
               "timeout",
-              "accounting_uncertain"
+              "accounting_uncertain",
+              "partial_failure",
+              "upstream_error"
             ],
             "title": "Code",
             "type": "string"
@@ -2594,6 +3453,30 @@
         "title": "Issue",
         "type": "object"
       },
+      "IssuedKey": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ApplicationKeyMetadata"
+          },
+          "secret": {
+            "title": "Secret",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metadata",
+          "secret"
+        ],
+        "title": "IssuedKey",
+        "type": "object"
+      },
       "Job": {
         "additionalProperties": false,
         "properties": {
@@ -2744,7 +3627,427 @@
         "title": "Job",
         "type": "object"
       },
+      "JsonSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "const": false,
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Additionalproperties"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "enum": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/JsonValue"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Enum"
+          },
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "properties": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/JsonSchema"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Properties"
+          },
+          "required": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Required",
+            "type": "array"
+          },
+          "type": {
+            "enum": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "JsonSchema",
+        "type": "object"
+      },
+      "JsonSchema-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "const": false,
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Additionalproperties"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "enum": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/JsonValue"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enum"
+          },
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonSchema-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "properties": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/JsonSchema-Input"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Properties"
+          },
+          "required": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Required",
+            "type": "array"
+          },
+          "type": {
+            "enum": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "JsonSchema",
+        "type": "object"
+      },
+      "JsonSchema-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "const": false,
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Additionalproperties"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "enum": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/JsonValue"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enum"
+          },
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonSchema-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "properties": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/JsonSchema-Output"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Properties"
+          },
+          "required": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Required",
+            "type": "array"
+          },
+          "type": {
+            "enum": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "JsonSchema",
+        "type": "object"
+      },
+      "JsonSchemaFormat": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/JsonSchema"
+          },
+          "strict": {
+            "const": true,
+            "default": true,
+            "title": "Strict",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "schema"
+        ],
+        "title": "JsonSchemaFormat",
+        "type": "object"
+      },
+      "JsonSchemaFormat-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/JsonSchema-Input"
+          },
+          "strict": {
+            "const": true,
+            "default": true,
+            "title": "Strict",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "schema"
+        ],
+        "title": "JsonSchemaFormat",
+        "type": "object"
+      },
+      "JsonSchemaFormat-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/JsonSchema-Output"
+          },
+          "strict": {
+            "const": true,
+            "default": true,
+            "title": "Strict",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "schema"
+        ],
+        "title": "JsonSchemaFormat",
+        "type": "object"
+      },
       "JsonValue": {},
+      "KeyIssueRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "alias_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Alias Ids",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "max_cost_micro_usd": {
+            "maximum": 1000000.0,
+            "minimum": 0.0,
+            "title": "Max Cost Micro Usd",
+            "type": "integer"
+          },
+          "scopes": {
+            "items": {
+              "enum": [
+                "models:read",
+                "chat:complete",
+                "workflow:run",
+                "runs:read",
+                "runs:cancel"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Scopes",
+            "type": "array"
+          },
+          "workflow_policies": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/VersionRef"
+            },
+            "title": "Workflow Policies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "expires_at",
+          "scopes",
+          "max_cost_micro_usd"
+        ],
+        "title": "KeyIssueRequest",
+        "type": "object"
+      },
       "LocalDeployment": {
         "additionalProperties": false,
         "properties": {
@@ -2889,6 +4192,25 @@
           "created"
         ],
         "title": "ModelListing",
+        "type": "object"
+      },
+      "NamedToolChoice": {
+        "additionalProperties": false,
+        "properties": {
+          "function": {
+            "$ref": "#/components/schemas/FunctionChoice"
+          },
+          "type": {
+            "const": "function",
+            "default": "function",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "function"
+        ],
+        "title": "NamedToolChoice",
         "type": "object"
       },
       "Node": {
@@ -3406,6 +4728,51 @@
         "title": "PolicyTransition",
         "type": "object"
       },
+      "PolicyVariant": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "quality",
+              "balanced",
+              "cost_conscious"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "quality_validated": {
+            "const": false,
+            "default": false,
+            "title": "Quality Validated",
+            "type": "boolean"
+          },
+          "rationale": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rationale",
+            "type": "array"
+          },
+          "rule_version": {
+            "const": "sandbox-heuristic-1",
+            "default": "sandbox-heuristic-1",
+            "title": "Rule Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "rationale"
+        ],
+        "title": "PolicyVariant",
+        "type": "object"
+      },
       "PolicyView": {
         "additionalProperties": false,
         "properties": {
@@ -3644,7 +5011,8 @@
           "adapter_id": {
             "enum": [
               "openrouter",
-              "local_ollama"
+              "local_ollama",
+              "openai_compatible"
             ],
             "title": "Adapter Id",
             "type": "string"
@@ -3897,6 +5265,94 @@
         "title": "ResearchTool",
         "type": "object"
       },
+      "ResponseFormat": {
+        "additionalProperties": false,
+        "properties": {
+          "json_schema": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonSchemaFormat"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "type": {
+            "enum": [
+              "text",
+              "json_object",
+              "json_schema"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "ResponseFormat",
+        "type": "object"
+      },
+      "ResponseFormat-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "json_schema": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonSchemaFormat-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": {
+            "enum": [
+              "text",
+              "json_object",
+              "json_schema"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "ResponseFormat",
+        "type": "object"
+      },
+      "ResponseFormat-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "json_schema": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonSchemaFormat-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": {
+            "enum": [
+              "text",
+              "json_object",
+              "json_schema"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "ResponseFormat",
+        "type": "object"
+      },
       "RouteAlias": {
         "additionalProperties": false,
         "properties": {
@@ -3946,12 +5402,60 @@
         "title": "RouteAlias",
         "type": "object"
       },
+      "RouteRequirements": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_endpoint_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Allowed Endpoint Ids",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "local_only": {
+            "default": false,
+            "title": "Local Only",
+            "type": "boolean"
+          },
+          "required_parameters": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Parameters",
+            "type": "array"
+          },
+          "required_region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Required Region"
+          }
+        },
+        "title": "RouteRequirements",
+        "type": "object"
+      },
       "RunAttempt": {
         "additionalProperties": false,
         "properties": {
           "attempt": {
-            "const": 1,
             "default": 1,
+            "maximum": 3,
+            "minimum": 1,
             "title": "Attempt",
             "type": "integer"
           },
@@ -3976,6 +5480,25 @@
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Id",
             "type": "string"
+          },
+          "latency_definition": {
+            "const": "reservation_to_finalization_wall_clock",
+            "default": "reservation_to_finalization_wall_clock",
+            "title": "Latency Definition",
+            "type": "string"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Latency Ms"
           },
           "node_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
@@ -4221,6 +5744,59 @@
           "expires_at"
         ],
         "title": "RuntimeGrant",
+        "type": "object"
+      },
+      "RuntimeStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "installed": {
+            "title": "Installed",
+            "type": "boolean"
+          },
+          "live_verified": {
+            "const": false,
+            "default": false,
+            "title": "Live Verified",
+            "type": "boolean"
+          },
+          "mode": {
+            "enum": [
+              "disabled",
+              "approved",
+              "synthetic_test"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "target_count": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Count"
+          }
+        },
+        "required": [
+          "installed",
+          "mode",
+          "detail"
+        ],
+        "title": "RuntimeStatus",
         "type": "object"
       },
       "SandboxAdmission": {
@@ -4599,6 +6175,55 @@
         "title": "StoredOutput",
         "type": "object"
       },
+      "StreamObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "actual_micro_usd": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Actual Micro Usd"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "trace": {
+            "$ref": "#/components/schemas/DecisionTrace"
+          },
+          "type": {
+            "const": "observation",
+            "default": "observation",
+            "title": "Type",
+            "type": "string"
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompletionUsage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "trace"
+        ],
+        "title": "StreamObservation",
+        "type": "object"
+      },
       "Submission": {
         "additionalProperties": false,
         "properties": {
@@ -4638,6 +6263,19 @@
         "additionalProperties": false,
         "description": "Canonical catalog extension: advertised facts != observations from our runs.",
         "properties": {
+          "approved_endpoint_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Approved Endpoint Id"
+          },
           "catalog_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Catalog Id",
@@ -4662,6 +6300,19 @@
             "default": "2.0",
             "title": "Execution Schema",
             "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expires At"
           },
           "limitations": {
             "items": {
@@ -4690,6 +6341,17 @@
             },
             "title": "Observed Run Ids",
             "type": "array"
+          },
+          "token_envelope_approved": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Fact_bool_"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -4739,6 +6401,103 @@
           }
         },
         "title": "TargetRequirements",
+        "type": "object"
+      },
+      "ToolCall": {
+        "additionalProperties": false,
+        "properties": {
+          "function": {
+            "$ref": "#/components/schemas/FunctionCall"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_-]{1,120}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "function",
+            "default": "function",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "function"
+        ],
+        "title": "ToolCall",
+        "type": "object"
+      },
+      "ToolCallDelta": {
+        "additionalProperties": false,
+        "properties": {
+          "function": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FunctionDelta"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_-]{1,120}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "index": {
+            "maximum": 7,
+            "minimum": 0,
+            "title": "Index",
+            "type": "integer"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "const": "function",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Type"
+          }
+        },
+        "required": [
+          "index"
+        ],
+        "title": "ToolCallDelta",
+        "type": "object"
+      },
+      "ToolDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "function": {
+            "$ref": "#/components/schemas/FunctionDefinition"
+          },
+          "type": {
+            "const": "function",
+            "default": "function",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "function"
+        ],
+        "title": "ToolDefinition",
         "type": "object"
       },
       "TransitionRequest": {
@@ -4848,6 +6607,37 @@
           "observed_at"
         ],
         "title": "UsageReconciliation",
+        "type": "object"
+      },
+      "VariantRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "quality",
+              "balanced",
+              "cost_conscious"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mode"
+        ],
+        "title": "VariantRequest",
         "type": "object"
       },
       "VersionRef": {
@@ -7077,6 +8867,212 @@
         ]
       }
     },
+    "/api/studio/keys": {
+      "get": {
+        "operationId": "keys_api_studio_keys_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationKeyMetadata"
+                  },
+                  "title": "Response Keys Api Studio Keys Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Keys",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      },
+      "post": {
+        "operationId": "issue_key_api_studio_keys_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KeyIssueRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedKey"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Issue Key",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/keys/{key_id}/revoke": {
+      "post": {
+        "operationId": "revoke_key_api_studio_keys__key_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "title": "Key Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationKeyMetadata"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Revoke Key",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
     "/api/studio/outputs/{output_id}": {
       "get": {
         "operationId": "get_output_api_studio_outputs__output_id__get",
@@ -7156,7 +9152,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExecutablePolicy"
+                "$ref": "#/components/schemas/ExecutablePolicy-Input"
               }
             }
           },
@@ -7392,6 +9388,97 @@
         ]
       }
     },
+    "/api/studio/policies/{policy_id}/versions/{version}/variants": {
+      "post": {
+        "operationId": "create_variant_api_studio_policies__policy_id__versions__version__variants_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VariantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Create Variant",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
     "/api/studio/prompts": {
       "post": {
         "operationId": "save_prompt_api_studio_prompts_post",
@@ -7539,6 +9626,208 @@
           }
         },
         "summary": "Get Prompt",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/runs": {
+      "get": {
+        "operationId": "studio_runs_api_studio_runs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SandboxRun"
+                  },
+                  "title": "Response Studio Runs Api Studio Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Studio Runs",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/runs/{run_id}/attempts": {
+      "get": {
+        "operationId": "attempts_api_studio_runs__run_id__attempts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RunAttempt"
+                  },
+                  "title": "Response Attempts Api Studio Runs  Run Id  Attempts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Attempts",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/runtime": {
+      "get": {
+        "operationId": "runtime_status_api_studio_runtime_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Runtime Status",
         "tags": [
           "Sandbox studio v2"
         ]
@@ -7902,6 +10191,16 @@
             },
             "description": "Internal Server Error"
           },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
           "503": {
             "content": {
               "application/json": {
@@ -8037,6 +10336,16 @@
               }
             },
             "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
           },
           "503": {
             "content": {

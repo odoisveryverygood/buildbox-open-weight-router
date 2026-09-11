@@ -2,7 +2,7 @@
 
 from sqlalchemy import Connection, Engine, text
 
-REVISION = 3
+REVISION = 4
 
 
 def migrate(engine: Engine) -> None:
@@ -22,6 +22,21 @@ def migrate(engine: Engine) -> None:
         if current < 3:
             revision_three(conn, engine.dialect.name)
             conn.execute(text("INSERT INTO schema_revisions(version) VALUES (3)"))
+        if current < 4:
+            revision_four(conn)
+            conn.execute(text("INSERT INTO schema_revisions(version) VALUES (4)"))
+
+
+def revision_four(conn: Connection) -> None:
+    conn.execute(
+        text("""CREATE TABLE runtime_queue (
+        owner VARCHAR(80) NOT NULL, id VARCHAR(80) NOT NULL, request_key VARCHAR(80) NOT NULL,
+        principal_id VARCHAR(80) NOT NULL, key_id VARCHAR(80), deadline DOUBLE PRECISION NOT NULL,
+        state VARCHAR(20) NOT NULL CHECK(state IN ('queued','running','done','uncertain')),
+        lease_until DOUBLE PRECISION,
+        PRIMARY KEY(owner,id))""")
+    )
+    conn.execute(text("CREATE INDEX runtime_queue_ready ON runtime_queue(state,deadline)"))
 
 
 def revision_three(conn: Connection, dialect: str) -> None:

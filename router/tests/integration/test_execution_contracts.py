@@ -345,7 +345,12 @@ def test_chat_unsupported_fields_are_explicitly_rejected(storage, extra):
     with TestClient(create_app(services=fixture_services(storage))) as client:
         response = client.post("/v1/chat/completions", json=request)
         assert response.status_code == 400
-        assert GatewayError.model_validate(response.json()).error.code == "unsupported_parameter"
+        expected = (
+            "invalid_request"
+            if extra in ("tools", "tool_choice", "response_format")
+            else "unsupported_parameter"
+        )
+        assert GatewayError.model_validate(response.json()).error.code == expected
 
 
 def test_gateway_and_workflow_fail_closed_no_fake_outputs(storage):
@@ -624,7 +629,7 @@ def test_revision_two_to_three_preserves_legacy_records(tmp_path):
         assert (
             conn.execute(text("SELECT MAX(version) FROM schema_revisions")).scalar_one()
             == REVISION
-            == 3
+            == 4
         )
         assert conn.execute(text("SELECT payload FROM records")).scalar_one() == "preserved"
     engine.dispose()

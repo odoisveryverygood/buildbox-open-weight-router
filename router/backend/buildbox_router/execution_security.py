@@ -71,7 +71,12 @@ def validate_admission(
         policy.version,
     ) or admission.policy_digest != digest(policy):
         deny("Admission does not cover this immutable executable policy")
-    configs = {s.configuration_id for s in policy.stages if s.configuration_id}
+    configs = {
+        c
+        for s in policy.stages
+        for c in ((s.configuration_id,) if s.configuration_id else ())
+        + s.fallback_configuration_ids
+    }
     tools = {t for s in policy.stages for t in s.allowed_tool_ids}
     if configs != set(admission.configuration_ids) or tools != set(admission.allowed_tool_ids):
         deny("Admission configuration or tool coverage mismatch")
@@ -84,8 +89,8 @@ def validate_admission(
     ):
         if fact.value is not True or not fact.provenance.evidence_ids:
             deny("Mandatory sandbox fact is unverified or denied")
-        if fact.provenance.kind == "synthetic" and not allow_synthetic:
-            deny("Synthetic guard fixtures are not operational sandbox admission")
+        if not allow_synthetic and fact.provenance.kind not in ("observed", "documented"):
+            deny("Synthetic/inferred/unverified facts are not operational sandbox admission")
     # Quality is intentionally NOT an admission criterion: first tests must be possible.
 
 

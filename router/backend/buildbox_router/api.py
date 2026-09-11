@@ -32,6 +32,7 @@ from .errors import DomainError
 from .execution_api import gateway, gateway_failure, studio, workflow_routes
 from .execution_contracts import GatewayError, GatewayErrorDetail
 from .execution_ports import ExecutionServices
+from .execution_storage import SandboxStorage
 from .intelligence.selection.policy import SafeDraftCompiler
 from .openapi_schema import enrich_schema
 from .planning import planning_examples
@@ -44,6 +45,7 @@ def create_app(
     settings: Settings | None = None,
     services: Services | None = None,
     execution_services: ExecutionServices | None = None,
+    sandbox_storage: SandboxStorage | None = None,
 ) -> FastAPI:
     config = settings or Settings.from_env()
     authenticator = (
@@ -62,6 +64,16 @@ def create_app(
             app.state.services = fixture_services(storage)
         else:
             app.state.services = services
+        if execution_services is None:
+            from .execution_composition import configured_execution
+            from .execution_storage import SandboxStorage
+
+            active_store = app.state.services.storage
+            if isinstance(active_store, SqlStorage):
+                app.state.execution_services = configured_execution(
+                    config, SandboxStorage(active_store.engine), app.state.services.selector
+                )
+        app.state.runtime_config = config
         yield
         if engine is not None:
             engine.dispose()
@@ -78,6 +90,7 @@ def create_app(
         },
     )
     app.state.execution_services = execution_services
+    app.state.sandbox_storage = sandbox_storage  # Explicit software-test dependency injection only.
     app.add_middleware(
         TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"]
     )

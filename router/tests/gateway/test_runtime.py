@@ -87,7 +87,10 @@ def test_models_only_current_key_allowed_usable_aliases(rt):
     [
         ("tools", []),
         ("tool_choice", "auto"),
-        ("response_format", {"type": "json_object"}),
+        (
+            "response_format",
+            {"type": "json_schema", "json_schema": {"name": "x", "schema": {"type": "object"}}},
+        ),
         ("n", 2),
         ("max_completion_tokens", 10),
         ("provider", {}),
@@ -210,6 +213,9 @@ def frames(text="first"):
 
 
 def test_stream_is_incremental_and_post_commit_error_explicit(rt):
+    from .test_http_adapters import hosted
+
+    hosted(rt)
     rt.inference.frames = [frames(), TimeoutError("private error")]
 
     async def collect():
@@ -227,6 +233,9 @@ def test_stream_is_incremental_and_post_commit_error_explicit(rt):
 
 
 def test_stream_terminal_usage_pending(rt):
+    from .test_http_adapters import hosted
+
+    hosted(rt)
     rt.inference.frames = [
         frames(),
         {

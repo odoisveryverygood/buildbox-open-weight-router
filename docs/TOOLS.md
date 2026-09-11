@@ -1,8 +1,37 @@
 # Tool access and runtime boundary
 
+## 7B integration refresh — September 8–9, 2026
+
+This refresh supersedes availability statements below for this integration task;
+older connector successes are historical, not rerun here.
+
+| Access | Verified in this task | Runtime / authorization boundary |
+|---|---|---|
+| Local repository / Git | Integration worktree and both lane histories read; no remotes configured. Local merge preserves both lanes. | No push, production merge, public deployment or other-project edits. |
+| Local Python / Node | Existing uv environment, Ruff, mypy, pytest, TypeScript, Vite and generated-schema tooling executed. | Tests do not discover credentials or construct live clients on import. |
+| Playwright | Installed skill read; CLI actual browser on isolated 5199/8029 app; Prompt 8 regression and runtime flow exercised. | Explicit synthetic HTTP provider fixture and private temporary DB, not a second live provider. |
+| PostgreSQL 17 | Native Homebrew toolchain; isolated loopback 55439 UTF-8 databases; migration and API/worker/accounting checks. | No cloud database provisioned or production DB modified. |
+| Official OpenRouter docs | Read-only provider-routing, streaming and structured-output pages retrieved. | Documentation access is not runtime authorization or proof of a tested model. |
+| OpenRouter runtime | Existing nonstream transport reused; SSE/controls validated through recorded and HTTP fixtures. | LIVE INFERENCE NOT VERIFIED. Separate current target grant/admission required, not old planning approval. |
+| Direct compatible runtime | Real guarded HTTP transport exercised against an explicit synthetic loopback server. | LIVE SECOND PROVIDER = UNVERIFIED. Only administrator-approved endpoint IDs; no arbitrary URL input. |
+| Drive / GitHub connector / Bright Data / Exa / Vercel / cloud DB / Figma | Not invoked for 7B; earlier availability is not reasserted. | No connector/session credentials copied into the deployed application. |
+
+After integration fixtures passed, these **process environment names were absent**:
+`OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `OPENAI_COMPATIBLE_API_KEY`,
+`ROUTER_RUNTIME_REGISTRY_FILE`, `ROUTER_AUTH_FILE`, `ROUTER_APPROVALS_FILE`,
+`ROUTER_LOCAL_INTERPRETATION_MODEL`. `router/.env` and the documented
+`router/.local/runtime-registry.json` were absent. No secret values were printed;
+this is not a search for credentials elsewhere or proof no provider account exists.
+
+The app now supports explicit operator registry composition with `ROUTER_MODE=live`
+and real shared authentication; fixture mode cannot load that registry. An app
+connector is never automatically an application runtime adapter. See
+`docs/API_COMPATIBILITY.md` for the central registry, scoped secret references,
+endpoint/network controls, retention and exact unsupported subset.
+
 ## Upgrade-base refresh — September 7, 2026
 
-This section is current; older checks below are historical, not renewed claims.
+This section records the upgrade-base check; see the 7B refresh above for current checks.
 
 | Integration | Current development access / actual check | Deployed runtime boundary |
 |---|---|---|

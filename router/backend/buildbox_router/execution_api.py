@@ -1,11 +1,12 @@
-"""Shared studio composition and explicit fail-closed execution route declarations.
+"""Central studio/gateway routes. Only approved composition dispatches inference.
 
-Lane 7 supplies port implementations later; no HTTP request in this milestone
-dispatches target inference or runs business tools.
+Chat returns tool calls; the separate authorized worker owns workflow execution.
 """
 
+import asyncio
 import re
 from collections.abc import AsyncIterator
+from contextlib import aclosing, suppress
 from datetime import UTC, datetime, timedelta
 from typing import NoReturn, cast
 from uuid import uuid4
@@ -16,6 +17,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from .contracts import ErrorCode
 from .errors import DomainError
 from .execution_contracts import (
+    ApplicationKeyMetadata,
     ChatCompletion,
     ChatCompletionChunk,
     ChatCompletionRequest,
@@ -26,15 +28,20 @@ from .execution_contracts import (
     GatewayError,
     GatewayErrorDetail,
     ImportedSample,
+    IssuedKey,
+    KeyIssueRequest,
     ModelList,
     PolicyView,
     PromptRevision,
     RouteAlias,
+    RunAttempt,
+    RuntimeStatus,
     SandboxAdmission,
     SandboxRun,
     Scope,
     StoredOutput,
     TransitionRequest,
+    VariantRequest,
     VersionRef,
     WorkflowRunRequest,
 )
@@ -46,6 +53,9 @@ from .storage import SqlStorage
 
 
 def repository(request: Request) -> SandboxStorage:
+    explicit = request.app.state.sandbox_storage
+    if isinstance(explicit, SandboxStorage):
+        return explicit
     storage = request.app.state.services.storage
     if not isinstance(storage, SqlStorage):
         raise DomainError(ErrorCode.UNSUPPORTED, "Sandbox durable storage unavailable", 503)
@@ -103,7 +113,14 @@ def enabled(request: Request, tenant: str, ref: VersionRef) -> ExecutablePolicy:
     admission = SandboxAdmission.model_validate_json(
         store.read(tenant, "admission", view.transition.admission_id)
     )
-    authorize_sandbox(tenant, view.policy, view.transition, admission, datetime.now(UTC))
+    authorize_sandbox(
+        tenant,
+        view.policy,
+        view.transition,
+        admission,
+        datetime.now(UTC),
+        allow_synthetic=store.offline_contract_test,
+    )
     return view.policy
 
 
@@ -117,6 +134,25 @@ def get_policy(policy_id: str, version: int, request: Request) -> PolicyView:
     return repository(request).policy(
         request.state.owner, VersionRef(id=policy_id, version=version)
     )
+
+
+@studio.post("/policies/{policy_id}/versions/{version}/variants", status_code=201)
+def create_variant(
+    policy_id: str, version: int, value: VariantRequest, request: Request
+) -> PolicyView:
+    from .execution_policy import variant
+    from .planning_storage import PlanningStorage
+
+    store = repository(request)
+    policy = store.policy(request.state.owner, VersionRef(id=policy_id, version=version)).policy
+    view = PlanningStorage(store.engine).view(
+        request.state.owner, policy.plan.id, policy.plan.version
+    )
+    if not view.result or not view.result.catalog:
+        raise DomainError(ErrorCode.CONFLICT, "Owned pinned planning catalog required", 409)
+    catalog = view.result.catalog
+    compiled = variant(policy, catalog, value, request.app.state.services.selector)
+    return store.create_policy(request.state.owner, compiled)
 
 
 @studio.post("/policies/{policy_id}/versions/{version}/transitions")
@@ -170,6 +206,69 @@ def get_output(output_id: str, request: Request) -> StoredOutput:
 @studio.get("/traces/{request_id}")
 def get_trace(request_id: str, request: Request) -> DecisionTrace:
     return repository(request).trace(request.state.owner, request_id)
+
+
+@studio.get("/runtime")
+def runtime_status(request: Request) -> RuntimeStatus:
+    installed = request.app.state.execution_services is not None
+    return RuntimeStatus(
+        installed=installed,
+        mode="synthetic_test"
+        if installed and repository(request).offline_contract_test
+        else "approved"
+        if installed
+        else "disabled",
+        target_count=None,
+        detail="Runtime composed; each request requires current operator admission. LIVE INFERENCE NOT VERIFIED"
+        if installed
+        else "No approved runtime registry configured. LIVE INFERENCE NOT VERIFIED",
+    )
+
+
+@studio.post("/keys", status_code=201)
+async def issue_key(value: KeyIssueRequest, request: Request) -> IssuedKey:
+    ctx = await context(request, "models:read")
+    metadata, secret = runtime(request).keys.issue(
+        ctx,
+        expires_at=value.expires_at,
+        scopes=value.scopes,
+        aliases=value.alias_ids,
+        policies=value.workflow_policies,
+        max_cost_micro_usd=value.max_cost_micro_usd,
+    )
+    return IssuedKey(metadata=metadata, secret=secret)
+
+
+@studio.get("/keys")
+def keys(request: Request) -> tuple[ApplicationKeyMetadata, ...]:
+    return tuple(
+        ApplicationKeyMetadata.model_validate_json(v)
+        for v in repository(request).records(request.state.owner, "application_key")
+    )
+
+
+@studio.post("/keys/{key_id}/revoke")
+async def revoke_key(key_id: str, request: Request) -> ApplicationKeyMetadata:
+    return await runtime(request).keys.revoke(await context(request, "models:read"), key_id)
+
+
+@studio.get("/runs")
+def studio_runs(request: Request) -> tuple[SandboxRun, ...]:
+    store = repository(request)
+    values = (SandboxRun.model_validate_json(v) for v in store.records(request.state.owner, "run"))
+    return tuple(
+        SandboxRun.model_validate(
+            v.model_dump() | {"status": store.request_state(request.state.owner, v.id)}
+        )
+        for v in values
+    )
+
+
+@studio.get("/runs/{run_id}/attempts")
+async def attempts(run_id: str, request: Request) -> tuple[RunAttempt, ...]:
+    ctx = await context(request, "runs:read")
+    await runtime(request).workflows.get(ctx, run_id)
+    return repository(request).attempts(ctx.tenant_id, run_id)
 
 
 def unavailable() -> NoReturn:
@@ -292,7 +391,7 @@ gateway = APIRouter(
     tags=["Chat Completions compatible SUBSET"],
     responses={
         code: {"model": GatewayError}
-        for code in (400, 401, 403, 404, 408, 409, 413, 422, 429, 500, 503)
+        for code in (400, 401, 403, 404, 408, 409, 413, 422, 429, 500, 502, 503)
     },
 )
 
@@ -372,20 +471,50 @@ async def complete(
         )
     headers = {"X-Request-ID": ctx.request_id, "X-Buildbox-Quality": policy.quality}
     if value.stream:
+        source = runtime(request).gateway.stream(ctx, value)
+        # Resolve/preflight and obtain the first event before committing HTTP headers.
+        # There is still no replay after the first response delta is delivered.
+        pending_first = asyncio.create_task(anext(source))
+
+        async def disconnected_before_headers() -> None:
+            while not pending_first.done():
+                if await request.is_disconnected():
+                    pending_first.cancel()
+                    return
+                await asyncio.sleep(0.05)
+
+        watcher = asyncio.create_task(disconnected_before_headers())
+        try:
+            first = await pending_first
+        finally:
+            watcher.cancel()
+            with suppress(asyncio.CancelledError):
+                await watcher
+        if isinstance(first, GatewayError):
+            await source.aclose()
+            return JSONResponse(first.model_dump(), status_code=502, headers=headers)
 
         async def stream() -> AsyncIterator[str]:
             try:
                 finished = False
-                async for chunk in runtime(request).gateway.stream(ctx, value):
-                    if await request.is_disconnected():
-                        return
-                    if isinstance(chunk, ChatCompletionChunk) and chunk.model != value.model:
-                        raise ValueError("Alias identity mismatch")
-                    if isinstance(chunk, ChatCompletionChunk):
-                        finished = finished or chunk.choices[0].finish_reason is not None
-                    yield chat_sse(chunk)
-                    if isinstance(chunk, GatewayError):
-                        return
+                async with aclosing(source):
+                    chunk: ChatCompletionChunk | GatewayError = first
+                    while True:
+                        if await request.is_disconnected():
+                            return
+                        if isinstance(chunk, ChatCompletionChunk) and chunk.model != value.model:
+                            raise ValueError("Alias identity mismatch")
+                        if isinstance(chunk, ChatCompletionChunk):
+                            finished = finished or any(
+                                c.finish_reason is not None for c in chunk.choices
+                            )
+                        yield chat_sse(chunk)
+                        if isinstance(chunk, GatewayError):
+                            return
+                        try:
+                            chunk = await anext(source)
+                        except StopAsyncIteration:
+                            break
                 if not finished:
                     raise ValueError("Stream ended without a terminal model event")
                 yield CHAT_DONE
@@ -394,7 +523,7 @@ async def complete(
                     GatewayError(
                         error=GatewayErrorDetail(
                             type="server_error",
-                            code="accounting_uncertain",
+                            code="partial_failure",
                             message="Stream interrupted; inspect request usage before retrying",
                         )
                     )

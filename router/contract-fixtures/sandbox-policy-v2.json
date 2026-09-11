@@ -1,6 +1,7 @@
 {
   "budget": {
     "execution_schema": "2.0",
+    "max_attempts": 1,
     "max_cost_micro_usd": 0,
     "max_input_tokens": 1024,
     "max_model_calls": 1,
@@ -41,6 +42,7 @@
       "allowed_tool_ids": [],
       "budget": {
         "execution_schema": "2.0",
+        "max_attempts": 1,
         "max_cost_micro_usd": 0,
         "max_input_tokens": 1024,
         "max_model_calls": 0,
@@ -51,6 +53,7 @@
       },
       "configuration_id": null,
       "execution_schema": "2.0",
+      "fallback_configuration_ids": [],
       "input_types": {
         "text": "text"
       },
@@ -60,6 +63,8 @@
         "result": "text"
       },
       "prompt": null,
+      "response_format": null,
+      "route_requirements": null,
       "stop": {
         "execution_schema": "2.0",
         "on_budget_exhausted": "stop",
@@ -72,6 +77,7 @@
       "allowed_tool_ids": [],
       "budget": {
         "execution_schema": "2.0",
+        "max_attempts": 1,
         "max_cost_micro_usd": 0,
         "max_input_tokens": 1024,
         "max_model_calls": 1,
@@ -82,6 +88,7 @@
       },
       "configuration_id": "fixture-small-local",
       "execution_schema": "2.0",
+      "fallback_configuration_ids": [],
       "input_types": {
         "text": "text"
       },
@@ -95,6 +102,8 @@
         "id": "sample-prompt",
         "version": 1
       },
+      "response_format": null,
+      "route_requirements": null,
       "stop": {
         "execution_schema": "2.0",
         "on_budget_exhausted": "stop",
@@ -107,6 +116,7 @@
       "allowed_tool_ids": [],
       "budget": {
         "execution_schema": "2.0",
+        "max_attempts": 1,
         "max_cost_micro_usd": 0,
         "max_input_tokens": 1024,
         "max_model_calls": 0,
@@ -117,6 +127,7 @@
       },
       "configuration_id": null,
       "execution_schema": "2.0",
+      "fallback_configuration_ids": [],
       "input_types": {
         "text": "text"
       },
@@ -126,6 +137,8 @@
         "result": "text"
       },
       "prompt": null,
+      "response_format": null,
+      "route_requirements": null,
       "stop": {
         "execution_schema": "2.0",
         "on_budget_exhausted": "stop",
@@ -135,6 +148,7 @@
       }
     }
   ],
+  "variant": null,
   "version": 1,
   "workflow": {
     "constraints": {
