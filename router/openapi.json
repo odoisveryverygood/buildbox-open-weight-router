@@ -383,6 +383,14 @@
             "title": "Configurations",
             "type": "array"
           },
+          "eligibility": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ConfigurationEligibility"
+            },
+            "title": "Eligibility",
+            "type": "array"
+          },
           "evidence": {
             "items": {
               "$ref": "#/components/schemas/Evidence"
@@ -596,7 +604,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/ToolDefinition"
+                  "$ref": "#/components/schemas/ToolDefinition-Input"
                 },
                 "maxItems": 8,
                 "minItems": 1,
@@ -918,11 +926,45 @@
             "title": "Attempt Usages",
             "type": "array"
           },
+          "checks": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/SampleCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "completion_ms": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Completion Ms"
+          },
           "execution_schema": {
             "const": "2.0",
             "default": "2.0",
             "title": "Execution Schema",
             "type": "string"
+          },
+          "gateway_overhead_ms": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gateway Overhead Ms"
           },
           "output_reference": {
             "anyOf": [
@@ -967,6 +1009,32 @@
             ],
             "title": "Status",
             "type": "string"
+          },
+          "time_to_first_content_ms": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Time To First Content Ms"
+          },
+          "upstream_ms": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Upstream Ms"
           },
           "usage": {
             "anyOf": [
@@ -1213,6 +1281,63 @@
           "total_tokens"
         ],
         "title": "CompletionUsage",
+        "type": "object"
+      },
+      "ConfigurationEligibility": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "configuration_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Configuration Id",
+            "type": "string"
+          },
+          "deployment": {
+            "$ref": "#/components/schemas/Fact_str_"
+          },
+          "expires_at": {
+            "title": "Expires At",
+            "type": "string"
+          },
+          "input_modalities": {
+            "$ref": "#/components/schemas/Fact_tuple_str__________"
+          },
+          "license_policy": {
+            "$ref": "#/components/schemas/Fact_bool_"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "supported_parameters": {
+            "$ref": "#/components/schemas/Fact_tuple_str__________"
+          },
+          "weights_access": {
+            "$ref": "#/components/schemas/Fact_bool_"
+          }
+        },
+        "required": [
+          "configuration_id",
+          "artifact_id",
+          "weights_access",
+          "license_policy",
+          "input_modalities",
+          "supported_parameters",
+          "deployment",
+          "observed_at",
+          "expires_at"
+        ],
+        "title": "ConfigurationEligibility",
         "type": "object"
       },
       "Constraints": {
@@ -2684,6 +2809,9 @@
           "policy": {
             "$ref": "#/components/schemas/PolicyView"
           },
+          "sample": {
+            "$ref": "#/components/schemas/ImportedSample"
+          },
           "stream_observation": {
             "$ref": "#/components/schemas/StreamObservation"
           },
@@ -2705,7 +2833,8 @@
           "output",
           "grant",
           "stream_observation",
-          "approved_endpoint"
+          "approved_endpoint",
+          "sample"
         ],
         "title": "ExecutionSchemaBundle",
         "type": "object"
@@ -3094,6 +3223,44 @@
                 "type": "null"
               }
             ],
+            "default": null,
+            "title": "Description"
+          },
+          "name": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/JsonSchema"
+          },
+          "strict": {
+            "const": true,
+            "default": true,
+            "title": "Strict",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "parameters"
+        ],
+        "title": "FunctionDefinition",
+        "type": "object"
+      },
+      "FunctionDefinition-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Description"
           },
           "name": {
@@ -3103,6 +3270,43 @@
           },
           "parameters": {
             "$ref": "#/components/schemas/JsonSchema-Input"
+          },
+          "strict": {
+            "const": true,
+            "default": true,
+            "title": "Strict",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "parameters"
+        ],
+        "title": "FunctionDefinition",
+        "type": "object"
+      },
+      "FunctionDefinition-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/JsonSchema-Output"
           },
           "strict": {
             "const": true,
@@ -3245,7 +3449,166 @@
               {
                 "type": "null"
               }
+            ],
+            "default": null
+          },
+          "expected_reviewed": {
+            "default": false,
+            "title": "Expected Reviewed",
+            "type": "boolean"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "imported_at": {
+            "format": "date-time",
+            "title": "Imported At",
+            "type": "string"
+          },
+          "inputs": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "$ref": "#/components/schemas/JsonValue"
+              }
+            },
+            "title": "Inputs",
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "sample",
+              "trace"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "observed_output": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "original_observed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Original Observed At"
+          },
+          "output_schema": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "processing": {
+            "default": "local_only",
+            "enum": [
+              "local_only",
+              "approved_hosted"
+            ],
+            "title": "Processing",
+            "type": "string"
+          },
+          "provenance": {
+            "const": "user_imported_not_verified",
+            "default": "user_imported_not_verified",
+            "title": "Provenance",
+            "type": "string"
+          },
+          "retention_days": {
+            "maximum": 30,
+            "minimum": 1,
+            "title": "Retention Days",
+            "type": "integer"
+          },
+          "source_label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source Label",
+            "type": "string"
+          },
+          "split": {
+            "default": "unspecified",
+            "enum": [
+              "tuning",
+              "holdout",
+              "unspecified"
+            ],
+            "title": "Split",
+            "type": "string"
+          },
+          "tool_schemas": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ToolDefinition"
+            },
+            "maxItems": 10,
+            "title": "Tool Schemas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "inputs",
+          "source_label",
+          "imported_at",
+          "data_class",
+          "retention_days"
+        ],
+        "title": "ImportedSample",
+        "type": "object"
+      },
+      "ImportedSample-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "data_class": {
+            "enum": [
+              "synthetic",
+              "tenant_private"
+            ],
+            "title": "Data Class",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expected_output": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
             ]
+          },
+          "expected_reviewed": {
+            "default": false,
+            "title": "Expected Reviewed",
+            "type": "boolean"
           },
           "id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
@@ -3296,6 +3659,16 @@
             ],
             "title": "Original Observed At"
           },
+          "output_schema": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonSchema-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "processing": {
             "default": "local_only",
             "enum": [
@@ -3322,6 +3695,175 @@
             "minLength": 1,
             "title": "Source Label",
             "type": "string"
+          },
+          "split": {
+            "default": "unspecified",
+            "enum": [
+              "tuning",
+              "holdout",
+              "unspecified"
+            ],
+            "title": "Split",
+            "type": "string"
+          },
+          "tool_schemas": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ToolDefinition-Input"
+            },
+            "maxItems": 10,
+            "title": "Tool Schemas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "inputs",
+          "source_label",
+          "imported_at",
+          "data_class",
+          "retention_days"
+        ],
+        "title": "ImportedSample",
+        "type": "object"
+      },
+      "ImportedSample-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "data_class": {
+            "enum": [
+              "synthetic",
+              "tenant_private"
+            ],
+            "title": "Data Class",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expected_output": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expected_reviewed": {
+            "default": false,
+            "title": "Expected Reviewed",
+            "type": "boolean"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "imported_at": {
+            "format": "date-time",
+            "title": "Imported At",
+            "type": "string"
+          },
+          "inputs": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "$ref": "#/components/schemas/JsonValue"
+              }
+            },
+            "title": "Inputs",
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "sample",
+              "trace"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "observed_output": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "original_observed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Observed At"
+          },
+          "output_schema": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonSchema-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processing": {
+            "default": "local_only",
+            "enum": [
+              "local_only",
+              "approved_hosted"
+            ],
+            "title": "Processing",
+            "type": "string"
+          },
+          "provenance": {
+            "const": "user_imported_not_verified",
+            "default": "user_imported_not_verified",
+            "title": "Provenance",
+            "type": "string"
+          },
+          "retention_days": {
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Retention Days",
+            "type": "integer"
+          },
+          "source_label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source Label",
+            "type": "string"
+          },
+          "split": {
+            "default": "unspecified",
+            "enum": [
+              "tuning",
+              "holdout",
+              "unspecified"
+            ],
+            "title": "Split",
+            "type": "string"
+          },
+          "tool_schemas": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ToolDefinition-Output"
+            },
+            "maxItems": 10,
+            "title": "Tool Schemas",
+            "type": "array"
           }
         },
         "required": [
@@ -4345,7 +4887,8 @@
             "enum": [
               "fixture",
               "public_snapshot",
-              "runtime_public"
+              "runtime_public",
+              "approved_runtime"
             ],
             "title": "Catalog Mode",
             "type": "string"
@@ -4366,8 +4909,29 @@
           "processing": {
             "$ref": "#/components/schemas/ProcessingPolicy"
           },
+          "proposal_mode": {
+            "default": "interpreter",
+            "enum": [
+              "interpreter",
+              "single_stage"
+            ],
+            "title": "Proposal Mode",
+            "type": "string"
+          },
           "requirements": {
             "$ref": "#/components/schemas/TargetRequirements"
+          },
+          "runtime_catalog_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime Catalog Id"
           },
           "schema_version": {
             "const": "1.0",
@@ -4522,6 +5086,15 @@
             "title": "Public Runtime Available",
             "type": "boolean"
           },
+          "runtime_catalog_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Runtime Catalog Ids",
+            "type": "array"
+          },
           "schema_version": {
             "const": "1.0",
             "default": "1.0",
@@ -4660,6 +5233,95 @@
           "fixture"
         ],
         "title": "PlanningResult",
+        "type": "object"
+      },
+      "PolicyEditRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "cheaper_stage_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Cheaper Stage Ids",
+            "type": "array"
+          },
+          "exclude_configuration_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Exclude Configuration Ids",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "instruction": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Instruction",
+            "type": "string"
+          },
+          "output_schemas": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "$ref": "#/components/schemas/JsonSchema-Input"
+              }
+            },
+            "title": "Output Schemas",
+            "type": "object"
+          },
+          "pins": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              }
+            },
+            "title": "Pins",
+            "type": "object"
+          },
+          "prompt_templates": {
+            "patternProperties": {
+              "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$": {
+                "type": "string"
+              }
+            },
+            "title": "Prompt Templates",
+            "type": "object"
+          }
+        },
+        "title": "PolicyEditRequest",
+        "type": "object"
+      },
+      "PolicyHistory": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/VersionRef"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "versions"
+        ],
+        "title": "PolicyHistory",
         "type": "object"
       },
       "PolicyTransition": {
@@ -5476,6 +6138,19 @@
             "title": "Execution Schema",
             "type": "string"
           },
+          "gateway_overhead_ms": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gateway Overhead Ms"
+          },
           "id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Id",
@@ -5535,8 +6210,34 @@
             "title": "Status",
             "type": "string"
           },
+          "time_to_first_content_ms": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Time To First Content Ms"
+          },
           "trace": {
             "$ref": "#/components/schemas/DecisionTrace"
+          },
+          "upstream_ms": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Upstream Ms"
           },
           "usage": {
             "$ref": "#/components/schemas/UsageReconciliation"
@@ -5749,6 +6450,15 @@
       "RuntimeStatus": {
         "additionalProperties": false,
         "properties": {
+          "available_tool_ids": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Available Tool Ids",
+            "type": "array"
+          },
           "detail": {
             "title": "Detail",
             "type": "string"
@@ -5797,6 +6507,45 @@
           "detail"
         ],
         "title": "RuntimeStatus",
+        "type": "object"
+      },
+      "SampleCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "check": {
+            "enum": [
+              "json_schema",
+              "reviewed_exact_match"
+            ],
+            "title": "Check",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "not_run"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check",
+          "status",
+          "detail"
+        ],
+        "title": "SampleCheck",
         "type": "object"
       },
       "SandboxAdmission": {
@@ -6369,7 +7118,8 @@
             "default": "any",
             "enum": [
               "any",
-              "self_hosted"
+              "self_hosted",
+              "api"
             ],
             "title": "Deployment",
             "type": "string"
@@ -6500,6 +7250,44 @@
         "title": "ToolDefinition",
         "type": "object"
       },
+      "ToolDefinition-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "function": {
+            "$ref": "#/components/schemas/FunctionDefinition-Input"
+          },
+          "type": {
+            "const": "function",
+            "default": "function",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "function"
+        ],
+        "title": "ToolDefinition",
+        "type": "object"
+      },
+      "ToolDefinition-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "function": {
+            "$ref": "#/components/schemas/FunctionDefinition-Output"
+          },
+          "type": {
+            "const": "function",
+            "default": "function",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "function"
+        ],
+        "title": "ToolDefinition",
+        "type": "object"
+      },
       "TransitionRequest": {
         "additionalProperties": false,
         "properties": {
@@ -6609,6 +7397,62 @@
         "title": "UsageReconciliation",
         "type": "object"
       },
+      "UsageSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "actual_micro_usd": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Micro Usd"
+          },
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/RunAttempt"
+            },
+            "title": "Attempts",
+            "type": "array"
+          },
+          "coverage": {
+            "const": "bounded_1000_latest_attempt_records",
+            "default": "bounded_1000_latest_attempt_records",
+            "title": "Coverage",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "known_subtotal_micro_usd": {
+            "title": "Known Subtotal Micro Usd",
+            "type": "integer"
+          },
+          "reserved_micro_usd": {
+            "title": "Reserved Micro Usd",
+            "type": "integer"
+          },
+          "unresolved_attempts": {
+            "title": "Unresolved Attempts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "attempts",
+          "actual_micro_usd",
+          "known_subtotal_micro_usd",
+          "reserved_micro_usd",
+          "unresolved_attempts"
+        ],
+        "title": "UsageSummary",
+        "type": "object"
+      },
       "VariantRequest": {
         "additionalProperties": false,
         "properties": {
@@ -6697,6 +7541,9 @@
           },
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
+          },
+          "requirements": {
+            "$ref": "#/components/schemas/TargetRequirements"
           },
           "schema_version": {
             "const": "1.0",
@@ -8285,6 +9132,82 @@
         ]
       }
     },
+    "/api/sandbox/runs/{run_id}/outputs": {
+      "get": {
+        "operationId": "run_outputs_api_sandbox_runs__run_id__outputs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoredOutput"
+                  },
+                  "title": "Response Run Outputs Api Sandbox Runs  Run Id  Outputs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Run Outputs",
+        "tags": [
+          "Sandbox workflow runs v2"
+        ]
+      }
+    },
     "/api/sandbox/runs/{run_id}/outputs/{output_id}": {
       "get": {
         "operationId": "run_output_api_sandbox_runs__run_id__outputs__output_id__get",
@@ -8731,7 +9654,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ImportedSample"
+                "$ref": "#/components/schemas/ImportedSample-Input"
               }
             }
           },
@@ -8742,7 +9665,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImportedSample"
+                  "$ref": "#/components/schemas/ImportedSample-Output"
                 }
               }
             },
@@ -8814,7 +9737,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImportedSample"
+                  "$ref": "#/components/schemas/ImportedSample-Output"
                 }
               }
             },
@@ -9216,6 +10139,78 @@
         ]
       }
     },
+    "/api/studio/policies/{policy_id}/history": {
+      "get": {
+        "operationId": "policy_history_api_studio_policies__policy_id__history_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "title": "Policy Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyHistory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Policy History",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
     "/api/studio/policies/{policy_id}/versions/{version}": {
       "get": {
         "operationId": "get_policy_api_studio_policies__policy_id__versions__version__get",
@@ -9292,6 +10287,97 @@
           }
         },
         "summary": "Get Policy",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/policies/{policy_id}/versions/{version}/propose-edit": {
+      "post": {
+        "operationId": "propose_edit_api_studio_policies__policy_id__versions__version__propose_edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyEditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutablePolicy-Output"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Propose Edit",
         "tags": [
           "Sandbox studio v2"
         ]
@@ -9900,6 +10986,99 @@
           }
         },
         "summary": "Get Trace",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/usage": {
+      "get": {
+        "operationId": "usage_summary_api_studio_usage_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "route",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Route",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Since",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Until",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Usage Summary",
         "tags": [
           "Sandbox studio v2"
         ]

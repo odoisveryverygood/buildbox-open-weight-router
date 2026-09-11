@@ -109,6 +109,8 @@ def loopback(rt, monkeypatch):
 
         def do_POST(self):
             state.seen.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+            if getattr(state, "respond", None):
+                state.respond(state.seen[-1])
             self.send_response(state.status)
             self.send_header(
                 "Content-Type",
@@ -462,7 +464,13 @@ def test_product_auth_to_queue_restart_worker_to_persisted_runtime(rt, loopback,
         assert not run_once(services, execution=restarted)
         result = client.get("/api/sandbox/runs/" + run["id"]).json()
         assert result["status"] == "awaiting_approval", result
-        assert loopback.seen[0]["messages"][0]["content"].endswith("synthetic document")
+        messages = loopback.seen[0]["messages"]
+        assert (
+            messages[0]["role"] == "system" and "synthetic document" not in messages[0]["content"]
+        )
+        assert messages[1]["role"] == "user" and json.loads(messages[1]["content"]) == {
+            "text": "synthetic document"
+        }
         attempts = client.get("/api/studio/runs/" + run["id"] + "/attempts").json()
         assert len(attempts) == 1 and attempts[0]["usage"]["actual_micro_usd"] == 0
         assert client.get("/api/studio/traces/" + attempts[0]["id"]).status_code == 200
@@ -724,6 +732,7 @@ def test_legacy_policy_digest_and_revision_three_migration(tmp_path):
                     "fallback_configuration_ids",
                     "route_requirements",
                     "response_format",
+                    "requirements",
                 }
             }
         if isinstance(value, list):

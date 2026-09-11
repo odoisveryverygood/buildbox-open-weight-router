@@ -153,6 +153,25 @@ class SandboxStorage(SqlStorage):
             )
         return tuple(RunAttempt.model_validate_json(v) for v in values)
 
+    def outputs_for_run(self, tenant: str, run_id: str) -> tuple[StoredOutput, ...]:
+        field = (
+            "json_extract(payload,'$.run_id')"
+            if self.engine.dialect.name == "sqlite"
+            else "CAST(payload AS jsonb)->>'run_id'"
+        )
+        with self.engine.connect() as conn:
+            rows = (
+                conn.execute(
+                    text(
+                        f"SELECT payload FROM sandbox_payloads WHERE owner=:owner AND kind='output' AND {field}=:run AND expires_at>:now ORDER BY id LIMIT 1000"
+                    ),
+                    dict(owner=tenant, run=run_id, now=datetime.now(UTC).timestamp()),
+                )
+                .scalars()
+                .all()
+            )
+        return tuple(StoredOutput.model_validate_json(row) for row in rows)
+
     def claim_runtime(self) -> tuple[QueuedContext, WorkflowRunRequest] | None:
         now = datetime.now(UTC).timestamp()
         with self.engine.begin() as conn:

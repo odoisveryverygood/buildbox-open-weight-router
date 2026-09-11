@@ -31,6 +31,8 @@ from .execution_contracts import (
     IssuedKey,
     KeyIssueRequest,
     ModelList,
+    PolicyEditRequest,
+    PolicyHistory,
     PolicyView,
     PromptRevision,
     RouteAlias,
@@ -41,6 +43,7 @@ from .execution_contracts import (
     Scope,
     StoredOutput,
     TransitionRequest,
+    UsageSummary,
     VariantRequest,
     VersionRef,
     WorkflowRunRequest,
@@ -155,6 +158,34 @@ def create_variant(
     return store.create_policy(request.state.owner, compiled)
 
 
+@studio.post("/policies/{policy_id}/versions/{version}/propose-edit")
+def propose_edit(
+    policy_id: str, version: int, value: PolicyEditRequest, request: Request
+) -> ExecutablePolicy:
+    from .execution_policy import edit
+    from .planning_storage import PlanningStorage
+
+    store = repository(request)
+    policy = store.policy(request.state.owner, VersionRef(id=policy_id, version=version)).policy
+    plan = PlanningStorage(store.engine).view(
+        request.state.owner, policy.plan.id, policy.plan.version
+    )
+    if not plan.result or not plan.result.catalog:
+        raise DomainError(ErrorCode.CONFLICT, "Owned pinned planning catalog required", 409)
+    return edit(policy, plan.result.catalog, value, request.app.state.services.selector)
+
+
+@studio.get("/policies/{policy_id}/history")
+def policy_history(policy_id: str, request: Request) -> PolicyHistory:
+    store = repository(request)
+    revision, _ = store.latest(request.state.owner, "policy", policy_id)
+    return PolicyHistory(
+        versions=tuple(
+            VersionRef(id=policy_id, version=v) for v in range(max(1, revision - 99), revision + 1)
+        )
+    )
+
+
 @studio.post("/policies/{policy_id}/versions/{version}/transitions")
 def transition(
     policy_id: str, version: int, value: TransitionRequest, request: Request
@@ -211,6 +242,18 @@ def get_trace(request_id: str, request: Request) -> DecisionTrace:
 @studio.get("/runtime")
 def runtime_status(request: Request) -> RuntimeStatus:
     installed = request.app.state.execution_services is not None
+    from .execution_jobs import QueuedWorkflows
+
+    flows = request.app.state.execution_services.workflows if installed else None
+    tool_ids = (
+        tuple(
+            sorted(
+                tool for tenant, tool in flows.runner.tools.tables if tenant == request.state.owner
+            )
+        )
+        if isinstance(flows, QueuedWorkflows)
+        else ()
+    )
     return RuntimeStatus(
         installed=installed,
         mode="synthetic_test"
@@ -219,9 +262,36 @@ def runtime_status(request: Request) -> RuntimeStatus:
         if installed
         else "disabled",
         target_count=None,
+        available_tool_ids=tool_ids,
         detail="Runtime composed; each request requires current operator admission. LIVE INFERENCE NOT VERIFIED"
         if installed
         else "No approved runtime registry configured. LIVE INFERENCE NOT VERIFIED",
+    )
+
+
+@studio.get("/usage")
+def usage_summary(
+    request: Request, route: str = "", since: str = "", until: str = ""
+) -> UsageSummary:
+    rows = [
+        RunAttempt.model_validate_json(raw)
+        for raw in repository(request).records(request.state.owner, "attempt")
+    ]
+    rows = [
+        a
+        for a in rows
+        if (not route or a.trace.alias_id == route or a.trace.policy.id == route)
+        and (not since or a.usage.observed_at.date().isoformat() >= since)
+        and (not until or a.usage.observed_at.date().isoformat() <= until)
+    ]
+    subtotal = sum(a.usage.actual_micro_usd or 0 for a in rows)
+    unresolved = sum(a.usage.actual_micro_usd is None for a in rows)
+    return UsageSummary(
+        attempts=tuple(rows),
+        actual_micro_usd=None if unresolved else subtotal,
+        known_subtotal_micro_usd=subtotal,
+        reserved_micro_usd=sum(a.usage.reserved_micro_usd for a in rows),
+        unresolved_attempts=unresolved,
     )
 
 
@@ -327,6 +397,13 @@ async def run_output(run_id: str, output_id: str, request: Request) -> StoredOut
     if value.run_id != run_id:
         raise DomainError(ErrorCode.NOT_FOUND, "Output is not part of this run", 404)
     return value
+
+
+@workflow_routes.get("/runs/{run_id}/outputs")
+async def run_outputs(run_id: str, request: Request) -> tuple[StoredOutput, ...]:
+    ctx = await context(request, "runs:read")
+    await runtime(request).workflows.get(ctx, run_id)
+    return repository(request).outputs_for_run(ctx.tenant_id, run_id)
 
 
 @workflow_routes.get("/traces/{request_id}")

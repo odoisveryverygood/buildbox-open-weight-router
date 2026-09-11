@@ -1,5 +1,11 @@
 # Planning alpha: local operation and boundaries
 
+For the current integrated sandbox journey, use
+[the Prompt 09 reviewer guide](../docs/REVIEWER_GUIDE.md) and
+[actual evaluation results](../docs/ROUTER_V2_EVALUATION.md).
+The material below preserves the earlier planning-only run history and scoped
+local-interpreter opt-in; it does not authorize target inference or deployment.
+
 Run from `router/`. Python 3.12 and Node/npm are required. No deployment or migration
 runs automatically. Install dependencies with `uv sync --frozen && npm ci --ignore-scripts`.
 Run `make check` for offline tests, both type checks, lint, build and generated-type drift.

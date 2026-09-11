@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .adapters import OfflineInference, OfflineSearch
 from .contracts import Constraints, Example, Intake, Provenance
@@ -64,3 +64,14 @@ def fixture_services(storage: StoragePort) -> Services:
         OfflineInference(),
         OfflineSearch(),
     )
+
+
+def product_services(storage: StoragePort) -> Services:
+    """One evidence-gated selector for planning, draft validation and all runtime calls.
+
+    Legacy example ports remain offline; they cannot supply runtime credentials.
+    Planning interpretation uses its separately authorized adapter in planning.py.
+    """
+    from .intelligence.selection.engine import DeterministicSelector
+
+    return replace(fixture_services(storage), selector=DeterministicSelector())

@@ -11,7 +11,7 @@ from typing import Annotated, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, JsonValue, model_validator
 
-from .contracts import CandidateConfiguration, Fact, Identifier, Workflow
+from .contracts import CandidateConfiguration, Fact, Identifier, TargetRequirements, Workflow
 from .evidence_contracts import EndpointRecord
 from .json_contracts import JsonSchema
 
@@ -40,6 +40,7 @@ def digest(value: BaseModel) -> str:
             "variant": None,
             "response_format": None,
             "max_attempts": 1,
+            "requirements": TargetRequirements().model_dump(mode="json"),
         }
         if isinstance(item, dict):
             return {
@@ -130,6 +131,19 @@ class PolicyVariant(ExecutionContract):
 class VariantRequest(ExecutionContract):
     id: Identifier
     mode: Literal["quality", "balanced", "cost_conscious"]
+
+
+class PolicyEditRequest(ExecutionContract):
+    instruction: str = Field(default="", max_length=2000)
+    pins: dict[Identifier, Identifier] = Field(default_factory=dict)
+    exclude_configuration_ids: tuple[Identifier, ...] = Field(default=(), max_length=30)
+    prompt_templates: dict[Identifier, str] = Field(default_factory=dict)
+    output_schemas: dict[Identifier, JsonSchema] = Field(default_factory=dict)
+    cheaper_stage_ids: tuple[Identifier, ...] = ()
+
+
+class PolicyHistory(ExecutionContract):
+    versions: tuple[VersionRef, ...]
 
 
 class ExecutableStage(ExecutionContract):
@@ -650,6 +664,9 @@ class RunAttempt(ExecutionContract):
     output_reference: Identifier | None = None
     error: GatewayError | None = None
     latency_ms: int | None = Field(default=None, ge=0)
+    gateway_overhead_ms: int | None = Field(default=None, ge=0)
+    upstream_ms: int | None = Field(default=None, ge=0)
+    time_to_first_content_ms: int | None = Field(default=None, ge=0)
     latency_definition: Literal["reservation_to_finalization_wall_clock"] = (
         "reservation_to_finalization_wall_clock"
     )
@@ -692,6 +709,16 @@ class RuntimeStatus(ExecutionContract):
     live_verified: Literal[False] = False
     target_count: int | None = Field(default=None, ge=0)
     detail: str
+    available_tool_ids: tuple[Identifier, ...] = ()
+
+
+class UsageSummary(ExecutionContract):
+    attempts: tuple[RunAttempt, ...]
+    actual_micro_usd: int | None
+    known_subtotal_micro_usd: int
+    reserved_micro_usd: int
+    unresolved_attempts: int
+    coverage: Literal["bounded_1000_latest_attempt_records"] = "bounded_1000_latest_attempt_records"
 
 
 class WorkflowRunRequest(ExecutionContract):
@@ -756,6 +783,18 @@ class ImportedSample(ExecutionContract):
     processing: Literal["local_only", "approved_hosted"] = "local_only"
     retention_days: int = Field(ge=1, le=30)
     provenance: Literal["user_imported_not_verified"] = "user_imported_not_verified"
+    split: Literal["tuning", "holdout", "unspecified"] = "unspecified"
+    output_schema: JsonSchema | None = None
+    expected_reviewed: bool = False
+    tool_schemas: tuple[ToolDefinition, ...] = Field(default=(), max_length=10)
+
+    @model_validator(mode="after")
+    def bounded(self) -> "ImportedSample":
+        if len(self.model_dump_json().encode()) > 65536:
+            raise ValueError("Import exceeds 64 KiB")
+        if self.expected_reviewed and self.expected_output is None:
+            raise ValueError("Reviewed expected answer required")
+        return self
 
 
 class StoredOutput(ExecutionContract):
@@ -787,6 +826,12 @@ class ComparisonRequest(ExecutionContract):
         return self
 
 
+class SampleCheck(ExecutionContract):
+    check: Literal["json_schema", "reviewed_exact_match"]
+    status: Literal["pass", "fail", "not_run"]
+    detail: str
+
+
 class ComparisonCell(ExecutionContract):
     sample_id: Identifier
     policy: VersionRef
@@ -795,6 +840,11 @@ class ComparisonCell(ExecutionContract):
     output_reference: Identifier | None = None
     usage: UsageReconciliation | None = None
     attempt_usages: tuple[UsageReconciliation, ...] = ()
+    checks: tuple[SampleCheck, ...] = ()
+    completion_ms: int | None = Field(default=None, ge=0)
+    upstream_ms: int | None = Field(default=None, ge=0)
+    gateway_overhead_ms: int | None = Field(default=None, ge=0)
+    time_to_first_content_ms: int | None = Field(default=None, ge=0)
 
     @model_validator(mode="after")
     def real_output(self) -> "ComparisonCell":
@@ -831,3 +881,4 @@ class ExecutionSchemaBundle(ExecutionContract):
     grant: RuntimeGrant
     stream_observation: StreamObservation
     approved_endpoint: ApprovedEndpoint
+    sample: ImportedSample

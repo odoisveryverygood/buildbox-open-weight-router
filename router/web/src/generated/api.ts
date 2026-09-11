@@ -344,6 +344,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sandbox/runs/{run_id}/outputs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Run Outputs */
+        get: operations["run_outputs_api_sandbox_runs__run_id__outputs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sandbox/runs/{run_id}/outputs/{output_id}": {
         parameters: {
             query?: never;
@@ -549,6 +566,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/studio/policies/{policy_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Policy History */
+        get: operations["policy_history_api_studio_policies__policy_id__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/studio/policies/{policy_id}/versions/{version}": {
         parameters: {
             query?: never;
@@ -560,6 +594,23 @@ export interface paths {
         get: operations["get_policy_api_studio_policies__policy_id__versions__version__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/policies/{policy_id}/versions/{version}/propose-edit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propose Edit */
+        post: operations["propose_edit_api_studio_policies__policy_id__versions__version__propose_edit_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -694,6 +745,23 @@ export interface paths {
         };
         /** Get Trace */
         get: operations["get_trace_api_studio_traces__request_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Usage Summary */
+        get: operations["usage_summary_api_studio_usage_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -939,6 +1007,11 @@ export interface components {
             artifacts: components["schemas"]["ModelArtifact"][];
             /** Configurations */
             configurations: components["schemas"]["CandidateConfiguration"][];
+            /**
+             * Eligibility
+             * @default []
+             */
+            eligibility: components["schemas"]["ConfigurationEligibility"][];
             /** Evidence */
             evidence: components["schemas"]["Evidence"][];
             /** Id */
@@ -1008,7 +1081,7 @@ export interface components {
             /** Tool Choice */
             tool_choice?: ("auto" | "none" | "required") | components["schemas"]["NamedToolChoice"] | null;
             /** Tools */
-            tools?: components["schemas"]["ToolDefinition"][] | null;
+            tools?: components["schemas"]["ToolDefinition-Input"][] | null;
         };
         /** ChatMessage */
         ChatMessage: {
@@ -1133,11 +1206,26 @@ export interface components {
              */
             attempt_usages: components["schemas"]["UsageReconciliation"][];
             /**
+             * Checks
+             * @default []
+             */
+            checks: components["schemas"]["SampleCheck"][];
+            /**
+             * Completion Ms
+             * @default null
+             */
+            completion_ms: number | null;
+            /**
              * Execution Schema
              * @default 2.0
              * @constant
              */
             execution_schema: "2.0";
+            /**
+             * Gateway Overhead Ms
+             * @default null
+             */
+            gateway_overhead_ms: number | null;
             /**
              * Output Reference
              * @default null
@@ -1156,6 +1244,16 @@ export interface components {
              * @enum {string}
              */
             status: "not_run" | "completed" | "failed" | "blocked";
+            /**
+             * Time To First Content Ms
+             * @default null
+             */
+            time_to_first_content_ms: number | null;
+            /**
+             * Upstream Ms
+             * @default null
+             */
+            upstream_ms: number | null;
             /** @default null */
             usage: components["schemas"]["UsageReconciliation"] | null;
         };
@@ -1247,6 +1345,28 @@ export interface components {
             prompt_tokens: number;
             /** Total Tokens */
             total_tokens: number;
+        };
+        /** ConfigurationEligibility */
+        ConfigurationEligibility: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Configuration Id */
+            configuration_id: string;
+            deployment: components["schemas"]["Fact_str_"];
+            /** Expires At */
+            expires_at: string;
+            input_modalities: components["schemas"]["Fact_tuple_str__________"];
+            license_policy: components["schemas"]["Fact_bool_"];
+            /** Observed At */
+            observed_at: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            supported_parameters: components["schemas"]["Fact_tuple_str__________"];
+            weights_access: components["schemas"]["Fact_bool_"];
         };
         /** Constraints */
         Constraints: {
@@ -1830,6 +1950,7 @@ export interface components {
             key: components["schemas"]["ApplicationKeyMetadata"];
             output: components["schemas"]["StoredOutput"];
             policy: components["schemas"]["PolicyView"];
+            sample: components["schemas"]["ImportedSample"];
             stream_observation: components["schemas"]["StreamObservation"];
             target: components["schemas"]["TargetConfiguration"];
         };
@@ -2022,11 +2143,42 @@ export interface components {
         };
         /** FunctionDefinition */
         FunctionDefinition: {
+            /**
+             * Description
+             * @default null
+             */
+            description: string | null;
+            /** Name */
+            name: string;
+            parameters: components["schemas"]["JsonSchema"];
+            /**
+             * Strict
+             * @default true
+             * @constant
+             */
+            strict: true;
+        };
+        /** FunctionDefinition */
+        "FunctionDefinition-Input": {
             /** Description */
             description?: string | null;
             /** Name */
             name: string;
             parameters: components["schemas"]["JsonSchema-Input"];
+            /**
+             * Strict
+             * @default true
+             * @constant
+             */
+            strict: true;
+        };
+        /** FunctionDefinition */
+        "FunctionDefinition-Output": {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+            parameters: components["schemas"]["JsonSchema-Output"];
             /**
              * Strict
              * @default true
@@ -2084,7 +2236,85 @@ export interface components {
              * @constant
              */
             execution_schema: "2.0";
+            /** @default null */
+            expected_output: components["schemas"]["JsonValue"] | null;
+            /**
+             * Expected Reviewed
+             * @default false
+             */
+            expected_reviewed: boolean;
+            /** Id */
+            id: string;
+            /**
+             * Imported At
+             * Format: date-time
+             */
+            imported_at: string;
+            /** Inputs */
+            inputs: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "sample" | "trace";
+            /** @default null */
+            observed_output: components["schemas"]["JsonValue"] | null;
+            /**
+             * Original Observed At
+             * @default null
+             */
+            original_observed_at: string | null;
+            /** @default null */
+            output_schema: components["schemas"]["JsonSchema"] | null;
+            /**
+             * Processing
+             * @default local_only
+             * @enum {string}
+             */
+            processing: "local_only" | "approved_hosted";
+            /**
+             * Provenance
+             * @default user_imported_not_verified
+             * @constant
+             */
+            provenance: "user_imported_not_verified";
+            /** Retention Days */
+            retention_days: number;
+            /** Source Label */
+            source_label: string;
+            /**
+             * Split
+             * @default unspecified
+             * @enum {string}
+             */
+            split: "tuning" | "holdout" | "unspecified";
+            /**
+             * Tool Schemas
+             * @default []
+             */
+            tool_schemas: components["schemas"]["ToolDefinition"][];
+        };
+        /** ImportedSample */
+        "ImportedSample-Input": {
+            /**
+             * Data Class
+             * @enum {string}
+             */
+            data_class: "synthetic" | "tenant_private";
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
             expected_output?: components["schemas"]["JsonValue"] | null;
+            /**
+             * Expected Reviewed
+             * @default false
+             */
+            expected_reviewed: boolean;
             /** Id */
             id: string;
             /**
@@ -2104,6 +2334,7 @@ export interface components {
             observed_output?: components["schemas"]["JsonValue"] | null;
             /** Original Observed At */
             original_observed_at?: string | null;
+            output_schema?: components["schemas"]["JsonSchema-Input"] | null;
             /**
              * Processing
              * @default local_only
@@ -2120,6 +2351,84 @@ export interface components {
             retention_days: number;
             /** Source Label */
             source_label: string;
+            /**
+             * Split
+             * @default unspecified
+             * @enum {string}
+             */
+            split: "tuning" | "holdout" | "unspecified";
+            /**
+             * Tool Schemas
+             * @default []
+             */
+            tool_schemas: components["schemas"]["ToolDefinition-Input"][];
+        };
+        /** ImportedSample */
+        "ImportedSample-Output": {
+            /**
+             * Data Class
+             * @enum {string}
+             */
+            data_class: "synthetic" | "tenant_private";
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            expected_output?: components["schemas"]["JsonValue"] | null;
+            /**
+             * Expected Reviewed
+             * @default false
+             */
+            expected_reviewed: boolean;
+            /** Id */
+            id: string;
+            /**
+             * Imported At
+             * Format: date-time
+             */
+            imported_at: string;
+            /** Inputs */
+            inputs: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "sample" | "trace";
+            observed_output?: components["schemas"]["JsonValue"] | null;
+            /** Original Observed At */
+            original_observed_at?: string | null;
+            output_schema?: components["schemas"]["JsonSchema-Output"] | null;
+            /**
+             * Processing
+             * @default local_only
+             * @enum {string}
+             */
+            processing: "local_only" | "approved_hosted";
+            /**
+             * Provenance
+             * @default user_imported_not_verified
+             * @constant
+             */
+            provenance: "user_imported_not_verified";
+            /** Retention Days */
+            retention_days: number;
+            /** Source Label */
+            source_label: string;
+            /**
+             * Split
+             * @default unspecified
+             * @enum {string}
+             */
+            split: "tuning" | "holdout" | "unspecified";
+            /**
+             * Tool Schemas
+             * @default []
+             */
+            tool_schemas: components["schemas"]["ToolDefinition-Output"][];
         };
         /** Intake */
         Intake: {
@@ -2546,11 +2855,19 @@ export interface components {
              * @default fixture
              * @enum {string}
              */
-            catalog_mode: "fixture" | "public_snapshot" | "runtime_public";
+            catalog_mode: "fixture" | "public_snapshot" | "runtime_public" | "approved_runtime";
             edited_workflow?: components["schemas"]["Workflow"] | null;
             intake: components["schemas"]["Intake"];
             processing?: components["schemas"]["ProcessingPolicy"];
+            /**
+             * Proposal Mode
+             * @default interpreter
+             * @enum {string}
+             */
+            proposal_mode: "interpreter" | "single_stage";
             requirements?: components["schemas"]["TargetRequirements"];
+            /** Runtime Catalog Id */
+            runtime_catalog_id?: string | null;
             /**
              * Schema Version
              * @default 1.0
@@ -2632,6 +2949,11 @@ export interface components {
              */
             public_runtime_available: boolean;
             /**
+             * Runtime Catalog Ids
+             * @default []
+             */
+            runtime_catalog_ids: string[];
+            /**
              * Schema Version
              * @default 1.0
              * @constant
@@ -2688,6 +3010,53 @@ export interface components {
             /** Version */
             version: number;
             workflow?: components["schemas"]["Workflow"] | null;
+        };
+        /** PolicyEditRequest */
+        PolicyEditRequest: {
+            /**
+             * Cheaper Stage Ids
+             * @default []
+             */
+            cheaper_stage_ids: string[];
+            /**
+             * Exclude Configuration Ids
+             * @default []
+             */
+            exclude_configuration_ids: string[];
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Instruction
+             * @default
+             */
+            instruction: string;
+            /** Output Schemas */
+            output_schemas?: {
+                [key: string]: components["schemas"]["JsonSchema-Input"];
+            };
+            /** Pins */
+            pins?: {
+                [key: string]: string;
+            };
+            /** Prompt Templates */
+            prompt_templates?: {
+                [key: string]: string;
+            };
+        };
+        /** PolicyHistory */
+        PolicyHistory: {
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Versions */
+            versions: components["schemas"]["VersionRef"][];
         };
         /** PolicyTransition */
         PolicyTransition: {
@@ -3099,6 +3468,11 @@ export interface components {
              * @constant
              */
             execution_schema: "2.0";
+            /**
+             * Gateway Overhead Ms
+             * @default null
+             */
+            gateway_overhead_ms: number | null;
             /** Id */
             id: string;
             /**
@@ -3126,7 +3500,17 @@ export interface components {
              * @enum {string}
              */
             status: "reserved" | "dispatched" | "succeeded" | "failed" | "cancelled" | "uncertain";
+            /**
+             * Time To First Content Ms
+             * @default null
+             */
+            time_to_first_content_ms: number | null;
             trace: components["schemas"]["DecisionTrace"];
+            /**
+             * Upstream Ms
+             * @default null
+             */
+            upstream_ms: number | null;
             usage: components["schemas"]["UsageReconciliation"];
         };
         /** RunErrorEvent */
@@ -3225,6 +3609,11 @@ export interface components {
         };
         /** RuntimeStatus */
         RuntimeStatus: {
+            /**
+             * Available Tool Ids
+             * @default []
+             */
+            available_tool_ids: string[];
             /** Detail */
             detail: string;
             /**
@@ -3248,6 +3637,27 @@ export interface components {
             mode: "disabled" | "approved" | "synthetic_test";
             /** Target Count */
             target_count?: number | null;
+        };
+        /** SampleCheck */
+        SampleCheck: {
+            /**
+             * Check
+             * @enum {string}
+             */
+            check: "json_schema" | "reviewed_exact_match";
+            /** Detail */
+            detail: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pass" | "fail" | "not_run";
         };
         /**
          * SandboxAdmission
@@ -3529,7 +3939,7 @@ export interface components {
              * @default any
              * @enum {string}
              */
-            deployment: "any" | "self_hosted";
+            deployment: "any" | "self_hosted" | "api";
             /**
              * Input Modality
              * @default text
@@ -3592,6 +4002,26 @@ export interface components {
              */
             type: "function";
         };
+        /** ToolDefinition */
+        "ToolDefinition-Input": {
+            function: components["schemas"]["FunctionDefinition-Input"];
+            /**
+             * Type
+             * @default function
+             * @constant
+             */
+            type: "function";
+        };
+        /** ToolDefinition */
+        "ToolDefinition-Output": {
+            function: components["schemas"]["FunctionDefinition-Output"];
+            /**
+             * Type
+             * @default function
+             * @constant
+             */
+            type: "function";
+        };
         /** TransitionRequest */
         TransitionRequest: {
             /** Admission Id */
@@ -3640,6 +4070,31 @@ export interface components {
             /** @default null */
             tokens: components["schemas"]["CompletionUsage"] | null;
         };
+        /** UsageSummary */
+        UsageSummary: {
+            /** Actual Micro Usd */
+            actual_micro_usd: number | null;
+            /** Attempts */
+            attempts: components["schemas"]["RunAttempt"][];
+            /**
+             * Coverage
+             * @default bounded_1000_latest_attempt_records
+             * @constant
+             */
+            coverage: "bounded_1000_latest_attempt_records";
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Known Subtotal Micro Usd */
+            known_subtotal_micro_usd: number;
+            /** Reserved Micro Usd */
+            reserved_micro_usd: number;
+            /** Unresolved Attempts */
+            unresolved_attempts: number;
+        };
         /** VariantRequest */
         VariantRequest: {
             /**
@@ -3679,6 +4134,7 @@ export interface components {
             /** Nodes */
             nodes: components["schemas"]["Node"][];
             provenance: components["schemas"]["Provenance"];
+            requirements?: components["schemas"]["TargetRequirements"];
             /**
              * Schema Version
              * @default 1.0
@@ -4920,6 +5376,64 @@ export interface operations {
             };
         };
     };
+    run_outputs_api_sandbox_runs__run_id__outputs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredOutput"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     run_output_api_sandbox_runs__run_id__outputs__output_id__get: {
         parameters: {
             query?: never;
@@ -5282,7 +5796,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ImportedSample"];
+                "application/json": components["schemas"]["ImportedSample-Input"];
             };
         };
         responses: {
@@ -5292,7 +5806,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ImportedSample"];
+                    "application/json": components["schemas"]["ImportedSample-Output"];
                 };
             };
             /** @description Bad Request */
@@ -5350,7 +5864,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ImportedSample"];
+                    "application/json": components["schemas"]["ImportedSample-Output"];
                 };
             };
             /** @description Bad Request */
@@ -5683,6 +6197,64 @@ export interface operations {
             };
         };
     };
+    policy_history_api_studio_policies__policy_id__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PolicyHistory"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_policy_api_studio_policies__policy_id__versions__version__get: {
         parameters: {
             query?: never;
@@ -5702,6 +6274,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PolicyView"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    propose_edit_api_studio_policies__policy_id__versions__version__propose_edit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PolicyEditRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutablePolicy-Output"];
                 };
             };
             /** @description Bad Request */
@@ -6175,6 +6810,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecisionTrace"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    usage_summary_api_studio_usage_get: {
+        parameters: {
+            query?: {
+                route?: string;
+                since?: string;
+                until?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageSummary"];
                 };
             };
             /** @description Bad Request */

@@ -102,13 +102,18 @@ export function importRows(text: string, format: 'text' | 'json' | 'jsonl', opti
   return raw.map((rawRow, i) => {
     if (!rawRow || Array.isArray(rawRow) || typeof rawRow !== 'object') throw new Error(`Row ${i+1}: expected an object with inputs.`);
     const row = scrub(rawRow) as Record<string, unknown>;
-    const allowed = ['inputs','expected_output','observed_output','kind','source_label','original_observed_at'];
-    if (Object.keys(row).some(key => !allowed.includes(key))) throw new Error(`Row ${i+1}: unsupported fields (including tool schemas, rubrics or tenant IDs). They are not silently discarded.`);
+    const allowed = ['inputs','expected_output','observed_output','kind','source_label','original_observed_at','split','expected_reviewed','output_schema','tool_schemas'];
+    if (Object.keys(row).some(key => !allowed.includes(key))) throw new Error(`Row ${i+1}: unsupported fields (including free-form rubrics or tenant IDs). They are not silently discarded.`);
+    if(row.split!==undefined&&!['tuning','holdout','unspecified'].includes(String(row.split)))throw new Error('Split must be tuning, holdout or unspecified.');
+    if(row.expected_reviewed!==undefined&&typeof row.expected_reviewed!=='boolean')throw new Error('Expected-answer review must be explicit true/false.');
+    if(row.expected_reviewed&&row.expected_output==null)throw new Error('Reviewed expected output required.');
+    if(row.output_schema!=null&&(typeof row.output_schema!=='object'||Array.isArray(row.output_schema)))throw new Error('Output schema must be an object. Server validates the strict subset.');
+    if(row.tool_schemas!==undefined&&(!Array.isArray(row.tool_schemas)||row.tool_schemas.length>10))throw new Error('At most 10 typed tool schemas, never execution permission.');
     if (!row.inputs || Array.isArray(row.inputs) || typeof row.inputs !== 'object' || !Object.keys(row.inputs).length || Object.keys(row.inputs).some(key => !identifier.test(key))) throw new Error(`Row ${i+1}: inputs must have valid named keys.`);
     if (row.kind !== undefined && row.kind !== 'sample' && row.kind !== 'trace') throw new Error('Kind must be sample or trace.');
     if (row.original_observed_at != null && (typeof row.original_observed_at !== 'string' || !/(Z|[+-]\d\d:\d\d)$/.test(row.original_observed_at) || !Number.isFinite(Date.parse(row.original_observed_at)))) throw new Error('Original observation date must include a timezone.');
     if (row.source_label !== undefined && (typeof row.source_label !== 'string' || !row.source_label.trim() || row.source_label.length > 200)) throw new Error('Source label must be 1–200 characters.');
-    return {execution_schema:'2.0', id:crypto.randomUUID(), kind:(row.kind ?? 'sample') as S['ImportedSample']['kind'], inputs:row.inputs as S['ImportedSample']['inputs'], expected_output:row.expected_output ?? null, observed_output:row.observed_output ?? null, source_label:(row.source_label ?? `Studio import ${i+1}`) as string, original_observed_at:(row.original_observed_at ?? null) as string | null, imported_at:new Date().toISOString(), data_class:options.dataClass, processing:options.processing, retention_days:options.retention, provenance:'user_imported_not_verified'};
+    return {execution_schema:'2.0', id:crypto.randomUUID(), kind:(row.kind ?? 'sample') as S['ImportedSample']['kind'], inputs:row.inputs as S['ImportedSample']['inputs'], expected_output:row.expected_output ?? null, observed_output:row.observed_output ?? null, source_label:(row.source_label ?? `Studio import ${i+1}`) as string, original_observed_at:(row.original_observed_at ?? null) as string | null, imported_at:new Date().toISOString(), data_class:options.dataClass, processing:options.processing, retention_days:options.retention, provenance:'user_imported_not_verified', split:(row.split??'unspecified') as S['ImportedSample']['split'], expected_reviewed:(row.expected_reviewed??false) as boolean, output_schema:(row.output_schema??null) as S['ImportedSample']['output_schema'],tool_schemas:(row.tool_schemas??[]) as S['ImportedSample']['tool_schemas']};
   });
 }
 export function sourceLink(value: string | null | undefined): string | undefined {

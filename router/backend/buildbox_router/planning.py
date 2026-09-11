@@ -36,6 +36,7 @@ from .research.service import PublicResearch
 from .research.sources import RecordedSources
 from .runtime import PUBLIC_REPOSITORY, OpenRouterRole, approval_for, public_sources
 from .storage import SqlStorage
+from .workflow_proposal import single_stage, unresolved
 
 
 def planning_examples() -> list[Example]:
@@ -231,6 +232,8 @@ class PlanningService:
                     intake, edited.model_copy(update={"version": 1}), plan.id
                 )
                 interpreted = Interpretation(status="ready", workflow=edited)
+            elif value.proposal_mode == "single_stage":
+                interpreted = single_stage(value, plan.id)
             elif recorded:
                 interpreted = SchemaInterpreter(
                     RecordedInference((recorded.model_dump_json(),))
@@ -239,7 +242,7 @@ class PlanningService:
                 interpreted = SchemaInterpreter().interpret(intake, plan.id)
             else:
                 # Targeted questions are evaluated before requesting any paid inference.
-                questions = SchemaInterpreter().clarifier.clarify(intake)
+                questions = unresolved(value)
                 if questions:
                     interpreted = Interpretation(status="needs_clarification", questions=questions)
                 elif value.processing.inference == "local_model":
@@ -336,7 +339,11 @@ class PlanningService:
                 )
             else:
                 workflow = Workflow.model_validate(
-                    {**workflow.model_dump(), "version": plan.version}
+                    {
+                        **workflow.model_dump(),
+                        "version": plan.version,
+                        "requirements": value.requirements,
+                    }
                 )
                 interpreted = interpreted.model_copy(update={"workflow": workflow})
                 model_nodes = any(n.kind in ("llm", "bounded_agent") for n in workflow.nodes)
@@ -351,6 +358,11 @@ class PlanningService:
                         evidence=(),
                         synthetic=False,
                     )
+                elif value.catalog_mode == "approved_runtime":
+                    from .runtime_catalog import planning_catalog
+
+                    catalog, target_gaps = planning_catalog(self.settings, owner, value)
+                    missing.extend(target_gaps)
                 elif value.catalog_mode == "fixture":
                     if self.settings.mode != "fixture":
                         raise DomainError(
@@ -398,7 +410,7 @@ class PlanningService:
                     missing.append(
                         "Retained September 6 public evidence is an offline snapshot, not a live refresh or tested target configuration. Exact configuration bindings and suitability evidence remain missing."
                     )
-                if model_nodes:
+                if model_nodes and value.catalog_mode != "approved_runtime":
                     requirements = value.requirements
                     if requirements.input_modality == "image":
                         missing.append(
@@ -412,7 +424,7 @@ class PlanningService:
                         missing.append(
                             "Required structured-output/tool-call support is unverified for exact target configurations."
                         )
-                elif (
+                elif not model_nodes and (
                     value.requirements.input_modality != "text"
                     or value.requirements.structured_output
                     or value.requirements.tool_calling

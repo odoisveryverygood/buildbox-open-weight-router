@@ -1,12 +1,14 @@
 # Buildbox workflow router — upgrade foundation
 
-## Active integration milestone 7B
+## Active integration milestone 09
 
 The user authorized central shared-contract/API/storage/worker and runtime/studio
-integration on `codex/router-integration`. Preserve commits from both lanes; their
+integration on `codex/router-v2-integration`, based on Prompt 6 commit
+`48ba6e2b2dc7d7d509cc68e2314c89dd5c54fec0`. Preserve commits from both lanes and
+the subsequent central 7B integration; their
 exclusive ownership rules below remain historical lane boundaries, not a block on
-this integration task. Read `docs/handoffs/07b-runtime-unblock-plan.md` and
-`docs/API_COMPATIBILITY.md` as they are delivered. No production merge/deployment,
+this integration task. Read `docs/handoffs/09-router-v2.md`,
+`docs/REVIEWER_GUIDE.md` and `docs/API_COMPATIBILITY.md`. No production merge/deployment,
 new provider authorization, secret discovery or implicit fixture/live fallback.
 
 The implementation lives in `router/`. Existing `.agents/`, company research,

@@ -14,6 +14,9 @@ from .contracts import (
     Recommendation,
     Workflow,
 )
+from .contracts import (
+    TargetRequirements as TargetRequirements,
+)
 from .evidence_contracts import ResearchLedger
 
 
@@ -23,13 +26,6 @@ class ProcessingPolicy(Contract):
     interpretation_role: Identifier = "interpretation"
     research_role: Identifier = "research"
     max_planning_usd: float = Field(default=0, ge=0, le=1, allow_inf_nan=False)
-
-
-class TargetRequirements(Contract):
-    input_modality: Literal["text", "image"] = "text"
-    deployment: Literal["any", "self_hosted"] = "any"
-    structured_output: bool = False
-    tool_calling: bool = False
 
 
 class ClarificationAnswer(Contract):
@@ -43,7 +39,11 @@ class PlanInput(Contract):
     requirements: TargetRequirements = Field(default_factory=TargetRequirements)
     answers: tuple[ClarificationAnswer, ...] = Field(default=(), max_length=30)
     edited_workflow: Workflow | None = None
-    catalog_mode: Literal["fixture", "public_snapshot", "runtime_public"] = "fixture"
+    catalog_mode: Literal["fixture", "public_snapshot", "runtime_public", "approved_runtime"] = (
+        "fixture"
+    )
+    runtime_catalog_id: Identifier | None = None
+    proposal_mode: Literal["interpreter", "single_stage"] = "interpreter"
 
 
 class PlanVersion(Contract):
@@ -102,3 +102,4 @@ class PlanningCapabilities(Contract):
     local_model: str | None = None
     evaluation_status: Literal["not_run"] = "not_run"
     live_gate: str
+    runtime_catalog_ids: tuple[Identifier, ...] = ()

@@ -5,8 +5,8 @@ setup:
 generate:
 	npm run generate
 lint:
-	uv run ruff check backend tests scripts
-	uv run ruff format --check backend tests scripts
+	uv run ruff check backend tests scripts examples
+	uv run ruff format --check backend tests scripts examples
 	npm run lint
 typecheck:
 	uv run mypy

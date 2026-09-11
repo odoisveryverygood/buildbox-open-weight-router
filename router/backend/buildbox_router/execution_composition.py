@@ -1,8 +1,11 @@
 """Central product/worker composition of the preserved runtime implementations."""
 
 import os
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 
+from pydantic import JsonValue
 from sqlalchemy.exc import IntegrityError
 
 from .config import Settings
@@ -35,10 +38,16 @@ def load_registry(path: str) -> RuntimeRegistry:
 
 
 def compose_execution(
-    store: SandboxStorage, registry: RuntimeRegistry, selector: Selector, *, retention_seconds: int
+    store: SandboxStorage,
+    registry: RuntimeRegistry,
+    selector: Selector,
+    *,
+    retention_seconds: int,
+    registry_loader: Callable[[], RuntimeRegistry] | None = None,
 ) -> ExecutionServices:
     def workspace(tenant: str) -> WorkspaceRuntime:
-        values = [w for w in registry.workspaces if w.tenant_id == tenant]
+        current = registry_loader() if registry_loader else registry
+        values = [w for w in current.workspaces if w.tenant_id == tenant]
         if len(values) != 1:
             raise DomainError(ErrorCode.UNSUPPORTED, "No approved runtime workspace", 403)
         return values[0]
@@ -88,6 +97,16 @@ def compose_execution(
             )
         return value
 
+    def packet(tenant: str, tool_id: str) -> dict[str, JsonValue]:
+        values = [
+            p
+            for p in workspace(tenant).read_only_packets
+            if p.tool_id == tool_id and p.observed_at <= datetime.now(UTC) < p.expires_at
+        ]
+        if len(values) != 1:
+            raise DomainError(ErrorCode.UNSUPPORTED, "Current read-only packet unavailable", 403)
+        return values[0].rows
+
     # Registry is administrator-supplied, never accepted from browser/model output.
     for item in registry.workspaces:
         for budget in item.budgets:
@@ -109,7 +128,24 @@ def compose_execution(
     keys = ApplicationKeys(store)
     gateway = Gateway(authority, TargetAdapters(secret, endpoint), keys, streaming_enabled=True)
     workflows = QueuedWorkflows(
-        WorkflowRunner(gateway, SampleTools({}), retain_seconds=retention_seconds)
+        WorkflowRunner(
+            gateway,
+            SampleTools(
+                {
+                    (w.tenant_id, p.tool_id): p.rows
+                    for w in registry.workspaces
+                    for p in w.read_only_packets
+                    if p.observed_at <= datetime.now(UTC) < p.expires_at
+                },
+                expires={
+                    (w.tenant_id, p.tool_id): p.expires_at
+                    for w in registry.workspaces
+                    for p in w.read_only_packets
+                },
+                current=packet,
+            ),
+            retain_seconds=retention_seconds,
+        )
     )
     return ExecutionServices(gateway, workflows, keys, Comparisons(workflows))
 
@@ -126,4 +162,5 @@ def configured_execution(
         load_registry(settings.runtime_registry_file),
         selector,
         retention_seconds=settings.runtime_retention_seconds,
+        registry_loader=lambda: load_registry(settings.runtime_registry_file or ""),
     )

@@ -1,5 +1,37 @@
 # Tool access and runtime boundary
 
+## Prompt 09 refresh — September 10, 2026 (America/Los_Angeles)
+
+This section supersedes historical availability claims below for Prompt 09.
+Local Git refs, actual lane diffs and central 7B work were inspected. There is no
+configured Git remote; nothing was pushed. Isolated integration ports are
+8030/5200 (normal product), 8031/5201 (explicit synthetic acceptance factory),
+and 55440 (temporary native PostgreSQL 17 cluster). Other worktrees were preserved.
+
+Python/uv, Node/npm, cURL, Playwright CLI, screenshots and native browser video
+recording worked. The browser exercised the actual API, worker and guarded HTTP
+transport; its upstream was explicitly synthetic. Both Python and TypeScript thin
+clients ran. Native PostgreSQL clean/v2-upgrade checks passed on isolated UTF-8
+databases. No managed database was selected or provisioned.
+
+Bright Data/Exa, Drive/GitHub, Vercel and Neon/Supabase development connectors were
+discovered, not treated as deployed credentials. No billable search, fresh model
+research, provider inference, account/secret creation, hosting or cloud operation
+was performed. The prior Drive read remains historical; the private internship
+document was not copied into this report or sent to a search service.
+
+Named runtime/provider/hosting environment entries and documented local config
+locations were absent in the inspected process/checkout. No approved provider
+secret store, exact target admission, spend cap or preview target was established.
+This is not a search for secrets elsewhere or proof that accounts do not exist.
+Missing operational permissions were requested together, without requesting keys
+in chat. Public source packets use retained September 6 metadata, not live search.
+
+One official dependency advisory was read to review a transitive js-yaml update;
+the regenerated lockfile passes `npm audit --omit=optional` with zero findings.
+Runtime integration docs and previous official-provider references remain in
+`API_COMPATIBILITY.md`; no new third-party runtime integration was introduced.
+
 ## 7B integration refresh — September 8–9, 2026
 
 This refresh supersedes availability statements below for this integration task;

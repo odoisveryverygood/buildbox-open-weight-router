@@ -1,4 +1,5 @@
 import asyncio
+import json
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -273,7 +274,11 @@ def test_dag_propagation_human_pause_and_reload(rt):
     value = WorkflowRunRequest(policy=rt.ref, inputs={"document": "   fixture text   "})
     result = run(rt.runner.submit(context, value))
     assert result.status == "awaiting_approval"
-    assert rt.inference.calls[0].messages.messages[0].content.endswith("fixture text")
+    messages = rt.inference.calls[0].messages.messages
+    assert messages[0].role == "system" and "fixture text" not in messages[0].content
+    assert messages[1].role == "user" and json.loads(messages[1].content) == {
+        "text": "fixture text"
+    }
     output = rt.store.output("alice", result.output_reference)
     assert output.value == {"result": "SYNTHETIC_CATEGORY"}
     restarted = WorkflowRunner(rt.gateway, SampleTools({}), retain_seconds=60)

@@ -12,7 +12,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import Response
 
 from .auth import Authenticator
-from .composition import Services, example, fixture_services
+from .composition import Services, example, product_services
 from .config import Settings
 from .contracts import (
     CatalogSnapshot,
@@ -61,7 +61,7 @@ def create_app(
             engine = engine_for(config)
             storage = PlanningStorage(engine)
             storage.check_revision()
-            app.state.services = fixture_services(storage)
+            app.state.services = product_services(storage)
         else:
             app.state.services = services
         if execution_services is None:
@@ -242,12 +242,17 @@ def create_app(
         return PlanningStorage(storage.engine)
 
     @app.get("/api/planning-capabilities")
-    def capabilities() -> PlanningCapabilities:
+    def capabilities(request: Request) -> PlanningCapabilities:
+        from .runtime_catalog import catalogs
+
         return PlanningCapabilities(
             mode=config.mode,
             authentication=config.identity_mode,
             interpretation_available=config.local_interpretation_model is not None,
             local_model=config.local_interpretation_model,
+            runtime_catalog_ids=tuple(
+                c.id for c in catalogs(config, request.state.owner) if not c.synthetic
+            ),
             live_gate="Opt-in local cached-model interpretation uses no external provider. Hosted interpretation requires a recorded role/key permission and budget. Public metadata research needs separate opt-in but no paid credential.",
         )
 

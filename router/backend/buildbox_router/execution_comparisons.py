@@ -8,12 +8,14 @@ from .execution_contracts import (
     ComparisonCell,
     ComparisonRequest,
     ComparisonResult,
+    SampleCheck,
     WorkflowRunRequest,
 )
 from .execution_jobs import QueuedWorkflows
 from .execution_ports import RequestContext
 from .execution_security import validate_inputs
 from .gateway.service import fingerprint
+from .sample_checks import checks
 
 
 class Comparisons:
@@ -93,7 +95,20 @@ class Comparisons:
                     raise
                 cells.append(cell.model_copy(update={"status": "blocked"}))
                 continue
-            records = [v.usage for v in self.store.attempts(context.tenant_id, run.id)]
+            attempts = self.store.attempts(context.tenant_id, run.id)
+            records = [v.usage for v in attempts]
+            check_results: tuple[SampleCheck, ...] = cell.checks
+            completion_ms = cell.completion_ms
+            if run.output_reference:
+                try:
+                    output = self.store.output(context.tenant_id, run.output_reference)
+                    sample = self.store.sample(context.tenant_id, cell.sample_id)
+                    check_results = checks(sample, output.value)
+                    completion_ms = max(
+                        0, int((output.created_at - run.created_at).total_seconds() * 1000)
+                    )
+                except DomainError:
+                    pass  # Expired private content is not reconstructed or rerun.
             state = (
                 "completed"
                 if run.status == "succeeded" and run.output_reference and records
@@ -110,6 +125,20 @@ class Comparisons:
                         "status": state,
                         "output_reference": run.output_reference,
                         "attempt_usages": records,
+                        "checks": check_results,
+                        "completion_ms": completion_ms,
+                        "upstream_ms": sum(
+                            a.upstream_ms for a in attempts if a.upstream_ms is not None
+                        )
+                        if attempts and all(a.upstream_ms is not None for a in attempts)
+                        else None,
+                        "gateway_overhead_ms": sum(
+                            a.gateway_overhead_ms
+                            for a in attempts
+                            if a.gateway_overhead_ms is not None
+                        )
+                        if attempts and all(a.gateway_overhead_ms is not None for a in attempts)
+                        else None,
                     }
                 )
             )

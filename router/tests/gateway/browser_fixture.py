@@ -5,6 +5,7 @@ Fresh temporary DB, known synthetic Basic identity, HTTP fixture provider only.
 """
 
 import json
+import os
 import tempfile
 import threading
 import time
@@ -14,7 +15,7 @@ from pathlib import Path
 import pytest
 from buildbox_router.api import create_app
 from buildbox_router.auth import password_hash
-from buildbox_router.composition import fixture_services
+from buildbox_router.composition import product_services
 from buildbox_router.config import Settings
 from buildbox_router.execution_composition import compose_execution
 from buildbox_router.migrations import migrate
@@ -45,7 +46,7 @@ def create_fixture_app():
         database_url=f"sqlite:///{directory}/fixture.db",
         identity_mode="shared",
         auth_file=str(auth),
-        web_origin="http://127.0.0.1:5199",
+        web_origin=os.getenv("ROUTER_WEB_ORIGIN", "http://127.0.0.1:5199"),
     )
     engine = engine_for(settings)
     migrate(engine)
@@ -55,12 +56,17 @@ def create_fixture_app():
     patch = pytest.MonkeyPatch()
     upstream = loopback.__wrapped__(fixture, patch)
     state = next(upstream)
-    services = fixture_services(storage)
+    services = product_services(storage)
+    if os.getenv("ROUTER_ACCEPTANCE_SETUP") == "synthetic-public-only":
+        from .acceptance_setup import setup_scenarios
+
+        setup_scenarios(fixture, state, services)
     execution = compose_execution(
         fixture.store, state.registry, services.selector, retention_seconds=3600
     )
     app = create_app(settings, services, execution, fixture.store)
     app.state.synthetic_upstream = (upstream, patch)
+    app.state.synthetic_context = (fixture, state)
 
     def work():
         while True:

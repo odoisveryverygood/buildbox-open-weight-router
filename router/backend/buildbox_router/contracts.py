@@ -105,6 +105,13 @@ class Node(Contract):
         return self
 
 
+class TargetRequirements(Contract):
+    input_modality: Literal["text", "image"] = "text"
+    deployment: Literal["any", "self_hosted", "api"] = "any"
+    structured_output: bool = False
+    tool_calling: bool = False
+
+
 class Workflow(Contract):
     id: Identifier
     version: int = Field(ge=1)
@@ -112,6 +119,7 @@ class Workflow(Contract):
     inputs: tuple[Identifier, ...]
     nodes: tuple[Node, ...] = Field(min_length=1, max_length=30)
     tools: tuple[WorkflowTool, ...] = ()
+    requirements: TargetRequirements = Field(default_factory=TargetRequirements)
     constraints: Constraints
     provenance: Provenance
 
@@ -192,12 +200,26 @@ class Evidence(Contract):
     provenance: Provenance
 
 
+class ConfigurationEligibility(Contract):
+    configuration_id: Identifier
+    artifact_id: Identifier
+    # Contextual review of exact weights and license, not a hosted listing.
+    weights_access: Fact[bool]
+    license_policy: Fact[bool]
+    input_modalities: Fact[tuple[str, ...]]
+    supported_parameters: Fact[tuple[str, ...]]
+    deployment: Fact[str]
+    observed_at: str
+    expires_at: str
+
+
 class CatalogSnapshot(Contract):
     id: Identifier
     artifacts: tuple[ModelArtifact, ...]
     configurations: tuple[CandidateConfiguration, ...]
     evidence: tuple[Evidence, ...]
     synthetic: bool
+    eligibility: tuple[ConfigurationEligibility, ...] = ()
 
     @model_validator(mode="after")
     def references(self) -> "CatalogSnapshot":
@@ -205,6 +227,15 @@ class CatalogSnapshot(Contract):
             if len({r.id for r in rows}) != len(rows):
                 raise ValueError("Duplicate catalog identifier")
         artifacts = {a.id for a in self.artifacts}
+        configs = {c.id: c for c in self.configurations}
+        if len({e.configuration_id for e in self.eligibility}) != len(self.eligibility):
+            raise ValueError("Duplicate configuration eligibility")
+        for item in self.eligibility:
+            if (
+                item.configuration_id not in configs
+                or configs[item.configuration_id].artifact_id != item.artifact_id
+            ):
+                raise ValueError("Eligibility identity differs from configuration/artifact")
         evidence = {e.id for e in self.evidence}
         for config in self.configurations:
             if config.artifact_id not in artifacts:

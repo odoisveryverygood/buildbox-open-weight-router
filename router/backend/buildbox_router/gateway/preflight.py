@@ -1,9 +1,13 @@
 """Fail-closed authority and cost checks, independent of transport implementations."""
 
+import re
+from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import ROUND_CEILING, Decimal
+from hashlib import sha256
+from threading import Lock
 
 from ..contracts import CatalogSnapshot, ErrorCode, Fact, Provenance
 from ..errors import DomainError
@@ -60,6 +64,39 @@ class Authority:
     ) -> None:
         self.store, self.target, self.grant = store, target, grant
         self.credential, self.catalog, self.selector = credential, catalog, selector
+        # Only immutable selection results are cached; grants, admissions, credentials,
+        # key scope, target freshness and budgets are still checked on every request.
+        self._selection_cache: OrderedDict[str, tuple[datetime, tuple[str, ...]]] = OrderedDict()
+        self._selection_lock = Lock()
+
+    def _eligible(self, policy: ExecutablePolicy, catalog: CatalogSnapshot) -> tuple[str, ...]:
+        key = sha256(
+            (policy.workflow.model_dump_json() + catalog.model_dump_json()).encode()
+        ).hexdigest()
+        now = datetime.now(UTC)
+        with self._selection_lock:
+            saved = self._selection_cache.get(key)
+            if saved and now < saved[0]:
+                self._selection_cache.move_to_end(key)
+                return saved[1]
+        result = self.selector.filter(policy.workflow, catalog).eligible
+        # Five seconds is bounded local engineering policy, not evidence freshness.
+        deadline = now + timedelta(seconds=5)
+        for record in catalog.eligibility:
+            try:
+                expiry = datetime.fromisoformat(record.expires_at)
+                observed = datetime.fromisoformat(record.observed_at)
+                if expiry.tzinfo is None or observed.tzinfo is None or observed > now:
+                    return result
+                deadline = min(deadline, expiry)
+            except ValueError:
+                return result
+        with self._selection_lock:
+            self._selection_cache[key] = (deadline, result)
+            self._selection_cache.move_to_end(key)
+            while len(self._selection_cache) > 128:
+                self._selection_cache.popitem(last=False)
+        return result
 
     def policy(
         self, context: RequestContext, ref: VersionRef
@@ -106,6 +143,12 @@ class Authority:
             stage = stage.model_copy(update={"configuration_id": configuration_id})
         assert stage.configuration_id is not None
         target = self.target(context.tenant_id, stage.configuration_id)
+        if not target.local and re.search(
+            r"local[- ]only|no (?:external|hosted|cloud)|must stay local|air[- ]gapped",
+            " ".join([policy.workflow.title, *(n.purpose for n in policy.workflow.nodes)]),
+            re.I,
+        ):
+            denied("Explicit workflow no-egress instruction applies to every target and fallback")
         if (
             target.configuration.id != stage.configuration_id
             or target.catalog_id != policy.catalog_id
@@ -131,8 +174,7 @@ class Authority:
             denied("Current approved target/token envelope evidence required")
         if catalog.id != policy.catalog_id or target.configuration not in catalog.configurations:
             denied("Configuration drift from pinned catalog")
-        filtered = self.selector.filter(policy.workflow, catalog)
-        if stage.configuration_id not in filtered.eligible:
+        if stage.configuration_id not in self._eligible(policy, catalog):
             denied("Hard eligibility evidence is contradicted or unknown")
         grant = self.grant(context.tenant_id, stage.configuration_id)
         if (

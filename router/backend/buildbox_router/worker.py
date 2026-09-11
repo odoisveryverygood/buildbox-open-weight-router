@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import time
 
-from .composition import Services, fixture_services
+from .composition import Services, product_services
 from .config import Settings
 from .contracts import Workflow
 from .execution_jobs import QueuedWorkflows
@@ -63,7 +63,7 @@ def main() -> None:
     engine = engine_for(settings)
     storage = PlanningStorage(engine)
     storage.check_revision()
-    services = fixture_services(storage)
+    services = product_services(storage)
     try:
         while True:
             run_once(services, settings)

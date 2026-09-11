@@ -246,6 +246,13 @@
       "schema_version": "1.0",
       "source": "Software contract fixture only"
     },
+    "requirements": {
+      "deployment": "any",
+      "input_modality": "text",
+      "schema_version": "1.0",
+      "structured_output": false,
+      "tool_calling": false
+    },
     "schema_version": "1.0",
     "title": "SYNTHETIC document classification",
     "tools": [],

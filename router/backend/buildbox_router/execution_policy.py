@@ -1,9 +1,139 @@
 """Draft-only policy variants using the existing selector; never route mutation."""
 
+import re
+
 from .contracts import CatalogSnapshot, ErrorCode
 from .errors import DomainError
-from .execution_contracts import ExecutablePolicy, ExecutableStage, PolicyVariant, VariantRequest
+from .execution_contracts import (
+    ExecutablePolicy,
+    ExecutableStage,
+    JsonSchemaFormat,
+    PolicyEditRequest,
+    PolicyVariant,
+    PromptRevision,
+    ResponseFormat,
+    VariantRequest,
+    VersionRef,
+)
 from .ports import Selector
+
+
+def edit(
+    policy: ExecutablePolicy,
+    catalog: CatalogSnapshot,
+    request: PolicyEditRequest,
+    selector: Selector,
+) -> ExecutablePolicy:
+    """Propose only. Explicit stage edits keep every other pin unchanged."""
+    if catalog.id != policy.catalog_id:
+        raise DomainError(ErrorCode.CONFLICT, "Pinned catalog required", 409)
+    stages = {s.node_id: s for s in policy.stages}
+    cheaper = set(request.cheaper_stage_ids)
+    kept = None
+    if request.instruction.strip():
+        match = re.fullmatch(
+            r"(?:keep the (.+?) model but )?make (.+?) cheaper[.!]?",
+            request.instruction.strip(),
+            re.I,
+        )
+        if not match:
+            raise DomainError(
+                ErrorCode.INVALID,
+                "Use structured edits, or 'keep the STAGE model but make STAGE cheaper'. Unrecognized instructions are not silently applied",
+                422,
+            )
+
+        def resolve(label: str) -> str:
+            matches = [
+                n.id
+                for n in policy.workflow.nodes
+                if n.kind == "llm"
+                and (n.id.lower() == label.lower() or label.lower() in n.purpose.lower())
+            ]
+            if len(matches) != 1:
+                raise DomainError(
+                    ErrorCode.INVALID, "Stage reference is ambiguous; use the exact stage ID", 422
+                )
+            return matches[0]
+
+        selected = resolve(match[2])
+        kept = resolve(match[1]) if match[1] else None
+        if kept == selected:
+            raise DomainError(ErrorCode.INVALID, "Cannot keep and change the same stage", 422)
+        cheaper.add(selected)
+    changed = (
+        set(request.pins) | set(request.prompt_templates) | set(request.output_schemas) | cheaper
+    )
+    if not changed <= stages.keys() or any(not stages[n].configuration_id for n in changed):
+        raise DomainError(ErrorCode.INVALID, "Edits must name existing LLM stages", 422)
+    excluded = set(request.exclude_configuration_ids)
+    if kept and (
+        kept in cheaper
+        or stages[kept].configuration_id in excluded
+        or request.pins.get(kept, stages[kept].configuration_id) != stages[kept].configuration_id
+    ):
+        raise DomainError(ErrorCode.INVALID, "Structured edits conflict with the kept model", 422)
+    if not excluded <= {c.id for c in catalog.configurations}:
+        raise DomainError(
+            ErrorCode.INVALID, "Excluded configuration is not in the pinned catalog", 422
+        )
+    filtered = selector.filter(policy.workflow, catalog)
+    ranked = [c for c in selector.rank(policy.workflow, catalog, filtered) if c not in excluded]
+    if any(c not in ranked for c in request.pins.values()):
+        raise DomainError(ErrorCode.UNSUPPORTED, "Pin is excluded or lacks mandatory evidence", 403)
+    prompts = []
+    compiled = []
+    for stage in policy.stages:
+        data = stage.model_dump()
+        if stage.configuration_id:
+            config = request.pins.get(stage.node_id, stage.configuration_id)
+            if stage.node_id in cheaper or config in excluded:
+                if not ranked:
+                    raise DomainError(ErrorCode.UNSUPPORTED, "No eligible alternative remains", 403)
+                config = ranked[0]
+            prompt = next(
+                p
+                for p in policy.prompts
+                if stage.prompt and p.id == stage.prompt.id and p.version == stage.prompt.version
+            )
+            revised = PromptRevision.model_validate(
+                prompt.model_dump()
+                | {
+                    "version": prompt.version + 1,
+                    "parent": VersionRef(id=prompt.id, version=prompt.version),
+                    "template": request.prompt_templates.get(stage.node_id, prompt.template),
+                }
+            )
+            prompts.append(revised)
+            data.update(
+                configuration_id=config,
+                prompt=VersionRef(id=revised.id, version=revised.version),
+                fallback_configuration_ids=(),
+            )
+            data["budget"] = stage.budget.model_copy(
+                update={"max_attempts": 1, "max_model_calls": 1}
+            )
+            if stage.node_id in request.output_schemas:
+                data.update(
+                    response_format=ResponseFormat(
+                        type="json_schema",
+                        json_schema=JsonSchemaFormat(
+                            name="result", schema=request.output_schemas[stage.node_id]
+                        ),
+                    ),
+                    output_types={"result": "json"},
+                )
+        compiled.append(ExecutableStage.model_validate(data))
+    return ExecutablePolicy.model_validate(
+        policy.model_dump()
+        | {
+            "version": policy.version + 1,
+            "stages": compiled,
+            "prompts": prompts,
+            "quality": "untested_provisional",
+            "variant": None,
+        }
+    )
 
 
 def variant(

@@ -3,6 +3,7 @@
 import asyncio
 import hashlib
 import json
+import time
 from collections.abc import AsyncGenerator
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -298,6 +299,8 @@ class Gateway:
                 raise TimeoutError("Sandbox stage deadline")
 
         context = replace(context, deadline=deadline, check_cancelled=check)
+        started = time.perf_counter()
+        upstream_started: float | None = None
         call, attempt = self.start(context, authorized, request, run_id, attempt_number)
         result: InferenceResult | None = None
         try:
@@ -317,7 +320,15 @@ class Gateway:
                 context.tenant_id, attempt.model_copy(update={"status": "dispatched"}), 2
             )
             async with asyncio.timeout(max(0, (deadline - datetime.now(UTC)).total_seconds())):
+                upstream_started = time.perf_counter()
                 result = await self.inference.complete(context, call)
+            upstream_finished = time.perf_counter()
+            attempt = attempt.model_copy(
+                update={
+                    "gateway_overhead_ms": max(0, int((upstream_started - started) * 1000)),
+                    "upstream_ms": max(0, int((upstream_finished - upstream_started) * 1000)),
+                }
+            )
             check()
             if result.completion.model != request.model or result.completion.usage != result.usage:
                 raise ValueError("Response identity/usage mismatch")
@@ -332,6 +343,17 @@ class Gateway:
                 raise DomainError(ErrorCode.UNSUPPORTED, "Accounting bound violated", 500)
             return result, done
         except (asyncio.CancelledError, Exception) as error:
+            now = time.perf_counter()
+            attempt = attempt.model_copy(
+                update={
+                    "gateway_overhead_ms": max(
+                        0, int(((upstream_started or now) - started) * 1000)
+                    ),
+                    "upstream_ms": max(0, int((now - upstream_started) * 1000))
+                    if upstream_started
+                    else None,
+                }
+            )
             # A dispatched request is never automatically refunded or restarted.
             try:
                 self.store.latest(context.tenant_id, "trace", context.request_id)

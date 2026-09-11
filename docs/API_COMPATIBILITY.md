@@ -1,4 +1,4 @@
-# Runtime API compatibility — 7B
+# Runtime API compatibility — sandbox integration 09
 
 This is an explicit Chat Completions **subset**, not universal OpenAI compatibility.
 Canonical definitions: `router/backend/buildbox_router/execution_contracts.py`,
@@ -83,7 +83,53 @@ time or time-to-first-token. Absent measurements remain null. Traces retain poli
 configuration, catalog/evidence, requested endpoint and safely observed served
 identity, not prompts/outputs, secrets or chain-of-thought.
 
+New nonstream measurements separate `upstream_ms` (adapter call wall time) from
+`gateway_overhead_ms` (reservation/pre-dispatch work). The latter is NOT full HTTP,
+authentication, selector or finalization overhead. Comparison `completion_ms`
+includes queue/worker wall time; attempt sums are not parallel end-to-end latency.
+First-content timing remains null for the nonstream workflow runner. No speed or
+model-quality advantage has been established.
+
+Normal inference performs no catalog research. API, worker, draft validation and
+planning now use the same `DeterministicSelector`; the legacy foundation fixture
+selector is restricted to explicit old test dependencies. Eligibility is cached
+by the entire immutable workflow/catalog content, at most 128 entries/five seconds
+and never beyond eligibility expiry. Current key, admission, grant, credential,
+target, privacy and budget checks are not cached. This bounded cache is engineering
+policy, not a freshness claim or a measured production performance improvement.
+
 ## Product, policies and worker
+
+- Planning `proposal_mode=single_stage` is an explicit, disclosed local template
+  for diverse text tasks, not general language-model DAG interpretation. Targeted
+  descriptive answers can resolve questions; unknowns and hard conflicts cannot
+  waive gates. Existing separately authorized interpretation adapters remain.
+- `catalog_mode=approved_runtime` requires an exact tenant-owned non-synthetic
+  `runtime_catalog_id`. Artifact/configuration-specific eligibility carries
+  evidence-linked weights access, contextual license approval, modalities,
+  parameter support, deployment and observation/expiry. Hosted listings alone
+  remain insufficient. A later registry change cannot mutate the saved snapshot.
+- `POST /api/studio/policies/{id}/versions/{v}/propose-edit` returns an UNSAVED next
+  version for confirmation. Pins/exclusions, prompts and strict output schemas
+  use canonical contracts. The bounded natural-language edit grammar is
+  `[keep the STAGE model but ]make STAGE cheaper`; ambiguous/other instructions
+  reject explicitly. It never changes an enabled version or reuses its admission.
+- `GET /api/studio/policies/{id}/history`, `GET /api/studio/usage` (optional route,
+  since, until filters), and `GET /api/sandbox/runs/{id}/outputs` expose scoped
+  persisted records. Usage coverage is bounded to 1,000 latest attempt records
+  BEFORE filtering; it is not an exhaustive billing report.
+- Imports accept typed inert `tool_schemas`, user-declared tuning/holdout split,
+  strict output schema and reviewed expected answers. Comparison checks strict
+  schema and reviewed exact match; observed trace answers are never ground truth.
+  Free-form rubric execution/self-grading is unsupported. Import size, tenancy,
+  retention and external-processing consent remain enforced.
+- Raw workflow inputs are conservatively treated as tenant-private. Use a saved,
+  consented `sample_reference` for narrower synthetic/public processing authority.
+  Local-only imported samples cannot escape through a hosted fallback.
+- Read-only tools are operator-provisioned, tenant-bound fixed packets. Current
+  expiry/removal/content changes are checked at dispatch. They are not runtime
+  search, fetch arbitrary URLs, or execute imported tool schemas. Packet changes
+  require explicit operator review/recomposition; no silent live search fallback.
 
 - `POST /api/studio/policies/{id}/versions/{v}/variants` creates a **new draft**
   using the pinned catalog and existing selector. Quality and balanced share the

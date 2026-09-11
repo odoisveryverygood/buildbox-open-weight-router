@@ -8,6 +8,7 @@ not inferred from evidence prose or smuggled through unstructured metadata.
 import itertools
 import math
 import re
+from datetime import UTC, datetime
 
 from ...contracts import (
     Assignment,
@@ -53,7 +54,9 @@ def _decision(rule: str, value: bool | None, sources: tuple[str, ...], reason: s
     )
 
 
-def _source_valid(fact: Fact[bool] | Fact[float] | Fact[str], catalog: CatalogSnapshot) -> bool:
+def _source_valid(
+    fact: Fact[bool] | Fact[float] | Fact[str] | Fact[tuple[str, ...]], catalog: CatalogSnapshot
+) -> bool:
     evidence = {e.id: e for e in catalog.evidence}
     ids = fact.provenance.evidence_ids
     if not ids or any(i not in evidence for i in ids):
@@ -89,6 +92,21 @@ class DeterministicSelector:
             artifact = artifacts[candidate.artifact_id]
             checks: list[Fact[bool]] = []
             weight = artifact.open_weight
+            eligibility = next(
+                (e for e in catalog.eligibility if e.configuration_id == candidate.id), None
+            )
+            current = False
+            if eligibility:
+                try:
+                    observed = datetime.fromisoformat(eligibility.observed_at)
+                    expires = datetime.fromisoformat(eligibility.expires_at)
+                    current = (
+                        observed.tzinfo is not None
+                        and expires.tzinfo is not None
+                        and observed <= datetime.now(UTC) < expires
+                    )
+                except ValueError:
+                    pass
             checks.append(
                 _decision(
                     "open_weight",
@@ -103,9 +121,22 @@ class DeterministicSelector:
                 checks.append(
                     _decision(
                         "artifact_download_and_legal_scope",
-                        None,
-                        artifact.provenance.evidence_ids,
-                        "v1 lacks exact download verification and contextual license-policy fields; a listing is not verified weights or legal suitability",
+                        True
+                        if current
+                        and eligibility
+                        and all(
+                            f.value is True and _source_valid(f, catalog)
+                            for f in (eligibility.weights_access, eligibility.license_policy)
+                        )
+                        else None,
+                        tuple(
+                            e
+                            for f in (eligibility.weights_access, eligibility.license_policy)
+                            for e in f.provenance.evidence_ids
+                        )
+                        if eligibility
+                        else artifact.provenance.evidence_ids,
+                        "Current exact download and contextual license-policy evidence is required; a listing alone is insufficient",
                     )
                 )
             for rule, fact, ceiling in (
@@ -144,20 +175,74 @@ class DeterministicSelector:
                         "Required region is not established; region alone does not establish privacy or retention",
                     )
                 )
+            requires_parameters = set()
+            if workflow.requirements.structured_output:
+                requires_parameters.add("response_format")
+            if workflow.requirements.tool_calling:
+                requires_parameters.update(("tools", "tool_choice"))
             if any(
-                n.kind == "bounded_agent"
-                or (
-                    n.kind == "llm"
-                    and re.search(r"\bjson\b|structured output|tool.call", n.purpose, re.IGNORECASE)
-                )
+                n.kind == "llm"
+                and re.search(r"\bjson\b|structured output", n.purpose, re.IGNORECASE)
                 for n in workflow.nodes
             ):
+                requires_parameters.add("response_format")
+            if any(re.search(r"tool.call", n.purpose, re.I) for n in workflow.nodes):
+                requires_parameters.update(("tools", "tool_choice"))
+            if any(n.kind == "bounded_agent" for n in workflow.nodes):
+                checks.append(
+                    _decision(
+                        "bounded_agent", None, (), "Agent-loop/tool-call execution is not supported"
+                    )
+                )
+            if requires_parameters:
                 checks.append(
                     _decision(
                         "model_tool_output_capabilities",
-                        None,
-                        (),
-                        "v1 lacks configuration-specific tool-call/output capabilities; mandatory support needs verification",
+                        True
+                        if current
+                        and eligibility
+                        and _source_valid(eligibility.supported_parameters, catalog)
+                        and eligibility.supported_parameters.value is not None
+                        and requires_parameters <= set(eligibility.supported_parameters.value)
+                        else None,
+                        eligibility.supported_parameters.provenance.evidence_ids
+                        if eligibility
+                        else (),
+                        "Current configuration-specific tool-call/output support needs verification",
+                    )
+                )
+            for rule, expected, requirement_fact in (
+                (
+                    "input_modality",
+                    workflow.requirements.input_modality,
+                    eligibility.input_modalities if eligibility else None,
+                ),
+                (
+                    "deployment",
+                    workflow.requirements.deployment,
+                    eligibility.deployment if eligibility else None,
+                ),
+            ):
+                if expected == "any" or (catalog.synthetic and expected == "text"):
+                    continue
+                established = (
+                    current
+                    and requirement_fact is not None
+                    and _source_valid(requirement_fact, catalog)
+                    and requirement_fact.value is not None
+                )
+                checks.append(
+                    _decision(
+                        rule,
+                        (
+                            expected in requirement_fact.value
+                            if isinstance(requirement_fact.value, tuple)
+                            else expected == requirement_fact.value
+                        )
+                        if established and requirement_fact
+                        else None,
+                        requirement_fact.provenance.evidence_ids if requirement_fact else (),
+                        "Mandatory deployment/modality unknown or stale",
                     )
                 )
             for requirement in UNREPRESENTED:
@@ -373,6 +458,6 @@ class DeterministicSelector:
                     )
                     or "none"
                 ),
-                "Missing contract fields block downloadable-artifact/legal suitability, context/output limits, hardware fit, privacy policy and scoped customer-evaluation claims.",
+                "Unknown mandatory facts remain blocked. Catalog eligibility does not establish runtime connectivity, hardware fit, privacy approval or customer-workload quality.",
             ),
         )

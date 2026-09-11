@@ -28,6 +28,6 @@ export default function Imports({onImport}: {onImport:(rows:S['ImportedSample'][
     {error&&<p role="alert" className="error">{error}</p>}
     {!!preview.length&&<><h3>{preview.length} records ready for review</h3><pre>{JSON.stringify(preview,null,2)}</pre><button disabled={busy} onClick={save}>{busy?'Importing…':'Confirm import to this workspace'}</button></>}
     {!!saved.length&&<p role="status">Saved sample IDs: {saved.join(', ')}. Copy IDs to recover after reload; sample text is not stored in browser storage.</p>}
-    <details><summary>Held-out evaluation and trace limitations</summary><p>This is an exploratory sample set, not a registered holdout. The frozen import contract has no tuning/holdout split, rubric or tool-schema fields; imports containing unsupported fields are rejected. Do not reuse these samples as an immutable evaluation holdout. Integration must add split provenance before a held-out quality claim.</p></details>
+    <details><summary>Held-out evaluation and trace limitations</summary><p>JSON/JSONL records support split (tuning, holdout, unspecified), expected_reviewed, output_schema and tool_schemas. Split labels are user-declared, not proof of an uncontaminated holdout. Exact-match checks run only against explicitly reviewed expected answers. Schema checks do not prove semantic accuracy. Imported tool schemas are inert data and never grant execution authority.</p></details>
   </section>;
 }
