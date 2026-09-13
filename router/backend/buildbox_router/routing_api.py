@@ -18,6 +18,8 @@ from .routing_contracts import (
     CatalogChange,
     CatalogDiffRequest,
     DraftFromDecision,
+    ExecutionOutcome,
+    OutcomeRating,
     PolicyEvaluationReport,
     PolicyEvaluationRequest,
     PreviewRequest,
@@ -29,6 +31,23 @@ from .routing_contracts import (
 )
 
 router = APIRouter(prefix="/api/studio/intelligence", tags=["Workload intelligence"])
+
+
+@router.get("/outcomes")
+def outcomes(request: Request) -> tuple[ExecutionOutcome, ...]:
+    from .gateway.outcomes import history
+
+    return history(repository(request), request.state.owner)
+
+
+@router.post("/outcomes/{identifier}/rating")
+def rate_outcome(identifier: str, value: OutcomeRating, request: Request) -> OutcomeRating:
+    store, owner = repository(request), request.state.owner
+    store.read(owner, "execution_outcome", identifier)
+    with store.engine.begin() as conn:
+        # One explicit immutable rating per outcome; cannot manufacture a sample count.
+        append(conn, owner, "outcome_rating", identifier, 1, value)
+    return value
 
 
 def catalogs(request: Request) -> dict[str, CatalogSnapshot]:

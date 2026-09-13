@@ -35,11 +35,11 @@ Workload + explicit overrides
               │
        registered transport A or B; validated read-only tools
               │
-       output validation / bounded pinned fallback
+       output validation / bounded pinned fallback or repair → revalidate
               │
        persisted outputs + every attempt + usage reconciliation
               │
-       reviewed evaluation / evidence, not automatic quality promotion
+       immutable outcome + optional explicit rating; no automatic quality promotion
 ```
 
 Paths in the following sections are relative to `router/backend/buildbox_router/`.
@@ -130,8 +130,13 @@ Expiry is source/field-specific snapshot policy, not a universal freshness claim
    receive a discount. Unknown values are never silently zero measurements.
 5. Pareto selection over active objectives. An unknown metric cannot dominate a
    known one. All candidates, rejections, metric bases and component scores persist.
-6. Confidence from measured task coverage, sample threshold, unknowns, competing
-   evidence and utility margin. Synthetic decisions remain LOW confidence.
+6. Separate routing confidence from model-quality confidence. A sole hard-eligible
+   deployment gives high confidence in constraint satisfaction relative to the
+   pinned catalog. Close utilities give medium routing confidence; missing compatible
+   objective evidence gives low; complete compatible objectives and a clear margin
+   give high. Synthetic catalog scope is explicit. Model-quality confidence still
+   requires measured task coverage/sample thresholds; synthetic quality remains LOW.
+   The legacy `confidence` field retains quality semantics for old clients.
 
 Cost forecast in micro-USD is `input_tokens × input_USD_per_million +
 output_tokens × output_USD_per_million + request_USD × 1e6`. Per-attempt reservations
@@ -151,10 +156,17 @@ or invented percentage is used. Catalog IDs and content digests are frozen.
 | Multi-stage | Extraction → task-specific reasoning → synthesis, independently selected per stage. |
 | Parallel | Three bounded analysis/review branches → synthesis; existing dependency-wave runtime executes them. |
 | Cheap-first | Cost-ordered primary; only eligible candidates with higher comparable task evidence may be escalation targets. Literal reviewed validation criteria are required. |
-| Generate + verify | Generator → separate verifier stage. The verifier may use the same eligible configuration; independence or superior quality is not claimed. |
+| Generate + verify | Generator → verifier. With explicit deterministic acceptance criteria and repairs enabled, the deterministic validator is the verifier; failed checks trigger bounded same-target repair and revalidation. Otherwise the existing separate LLM verifier remains. No independence or superior quality claim. |
 
-Strategies are bounded templates plus transparent rules, **not a global optimizer
-over arbitrary DAGs**. Generate/verify does not yet perform conditional repair.
+All templates compile through `ExecutionPlan` (`dag-1`) into the same canonical
+workflow and runtime. `/preview` also accepts a reviewed custom graph of up to eight
+text stages, task families, dependencies, validators and bounded repair/escalation
+edges. Input order is normalized topologically; cycles/missing dependencies and
+duplicates are rejected. Independent stages run concurrently; dependent synthesis
+receives the named predecessor results plus the original input. Validation is a
+typed post-generation control step within each node, not another model call.
+Only validated output crosses a dependency edge. No autonomous graph editing or
+global search over arbitrary DAGs is claimed.
 Planned worst-case calls include every allowed attempt. Cost is summed across
 stages/attempts; latency follows the critical path rather than adding parallel
 branches. Hard caps block impossible plans. Input envelopes must include prompt
@@ -174,10 +186,24 @@ citation-URL allowlist checks (no fetch or entailment claim). A critic is not an
 automatic quality oracle. Failed output validation remains visible and accounted.
 
 `fallback_on` restricts allowable failure classes for pinned attempts. There are at
-most three attempts, no same-target indefinite retry, no fallback after response
+most three total attempts per node (original + fallbacks + repairs), no indefinite
+retry, no fallback after response
 commit, and no repeated business-tool side effects. Failed/partial requests retain
 unknown charges as pending. Strict post-output validators reject streaming before
 dispatch; they cannot retrospectively withdraw an invalid streamed answer.
+
+`max_repairs` is configurable from zero to two, requires explicit validators and
+reserved attempt capacity, and defaults to zero for compatibility. Only invalid
+output/quality-validation failures can trigger repair. Repair uses the same pinned
+target and prompt with the failed output/checks supplied as untrusted data; it
+re-enters authorization, privacy, input-envelope, cost and deadline checks.
+Tool-bearing repair is rejected. Invalid original outputs use private expiring
+storage. Every attempt has its own output reference where invalid, validation,
+recovery action/reason, usage reservation and final reconciliation. SSE usage
+events include all settled attempts. Known-charge validation exhaustion is a failed
+run, not an ambiguous provider charge; unknown charges remain uncertain.
+Worst-case repair reservations include the full input envelope and round each
+attempt upward separately, avoiding aggregate-rounding under-reservation.
 
 Revision 5 adds `deployment_health`, scoped by tenant + configuration + catalog.
 Transport failure/rate-limit/timeout observations can open a configurable circuit;
@@ -211,13 +237,23 @@ counts plus policy disagreement. It is not an unlimited analytics or billing exp
 Detailed tool/schema outcomes remain in existing runs/attempts/comparison records;
 dedicated aggregate tool/schema-rate dashboards are not added.
 
+Terminal workflow executions append content-free `ExecutionOutcome` observations
+with exact run/policy/catalog/decision references, status, final validation, earlier
+failed checks, summed attempt latency (not parallel wall time), known cost,
+unknown-charge count, fallback and repair usage. One optional immutable 1–5 user
+rating can be attached through tenant-scoped studio authorization. Query coverage
+is at most 1000 records; these observations never alter ranking or become benchmark
+truth. Existing append-only storage and private output TTL are reused; no migration
+or second evidence database is needed. Dedicated retention quotas remain future
+production work rather than deletion of historical snapshots.
+
 ## API and UI
 
 New authenticated `/api/studio/intelligence` endpoints:
 
 | Method/path suffix | Behavior |
 |---|---|
-| GET `/status` | Owned catalog snapshots; explicitly injected D–J fixtures only in test composition |
+| GET `/status` | Owned catalog snapshots; explicitly injected D–K fixtures only in test composition |
 | POST `/analyze` | Local `WorkloadProfile`, no persistence or inference |
 | POST `/preview` | Saved immutable decision, no activation |
 | GET `/decisions/{id}` | Tenant-owned complete decision |
@@ -226,6 +262,8 @@ New authenticated `/api/studio/intelligence` endpoints:
 | POST `/catalog-diff` | Artifact/deployment/capability/price/evidence snapshot differences |
 | POST `/evaluate` | Up to 30 saved decision comparisons; explicitly router behavior only |
 | GET `/metrics` | Bounded recorded aggregates with unknowns retained |
+| GET `/outcomes` | Tenant-scoped content-free terminal outcomes and explicit ratings; no ranking effect |
+| POST `/outcomes/{run_id}/rating` | One immutable explicit rating for an owned outcome; identical repeats idempotent |
 
 Execution, outputs, imports, comparison and aliases reuse the existing sandbox and
 studio APIs. `/v1/models` and `/v1/chat/completions` remain the documented subset;
@@ -241,6 +279,12 @@ normalization, cross-method conflicts, Pareto, explanation consistency, confiden
 strategy budgets, typed DAG execution, validators, escalation, circuits, immutable
 versions, tenant access and no-authority what-if. Existing security/runtime tests
 remain unchanged apart from forward migration/legacy-fixture expectations.
+
+`test_sandbox_completion.py` adds repair pass/exhaustion/skip, preserved invalid
+output and both charges/events, custom graph order/parallel fan-in, conditional
+escalation, hard caps, immutable rating/tenant boundaries and confidence separation.
+Scenario K in `/?intelligence=1` shows a synthetic invalid generation → one repair
+→ passing validation, both outputs and attempts, and the recorded outcome.
 
 `uv run python -m tests.gateway.evaluate_advanced --output output/advanced-evaluation.json`
 creates an isolated loopback test composition. It compares two policies for nine

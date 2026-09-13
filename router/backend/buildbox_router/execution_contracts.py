@@ -53,6 +53,7 @@ def digest(value: BaseModel) -> str:
             "router_policy_ref": None,
             "catalog_digest": None,
             "validation_rules": [],
+            "max_repairs": 0,
             "fallback_on": [],
             "circuit_policy": None,
         }
@@ -213,6 +214,7 @@ class ExecutableStage(ExecutionContract):
     stop: StopConditions = Field(default_factory=StopConditions)
     workload_profile: WorkloadProfile | None = None
     validation_rules: tuple[ValidationRule, ...] = Field(default=(), max_length=5)
+    max_repairs: int = Field(default=0, ge=0, le=2, strict=True)
     fallback_on: tuple[FailureKind, ...] = ()
 
 
@@ -251,6 +253,15 @@ class ExecutablePolicy(ExecutionContract):
         used_prompts = set()
         for name, stage in stages.items():
             node = nodes[name]
+            if stage.max_repairs and (
+                node.kind != "llm"
+                or not stage.validation_rules
+                or 1 + stage.max_repairs + len(stage.fallback_configuration_ids)
+                > stage.budget.max_attempts
+            ):
+                raise ValueError(
+                    "Repair requires explicit validators and reserved bounded attempts"
+                )
             if (
                 len(set(stage.fallback_configuration_ids)) != len(stage.fallback_configuration_ids)
                 or stage.configuration_id in stage.fallback_configuration_ids
@@ -258,7 +269,8 @@ class ExecutablePolicy(ExecutionContract):
                 raise ValueError("Fallback pins must be distinct")
             if stage.fallback_configuration_ids and (
                 node.kind != "llm"
-                or len(stage.fallback_configuration_ids) + 1 > stage.budget.max_attempts
+                or len(stage.fallback_configuration_ids) + 1 + stage.max_repairs
+                > stage.budget.max_attempts
             ):
                 raise ValueError("Fallbacks require explicit bounded model attempts")
             if stage.response_format is not None and node.kind != "llm":
@@ -733,6 +745,7 @@ class RunAttempt(ExecutionContract):
     time_to_first_content_ms: int | None = Field(default=None, ge=0)
     failure_kind: FailureKind | None = None
     fallback_reason: FailureKind | None = None
+    recovery_action: Literal["fallback", "repair"] | None = None
     validation: tuple[ValidationObservation, ...] = ()
     latency_definition: Literal["reservation_to_finalization_wall_clock"] = (
         "reservation_to_finalization_wall_clock"

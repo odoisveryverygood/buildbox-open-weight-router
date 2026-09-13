@@ -190,3 +190,24 @@ enforcement, not Buildbox-owned serving. Current official references inspected:
 **LIVE INFERENCE NOT VERIFIED. LIVE SECOND PROVIDER = UNVERIFIED.**
 Only explicit synthetic loopback HTTP and recorded OpenRouter fixtures were run;
 no authorized registry, provider key or target grant was supplied in this session.
+
+## Advanced local sandbox completion (milestone 12)
+
+Additive `/api/studio/intelligence/preview` inputs: `execution_plan` (version `dag-1`,
+up to eight reviewed typed text stages with dependencies, validators and bounded
+repair/escalation) and `max_repairs` (0–2 for strategy templates). These compile
+to the existing executable policy; they do not grant admission. All attempts share
+the per-stage cap (at most three) and aggregate policy budget. Repairs require
+nonstream validated output, no tool-bearing call, and authorized private retention.
+`RunAttempt.recovery_action` distinguishes repair from fallback. Strict validation
+still rejects SSE before dispatch; ordinary supported stage SSE is unchanged.
+
+`StageDecision.routing_confidence` and `quality_confidence` are separate; legacy
+`confidence` continues to mean quality confidence. Synthetic quality remains LOW;
+constraint confidence may be high relative to the explicitly synthetic snapshot.
+
+`GET /api/studio/intelligence/outcomes` returns up to 1000 tenant-owned content-free
+terminal workflow observations. `POST /outcomes/{run_id}/rating` accepts one explicit
+integer rating 1–5. Identical repetition is idempotent, a changed rating conflicts,
+and another tenant cannot read/rate the run. No outcome or rating affects ranking.
+No client compatibility claim or provider connection was expanded.

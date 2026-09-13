@@ -54,7 +54,7 @@ export function draftPolicy(view: S['PlanView']): S['ExecutablePolicy'] {
     }
     return {execution_schema:'2.0', node_id:node.id, input_types, output_types, prompt, configuration_id,
       fallback_configuration_ids:[], route_requirements:null, response_format:null,
-      workload_profile:null, validation_rules:[], fallback_on:[],
+      workload_profile:null, validation_rules:[], max_repairs:0, fallback_on:[],
       operation:null, allowed_tool_ids:node.kind === 'tool' && node.tool_id ? [node.tool_id] : [],
       budget:budget(node.kind === 'llm' ? 1 : 0, node.kind === 'tool' ? 1 : 0), stop:{execution_schema:'2.0', on_error:'stop', on_budget_exhausted:'stop', on_cancel:'stop_before_next_dispatch', on_human_approval:'pause'}};
   });

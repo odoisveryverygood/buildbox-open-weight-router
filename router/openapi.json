@@ -3172,6 +3172,13 @@
             "title": "Input Types",
             "type": "object"
           },
+          "max_repairs": {
+            "default": 0,
+            "maximum": 2,
+            "minimum": 0,
+            "title": "Max Repairs",
+            "type": "integer"
+          },
           "node_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Node Id",
@@ -3355,6 +3362,13 @@
             "title": "Input Types",
             "type": "object"
           },
+          "max_repairs": {
+            "default": 0,
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Max Repairs",
+            "type": "integer"
+          },
           "node_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Node Id",
@@ -3533,6 +3547,13 @@
             "title": "Input Types",
             "type": "object"
           },
+          "max_repairs": {
+            "default": 0,
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Max Repairs",
+            "type": "integer"
+          },
           "node_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Node Id",
@@ -3701,6 +3722,165 @@
           "timeout_ms"
         ],
         "title": "ExecutionBudget",
+        "type": "object"
+      },
+      "ExecutionOutcome": {
+        "additionalProperties": false,
+        "properties": {
+          "affects_ranking": {
+            "const": false,
+            "default": false,
+            "title": "Affects Ranking",
+            "type": "boolean"
+          },
+          "attempt_count": {
+            "title": "Attempt Count",
+            "type": "integer"
+          },
+          "attempt_latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt Latency Ms"
+          },
+          "catalog_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Catalog Id",
+            "type": "string"
+          },
+          "decision_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Id"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "failed_validations": {
+            "title": "Failed Validations",
+            "type": "integer"
+          },
+          "fallback_count": {
+            "title": "Fallback Count",
+            "type": "integer"
+          },
+          "known_cost_micro_usd": {
+            "title": "Known Cost Micro Usd",
+            "type": "integer"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "repair_count": {
+            "title": "Repair Count",
+            "type": "integer"
+          },
+          "run_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "unknown_cost_attempts": {
+            "title": "Unknown Cost Attempts",
+            "type": "integer"
+          },
+          "validation_passed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation Passed"
+          }
+        },
+        "required": [
+          "run_id",
+          "policy",
+          "catalog_id",
+          "decision_id",
+          "status",
+          "validation_passed",
+          "failed_validations",
+          "attempt_count",
+          "attempt_latency_ms",
+          "known_cost_micro_usd",
+          "unknown_cost_attempts",
+          "fallback_count",
+          "repair_count",
+          "synthetic"
+        ],
+        "title": "ExecutionOutcome",
+        "type": "object"
+      },
+      "ExecutionPlan": {
+        "additionalProperties": false,
+        "description": "Compiles to the canonical Workflow/ExecutablePolicy; never a second runtime.",
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/PlanStage"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Stages",
+            "type": "array"
+          },
+          "version": {
+            "const": "dag-1",
+            "default": "dag-1",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stages"
+        ],
+        "title": "ExecutionPlan",
         "type": "object"
       },
       "ExecutionSchemaBundle": {
@@ -5869,6 +6049,28 @@
         "title": "Node",
         "type": "object"
       },
+      "OutcomeRating": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "rating": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Rating",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rating"
+        ],
+        "title": "OutcomeRating",
+        "type": "object"
+      },
       "PerformanceEvidence": {
         "additionalProperties": false,
         "properties": {
@@ -6139,6 +6341,81 @@
           "intake"
         ],
         "title": "PlanInput",
+        "type": "object"
+      },
+      "PlanStage": {
+        "additionalProperties": false,
+        "description": "A reviewed text stage, with deterministic validation and bounded recovery edges.",
+        "properties": {
+          "depends_on": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Depends On",
+            "type": "array"
+          },
+          "escalate": {
+            "default": false,
+            "title": "Escalate",
+            "type": "boolean"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_repairs": {
+            "default": 0,
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Max Repairs",
+            "type": "integer"
+          },
+          "task": {
+            "enum": [
+              "extraction",
+              "summarization",
+              "classification",
+              "coding",
+              "debugging",
+              "mathematics",
+              "science",
+              "long_context",
+              "tool_use",
+              "structured_extraction",
+              "research",
+              "planning",
+              "multilingual",
+              "vision",
+              "general"
+            ],
+            "title": "Task",
+            "type": "string"
+          },
+          "validators": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ValidationRule"
+            },
+            "maxItems": 5,
+            "title": "Validators",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "task"
+        ],
+        "title": "PlanStage",
         "type": "object"
       },
       "PlanVersion": {
@@ -6748,11 +7025,28 @@
             "title": "Description",
             "type": "string"
           },
+          "execution_plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "execution_schema": {
             "const": "2.0",
             "default": "2.0",
             "title": "Execution Schema",
             "type": "string"
+          },
+          "max_repairs": {
+            "default": 0,
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Max Repairs",
+            "type": "integer"
           },
           "overrides": {
             "anyOf": [
@@ -7673,6 +7967,16 @@
             "title": "Created At",
             "type": "string"
           },
+          "execution_plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "execution_schema": {
             "const": "2.0",
             "default": "2.0",
@@ -7921,6 +8225,22 @@
             ],
             "default": null,
             "title": "Output Reference"
+          },
+          "recovery_action": {
+            "anyOf": [
+              {
+                "enum": [
+                  "fallback",
+                  "repair"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Recovery Action"
           },
           "run_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
@@ -8665,6 +8985,31 @@
           },
           "profile": {
             "$ref": "#/components/schemas/WorkloadProfile"
+          },
+          "quality_confidence": {
+            "default": "low",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Quality Confidence",
+            "type": "string"
+          },
+          "routing_confidence": {
+            "default": "low",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Routing Confidence",
+            "type": "string"
+          },
+          "routing_confidence_reason": {
+            "default": "Historical decision; not separately calibrated",
+            "title": "Routing Confidence Reason",
+            "type": "string"
           },
           "selected": {
             "anyOf": [
@@ -12869,6 +13214,153 @@
           }
         },
         "summary": "Metrics",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/outcomes": {
+      "get": {
+        "operationId": "outcomes_api_studio_intelligence_outcomes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExecutionOutcome"
+                  },
+                  "title": "Response Outcomes Api Studio Intelligence Outcomes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Outcomes",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/outcomes/{identifier}/rating": {
+      "post": {
+        "operationId": "rate_outcome_api_studio_intelligence_outcomes__identifier__rating_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutcomeRating"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomeRating"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Rate Outcome",
         "tags": [
           "Workload intelligence"
         ]

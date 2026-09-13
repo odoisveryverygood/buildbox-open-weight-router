@@ -6,7 +6,7 @@ async page => {
   await page.route('**/api/**',r=>r.continue({headers:{...r.request().headers(),Authorization:'Basic '+basic}}));
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/?intelligence=1');
-  const titles=['D · Long context','E · Privacy','F · Hard budget','G · Specialist stages','H · Validation escalation','I · Deployment health'];
+  const titles=['D · Long context','E · Privacy','F · Hard budget','G · Specialist stages','H · Validation escalation','I · Deployment health','K · Generate → Verify → Repair'];
   const results=[];
   for(const title of titles){
     await page.getByRole('button',{name:title,exact:true}).click();
@@ -22,6 +22,14 @@ async page => {
     await page.getByRole('button',{name:'Enable sandbox & run',exact:true}).click();
     await page.getByRole('status').filter({hasText:'Workflow succeeded'}).waitFor();
     if(title.startsWith('H')&&!(await page.getByText(/required_terms: fail/).count()))throw new Error('Failed validation hidden');
+    if(title.startsWith('K')){
+      await page.getByText(/repair after quality_validation/).waitFor();
+      await page.getByText(/2 attempts · 1 repairs · 0 fallbacks/).waitFor();
+      if(!(await page.getByText(/required_terms: fail/).count())||!(await page.getByText(/required_terms: pass/).count()))throw new Error('Repair validation trace hidden');
+      if(!(await page.getByText(/Incomplete synthetic first result/).count()))throw new Error('Original output not retained');
+      await page.getByRole('button',{name:'Save explicit rating',exact:true}).click();
+      await page.getByText(/rating 3/).waitFor();
+    }
     results.push({scenario:title,status:'succeeded',pins:trace.stages.map(s=>s.selected)});
   }
   // Repeating H must again show two accounted attempts rather than a one-shot trick.

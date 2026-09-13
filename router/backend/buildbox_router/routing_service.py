@@ -72,6 +72,7 @@ def what_if(
             catalog_id=original.catalog.id,
             policy=request.policy,
             required_terms=original.required_terms,
+            execution_plan=original.execution_plan,
         ),
         original.catalog,
         profile=profile,

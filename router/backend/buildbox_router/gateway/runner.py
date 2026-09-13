@@ -25,7 +25,6 @@ from ..execution_contracts import (
     GatewayError,
     GatewayErrorDetail,
     PromptRevision,
-    RunAttempt,
     RunErrorEvent,
     RunEvent,
     RunStatusEvent,
@@ -321,10 +320,23 @@ class WorkflowRunner:
                         ),
                         return_exceptions=True,
                     )
-                    failed = False
+                    stage_error: BaseException | None = None
                     for node, result in zip(ready, results, strict=True):
+                        # Publish every settled attempt, including failed validation,
+                        # fallback and repair; parallel tasks never race event sequences.
+                        for record in self.store.attempts(context.tenant_id, identifier):
+                            if record.node_id == node.id:
+                                events = self.store.events(context.tenant_id, identifier, 0)
+                                self._event(
+                                    context,
+                                    RunUsageEvent(
+                                        run_id=identifier,
+                                        sequence=len(events) + 1,
+                                        usage=record.usage,
+                                    ),
+                                )
                         if isinstance(result, BaseException):
-                            failed = True
+                            stage_error = stage_error or result
                             continue
                         output, attempt_id, output_id = result
                         outputs[node.id] = output
@@ -334,26 +346,27 @@ class WorkflowRunner:
                             }
                         )
                         self._save(context, run)  # Durable checkpoint before next frontier.
-                        if attempt_id:
-                            record = RunAttempt.model_validate_json(
-                                self.store.latest(context.tenant_id, "attempt", attempt_id)[1]
-                            )
-                            events = self.store.events(context.tenant_id, identifier, 0)
-                            self._event(
-                                context,
-                                RunUsageEvent(
-                                    run_id=identifier, sequence=len(events) + 1, usage=record.usage
-                                ),
-                            )
-                    if failed:
-                        raise ValueError("A parallel stage failed; no next-stage dispatch")
+                    if stage_error:
+                        raise stage_error
                 else:
                     run = run.model_copy(update={"status": "succeeded"})
-        except (asyncio.CancelledError, Exception):
+        except (asyncio.CancelledError, Exception) as error:
             current = self.store.request_state(context.tenant_id, identifier)
             # Once an upstream was dispatched, preserve the conservative interrupted
             # workflow state even if one attempt's billing has already reconciled.
             uncertain = bool(self.store.attempts(context.tenant_id, identifier))
+            from .service import RoutedFailure
+
+            if isinstance(error, RoutedFailure) and error.kind in (
+                "quality_validation",
+                "invalid_output",
+                "budget_violation",
+                "capability_mismatch",
+            ):
+                uncertain = any(
+                    a.usage.actual_micro_usd is None
+                    for a in self.store.attempts(context.tenant_id, identifier)
+                )
             run = run.model_copy(
                 update={
                     "status": "cancelled"
@@ -393,6 +406,10 @@ class WorkflowRunner:
             }
         )
         self._save(context, run)
+        if run.status in ("succeeded", "failed", "uncertain", "cancelled"):
+            from .outcomes import record_outcome
+
+            record_outcome(self.store, context.tenant_id, run)
         return run
 
     async def _stage(

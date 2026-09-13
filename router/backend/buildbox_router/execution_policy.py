@@ -111,7 +111,10 @@ def edit(
                 fallback_configuration_ids=(),
             )
             data["budget"] = stage.budget.model_copy(
-                update={"max_attempts": 1, "max_model_calls": 1}
+                update={
+                    "max_attempts": 1 + stage.max_repairs,
+                    "max_model_calls": 1 + stage.max_repairs,
+                }
             )
             if stage.node_id in request.output_schemas:
                 data.update(
@@ -195,7 +198,9 @@ def variant(
         # endpoint capability or reserve bounds. Runtime rechecks every dispatch.
         data = stage.model_dump()
         data.update(configuration_id=ranked[0], fallback_configuration_ids=())
-        data["budget"] = stage.budget.model_copy(update={"max_attempts": 1, "max_model_calls": 1})
+        data["budget"] = stage.budget.model_copy(
+            update={"max_attempts": 1 + stage.max_repairs, "max_model_calls": 1 + stage.max_repairs}
+        )
         stages.append(ExecutableStage.model_validate(data))
     return ExecutablePolicy.model_validate(
         policy.model_dump()

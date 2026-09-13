@@ -351,13 +351,24 @@ def test_unknown_not_false_and_nonfinite_rejected(catalog):
         DeploymentIntelligence(configuration_id="test", facts={"latency_ms": bad})
 
 
-def test_advanced_scenarios_real_worker_and_validation_escalation(rt, loopback):
+def test_advanced_scenarios_real_worker_and_validation_escalation(rt, loopback, monkeypatch):
     services = product_services(PlanningStorage(rt.store.engine))
     manifest = setup_demo(rt, loopback, services)
     catalogs, scenarios = setup_advanced(rt, loopback, services, manifest)
     execution = compose_execution(
         rt.store, loopback.registry, services.selector, retention_seconds=60
     )
+    failures = []
+    stage = execution.workflows.runner._stage
+
+    async def observed_stage(*args, **kwargs):
+        try:
+            return await stage(*args, **kwargs)
+        except Exception as error:
+            failures.append(str(error))
+            raise
+
+    monkeypatch.setattr(execution.workflows.runner, "_stage", observed_stage)
     for scenario in scenarios:
         policy = rt.store.policy("alice", scenario.policy).policy
         rt.store.transition(
@@ -375,6 +386,7 @@ def test_advanced_scenarios_real_worker_and_validation_escalation(rt, loopback):
         assert run_once(services, execution=execution)
         result = asyncio.run(execution.workflows.get(ctx(), run.id))
         assert result.status == "succeeded", (
+            failures,
             scenario.id,
             result,
             rt.store.attempts("alice", run.id),
@@ -441,7 +453,11 @@ def test_confidence_threshold_logic_with_explicit_unit_stubs(
     result = optimization.select(
         profile(task="coding"), catalog.model_copy(update={"synthetic": False}), policy, "respond"
     )
-    assert result.confidence == expected and f"Confidence {expected}" in result.explanation
+    assert (
+        result.confidence == expected
+        and f"Model-quality confidence {expected}" in result.explanation
+    )
+    assert result.quality_confidence == expected
 
 
 def test_objective_preserved_without_template_injection(catalog):

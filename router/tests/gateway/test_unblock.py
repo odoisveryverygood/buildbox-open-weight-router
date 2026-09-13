@@ -741,6 +741,7 @@ def test_legacy_policy_digest_and_revision_three_migration(tmp_path):
                     "catalog_digest",
                     "circuit_policy",
                     "validation_rules",
+                    "max_repairs",
                     "fallback_on",
                 }
             }

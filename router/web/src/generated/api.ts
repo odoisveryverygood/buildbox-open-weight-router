@@ -650,6 +650,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/studio/intelligence/outcomes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Outcomes */
+        get: operations["outcomes_api_studio_intelligence_outcomes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/intelligence/outcomes/{identifier}/rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rate Outcome */
+        post: operations["rate_outcome_api_studio_intelligence_outcomes__identifier__rating_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/studio/intelligence/preview": {
         parameters: {
             query?: never;
@@ -2308,6 +2342,11 @@ export interface components {
             input_types: {
                 [key: string]: "text" | "json" | "boolean" | "number";
             };
+            /**
+             * Max Repairs
+             * @default 0
+             */
+            max_repairs: number;
             /** Node Id */
             node_id: string;
             /**
@@ -2364,6 +2403,11 @@ export interface components {
             input_types: {
                 [key: string]: "text" | "json" | "boolean" | "number";
             };
+            /**
+             * Max Repairs
+             * @default 0
+             */
+            max_repairs: number;
             /** Node Id */
             node_id: string;
             /** Operation */
@@ -2413,6 +2457,11 @@ export interface components {
             input_types: {
                 [key: string]: "text" | "json" | "boolean" | "number";
             };
+            /**
+             * Max Repairs
+             * @default 0
+             */
+            max_repairs: number;
             /** Node Id */
             node_id: string;
             /** Operation */
@@ -2463,6 +2512,70 @@ export interface components {
             max_tool_calls: number;
             /** Timeout Ms */
             timeout_ms: number;
+        };
+        /** ExecutionOutcome */
+        ExecutionOutcome: {
+            /**
+             * Affects Ranking
+             * @default false
+             * @constant
+             */
+            affects_ranking: false;
+            /** Attempt Count */
+            attempt_count: number;
+            /** Attempt Latency Ms */
+            attempt_latency_ms: number | null;
+            /** Catalog Id */
+            catalog_id: string;
+            /** Decision Id */
+            decision_id: string | null;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Failed Validations */
+            failed_validations: number;
+            /** Fallback Count */
+            fallback_count: number;
+            /** Known Cost Micro Usd */
+            known_cost_micro_usd: number;
+            policy: components["schemas"]["VersionRef"];
+            /** Rating */
+            rating?: number | null;
+            /** Repair Count */
+            repair_count: number;
+            /** Run Id */
+            run_id: string;
+            /** Status */
+            status: string;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Unknown Cost Attempts */
+            unknown_cost_attempts: number;
+            /** Validation Passed */
+            validation_passed: boolean | null;
+        };
+        /**
+         * ExecutionPlan
+         * @description Compiles to the canonical Workflow/ExecutablePolicy; never a second runtime.
+         */
+        ExecutionPlan: {
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Stages */
+            stages: components["schemas"]["PlanStage"][];
+            /**
+             * Version
+             * @default dag-1
+             * @constant
+             */
+            version: "dag-1";
         };
         /**
          * ExecutionSchemaBundle
@@ -3394,6 +3507,17 @@ export interface components {
              */
             tool_id: string | null;
         };
+        /** OutcomeRating */
+        OutcomeRating: {
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Rating */
+            rating: number;
+        };
         /** PerformanceEvidence */
         PerformanceEvidence: {
             /** Benchmark */
@@ -3507,6 +3631,45 @@ export interface components {
              * @constant
              */
             schema_version: "1.0";
+        };
+        /**
+         * PlanStage
+         * @description A reviewed text stage, with deterministic validation and bounded recovery edges.
+         */
+        PlanStage: {
+            /**
+             * Depends On
+             * @default []
+             */
+            depends_on: string[];
+            /**
+             * Escalate
+             * @default false
+             */
+            escalate: boolean;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Id */
+            id: string;
+            /**
+             * Max Repairs
+             * @default 0
+             */
+            max_repairs: number;
+            /**
+             * Task
+             * @enum {string}
+             */
+            task: "extraction" | "summarization" | "classification" | "coding" | "debugging" | "mathematics" | "science" | "long_context" | "tool_use" | "structured_extraction" | "research" | "planning" | "multilingual" | "vision" | "general";
+            /**
+             * Validators
+             * @default []
+             */
+            validators: components["schemas"]["ValidationRule"][];
         };
         /** PlanVersion */
         PlanVersion: {
@@ -3812,12 +3975,18 @@ export interface components {
             catalog_id: string;
             /** Description */
             description: string;
+            execution_plan?: components["schemas"]["ExecutionPlan"] | null;
             /**
              * Execution Schema
              * @default 2.0
              * @constant
              */
             execution_schema: "2.0";
+            /**
+             * Max Repairs
+             * @default 0
+             */
+            max_repairs: number;
             overrides?: components["schemas"]["WorkloadProfile"] | null;
             policy?: components["schemas"]["RouterPolicy"];
             /**
@@ -4268,6 +4437,7 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            execution_plan?: components["schemas"]["ExecutionPlan"] | null;
             /**
              * Execution Schema
              * @default 2.0
@@ -4358,6 +4528,11 @@ export interface components {
              * @default null
              */
             output_reference: string | null;
+            /**
+             * Recovery Action
+             * @default null
+             */
+            recovery_action: ("fallback" | "repair") | null;
             /** Run Id */
             run_id: string;
             /**
@@ -4716,6 +4891,23 @@ export interface components {
             /** Node Id */
             node_id: string;
             profile: components["schemas"]["WorkloadProfile"];
+            /**
+             * Quality Confidence
+             * @default low
+             * @enum {string}
+             */
+            quality_confidence: "low" | "medium" | "high";
+            /**
+             * Routing Confidence
+             * @default low
+             * @enum {string}
+             */
+            routing_confidence: "low" | "medium" | "high";
+            /**
+             * Routing Confidence Reason
+             * @default Historical decision; not separately calibrated
+             */
+            routing_confidence_reason: string;
             /** Selected */
             selected: string | null;
             /** Uncertainty */
@@ -7574,6 +7766,124 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RouterMetrics"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    outcomes_api_studio_intelligence_outcomes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutionOutcome"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    rate_outcome_api_studio_intelligence_outcomes__identifier__rating_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                identifier: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutcomeRating"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutcomeRating"];
                 };
             };
             /** @description Bad Request */

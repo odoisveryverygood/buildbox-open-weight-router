@@ -409,6 +409,27 @@ def select(
             uncertainty.append("Insufficient measured sample coverage for high confidence")
     else:
         uncertainty.append("No eligible deployment remains")
+    routing_confidence: Literal["low", "medium", "high"] = "low"
+    routing_reason = "No eligible deployment remains"
+    if winner:
+        if len(eligible) == 1:
+            routing_confidence = "high"
+            routing_reason = (
+                "Clear constraint-driven winner: exactly one deployment satisfies the hard gates"
+            )
+        elif gap < policy.clear_margin:
+            routing_confidence = "medium"
+            routing_reason = (
+                "Close candidates: eligible utility margin is below the configured clear margin"
+            )
+        elif winner.unknown or missing_quality:
+            routing_reason = "Insufficient compatible evidence for a confident utility winner"
+        else:
+            routing_confidence = "high"
+            routing_reason = "Compatible objective evidence and a clear normalized utility margin"
+        routing_reason += "; relative to this pinned catalog, not proof of model quality"
+        if catalog.synthetic:
+            routing_reason += "; catalog evidence is synthetic"
     tradeoffs = []
     if winner and len(eligible) > 1:
         other = eligible[1]
@@ -432,7 +453,7 @@ def select(
             else "No valid plan satisfies all hard constraints. "
         )
         + ("Known tradeoff: " + "; ".join(tradeoffs) + ". " if tradeoffs else "")
-        + f"Confidence {confidence}: "
+        + f"Routing confidence {routing_confidence}: {routing_reason}. Model-quality confidence {confidence}: "
         + "; ".join(uncertainty or ["measured task evidence and a clear utility margin"])
     )
     return StageDecision(
@@ -442,6 +463,9 @@ def select(
         selected=winner.configuration_id if winner else None,
         candidates=rows,
         confidence=confidence,
+        routing_confidence=routing_confidence,
+        quality_confidence=confidence,
+        routing_confidence_reason=routing_reason,
         uncertainty=tuple(uncertainty),
         explanation=explanation,
     )

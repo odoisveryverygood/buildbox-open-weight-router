@@ -1,6 +1,14 @@
 # Buildbox workflow router — upgrade foundation
 
-## Active integration milestone 11 — workload intelligence
+## Active integration milestone 12 — advanced local sandbox completion
+
+Start from `b3d19385c986cdb3b46d0b899259f9d9af409743` on the same integration
+branch. Complete bounded conditional repair, reviewed typed DAG compilation,
+content-free outcomes and separate routing/model-quality confidence. Reuse the
+existing engine; no redesign, paid calls, infrastructure or provider additions.
+Local sandbox acceptance includes deterministic A–K, not live quality validation.
+
+## Prior integration milestone 11 — workload intelligence
 
 The September 13 advanced-router request starts from verified commit
 `7bff0878d68921a11b6b35e238f8b6d1d66eddce` on the same integration branch.

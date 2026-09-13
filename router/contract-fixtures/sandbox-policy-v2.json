@@ -62,6 +62,7 @@
       "input_types": {
         "text": "text"
       },
+      "max_repairs": 0,
       "node_id": "normalize",
       "operation": "text.trim.v1",
       "output_types": {
@@ -100,6 +101,7 @@
       "input_types": {
         "text": "text"
       },
+      "max_repairs": 0,
       "node_id": "classify",
       "operation": null,
       "output_types": {
@@ -142,6 +144,7 @@
       "input_types": {
         "text": "text"
       },
+      "max_repairs": 0,
       "node_id": "review",
       "operation": null,
       "output_types": {

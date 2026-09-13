@@ -230,6 +230,19 @@ def scenario_requests(catalog_id):
                 overrides=WorkloadProfile(**(base | {"task": "coding"})),
             ),
         ),
+        (
+            "K",
+            "Generate → Verify → Repair",
+            PreviewRequest(
+                description="Generate a complete answer and verify required acceptance terms",
+                catalog_id=catalog_id,
+                overrides=WorkloadProfile(
+                    **(base | {"task": "coding", "strategy": "generate_verify"})
+                ),
+                required_terms=("VALID",),
+                max_repairs=1,
+            ),
+        ),
     )
 
 
@@ -337,6 +350,14 @@ def setup_advanced(rt, state, services, manifest):
             return old(body)
         state.status, state.delay, state.parts = 200, 0, None
         counts[messages] = counts.get(messages, 0) + 1
+        if "ADVANCED_K" in messages:
+            content = (
+                "VALID: repaired synthetic result"
+                if "Bounded repair:" in messages
+                else "Incomplete synthetic first result"
+            )
+            state.result = wire(content=content)
+            return
         content = (
             "Incomplete fixture response"
             if "ADVANCED_H" in messages and counts[messages] % 2 == 1

@@ -138,7 +138,13 @@ def compose_execution(
         ),
     )
     keys = ApplicationKeys(store)
-    gateway = Gateway(authority, TargetAdapters(secret, endpoint), keys, streaming_enabled=True)
+    gateway = Gateway(
+        authority,
+        TargetAdapters(secret, endpoint),
+        keys,
+        streaming_enabled=True,
+        repair_retain_seconds=retention_seconds,
+    )
     workflows = QueuedWorkflows(
         WorkflowRunner(
             gateway,

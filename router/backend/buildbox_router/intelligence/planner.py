@@ -30,7 +30,14 @@ from ..execution_contracts import (
     VersionRef,
 )
 from ..json_contracts import JsonSchema
-from ..routing_contracts import PreviewRequest, RouterPolicy, RoutingDecision, StageDecision
+from ..routing_contracts import (
+    ExecutionPlan,
+    PlanStage,
+    PreviewRequest,
+    RouterPolicy,
+    RoutingDecision,
+    StageDecision,
+)
 from .optimization import select
 from .workload import analyze
 
@@ -84,16 +91,46 @@ def plan(
                 ("generate",),
             ),
         ]
+    if strategy == "generate_verify" and request.max_repairs and request.required_terms:
+        # The reviewed deterministic validator is the verifier; no extra critic call.
+        shape = [("generate", profile.task, ())]
+    rules = (
+        (ValidationRule(kind="required_terms", values=request.required_terms),)
+        if request.required_terms
+        else ()
+    )
+    graph = request.execution_plan or ExecutionPlan(
+        stages=tuple(
+            PlanStage(
+                id=node,
+                task=task,
+                depends_on=deps,
+                validators=rules,
+                max_repairs=request.max_repairs,
+                escalate=strategy == "cheap_first" and bool(rules),
+            )
+            for node, task, deps in shape
+        )
+    )
+    # Normalize arbitrary input order to dependency order before cost/path calculation.
+    ordered: list[PlanStage] = []
+    while len(ordered) < len(graph.stages):
+        done_ids = {s.id for s in ordered}
+        ordered.extend(
+            s for s in graph.stages if s.id not in done_ids and set(s.depends_on) <= done_ids
+        )
+    graph = graph.model_copy(update={"stages": tuple(ordered)})
     stages: list[StageDecision] = []
-    for node, task, deps in shape:
+    for spec in graph.stages:
+        node, task, deps = spec.id, spec.task, spec.depends_on
         stage_profile = WorkloadProfile.model_validate(profile.model_dump() | {"task": task})
         objective = request.policy
-        if strategy == "cheap_first":
+        if spec.escalate:
             objective = RouterPolicy.model_validate(
                 request.policy.model_dump() | {"weights": {"cost": 1.0}}
             )
         decision = select(stage_profile, catalog, objective, node, deps, unhealthy=unhealthy)
-        if strategy == "cheap_first" and decision.selected:
+        if spec.escalate and decision.selected:
             chosen = next(c for c in decision.candidates if c.configuration_id == decision.selected)
             q = chosen.metrics.get("quality")
             alternatives = sorted(
@@ -109,7 +146,8 @@ def plan(
                 key=lambda c: (-cast(float, c.metrics["quality"]), c.configuration_id),
             )
             fallbacks = tuple(
-                c.configuration_id for c in alternatives[: max(0, profile.max_attempts - 1)]
+                c.configuration_id
+                for c in alternatives[: max(0, profile.max_attempts - 1 - spec.max_repairs)]
             )
             decision = decision.model_copy(
                 update={
@@ -120,6 +158,8 @@ def plan(
             )
         stages.append(decision)
     blockers = []
+    if any(1 + s.max_repairs > profile.max_attempts for s in graph.stages):
+        blockers.append("Repair count exceeds the per-stage attempt cap")
     if profile.data_class == "restricted":
         blockers.append(
             "Restricted data has no supported runtime grant class; execution is blocked"
@@ -155,13 +195,23 @@ def plan(
             raise ValueError("Planner produced a dependency cycle")
         waves.append(wave)
         done.update(wave)
-    for s in stages:
+    for s, spec in zip(stages, graph.stages, strict=True):
         selected = [c for c in s.candidates if c.configuration_id in (s.selected, *s.fallbacks)]
-        calls += len(selected)
+        calls += len(selected) + spec.max_repairs
+        latencies = [c.metrics.get("latency") for c in selected]
+        if spec.max_repairs:
+            latencies += [
+                max(cast(list[float], latencies))
+                if latencies and all(v is not None for v in latencies)
+                else None
+            ] * spec.max_repairs
+        if selected and spec.max_repairs:
+            # Reserve repair at the most expensive possible target, including escalation.
+            repair_target = max(selected, key=lambda c: c.metrics.get("cost") or 0)
+            selected += [repair_target] * spec.max_repairs
         costs.extend(
             math.ceil(v) if (v := c.metrics.get("cost")) is not None else None for c in selected
         )
-        latencies = [c.metrics.get("latency") for c in selected]
         durations[s.node_id] = (
             sum(cast(list[float], latencies))
             if latencies and all(x is not None for x in latencies)
@@ -204,6 +254,7 @@ def plan(
         max_model_calls=calls,
         parallel_waves=tuple(waves),
         required_terms=request.required_terms,
+        execution_plan=graph,
         strategy_reason=f"{strategy}: explicit strategy or transparent decomposition/parallel/verification rules; otherwise prefer one model. Estimates count every possible attempt; critical path, not sum of parallel latencies.",
     )
 
@@ -217,6 +268,12 @@ def compile_policy(decision: RoutingDecision, plan_id: str) -> ExecutablePolicy:
     nodes = []
     stages = []
     for s in decision.stages:
+        spec = (
+            next((n for n in decision.execution_plan.stages if n.id == s.node_id), None)
+            if decision.execution_plan
+            else None
+        )
+        repairs = spec.max_repairs if spec else 0
         bindings = {d: Binding(source=d, output="result") for d in s.depends_on} or {
             "input": Binding(source="input", output="value", from_input=True)
         }
@@ -249,10 +306,12 @@ def compile_policy(decision: RoutingDecision, plan_id: str) -> ExecutablePolicy:
             for c in s.candidates
             if c.configuration_id in (s.selected, *s.fallbacks)
         ]
+        if costs and repairs and all(c is not None for c in costs):
+            costs += [max(cast(list[float], costs))] * repairs
         # Cost forecasts are not dispatch guarantees: actual transport envelopes are
         # rechecked against these reservations by the existing preflight.
         amount = (
-            math.ceil(sum(cast(list[float], costs)))
+            sum(math.ceil(c) for c in cast(list[float], costs))
             if costs and all(c is not None for c in costs)
             else 0
         )
@@ -260,18 +319,20 @@ def compile_policy(decision: RoutingDecision, plan_id: str) -> ExecutablePolicy:
             raise ValueError("Execution requires complete component prices")
         budget = ExecutionBudget(
             max_cost_micro_usd=amount,
-            max_model_calls=1 + len(s.fallbacks),
+            max_model_calls=1 + len(s.fallbacks) + repairs,
             max_tool_calls=0,
             max_input_tokens=p.input_tokens,
             max_output_tokens=p.output_tokens,
             timeout_ms=p.max_latency_ms or 120000,
-            max_attempts=1 + len(s.fallbacks),
+            max_attempts=1 + len(s.fallbacks) + repairs,
         )
-        rules = (
+        rules: tuple[ValidationRule, ...] = (
             (ValidationRule(kind="required_terms", values=decision.required_terms),)
             if decision.required_terms
             else ()
         )
+        if spec:
+            rules = spec.validators
         stages.append(
             ExecutableStage(
                 node_id=s.node_id,
@@ -282,6 +343,7 @@ def compile_policy(decision: RoutingDecision, plan_id: str) -> ExecutablePolicy:
                 fallback_configuration_ids=s.fallbacks,
                 workload_profile=s.profile,
                 validation_rules=rules,
+                max_repairs=repairs,
                 fallback_on=(
                     "quality_validation",
                     "invalid_output",

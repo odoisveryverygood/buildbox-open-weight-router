@@ -4,8 +4,8 @@ from typing import Literal, cast
 
 from pydantic import AwareDatetime, Field, model_validator
 
-from .contracts import CatalogSnapshot, Identifier, Strategy, WorkloadProfile
-from .execution_contracts import ExecutionContract, VersionRef
+from .contracts import CatalogSnapshot, Identifier, Strategy, TaskFamily, WorkloadProfile
+from .execution_contracts import ExecutionContract, ValidationRule, VersionRef
 
 Objective = Literal[
     "quality", "latency", "cost", "throughput", "privacy", "reliability", "capability"
@@ -50,11 +50,60 @@ class WorkloadRequest(ExecutionContract):
     overrides: WorkloadProfile | None = None
 
 
+class PlanStage(ExecutionContract):
+    """A reviewed text stage, with deterministic validation and bounded recovery edges."""
+
+    id: Identifier
+    task: TaskFamily
+    depends_on: tuple[Identifier, ...] = Field(default=(), max_length=8)
+    validators: tuple[ValidationRule, ...] = Field(default=(), max_length=5)
+    max_repairs: int = Field(default=0, ge=0, le=2, strict=True)
+    escalate: bool = False
+
+    @model_validator(mode="after")
+    def recovery_requires_validation(self) -> "PlanStage":
+        if (self.max_repairs or self.escalate) and not self.validators:
+            raise ValueError("Conditional recovery requires reviewed validation")
+        return self
+
+
+class ExecutionPlan(ExecutionContract):
+    """Compiles to the canonical Workflow/ExecutablePolicy; never a second runtime."""
+
+    version: Literal["dag-1"] = "dag-1"
+    stages: tuple[PlanStage, ...] = Field(min_length=1, max_length=8)
+
+    @model_validator(mode="after")
+    def acyclic(self) -> "ExecutionPlan":
+        ids = {s.id for s in self.stages}
+        if "input" in ids:
+            raise ValueError("Stage ID input is reserved for the original workload binding")
+        if len(ids) != len(self.stages):
+            raise ValueError("Duplicate DAG stage")
+        done: set[str] = set()
+        while done != ids:
+            ready = {s.id for s in self.stages if s.id not in done and set(s.depends_on) <= done}
+            if not ready:
+                raise ValueError("DAG has a cycle or missing dependency")
+            done |= ready
+        if any(len(set(s.depends_on)) != len(s.depends_on) for s in self.stages):
+            raise ValueError("Duplicate dependency")
+        return self
+
+
 class PreviewRequest(WorkloadRequest):
     catalog_id: Identifier
     policy: RouterPolicy = Field(default_factory=RouterPolicy)
     # Explicitly reviewed completeness tokens; no model-supplied executable checks.
     required_terms: tuple[str, ...] = Field(default=(), max_length=20)
+    execution_plan: ExecutionPlan | None = None
+    max_repairs: int = Field(default=0, ge=0, le=2, strict=True)
+
+    @model_validator(mode="after")
+    def repair_criteria(self) -> "PreviewRequest":
+        if self.max_repairs and not self.required_terms and self.execution_plan is None:
+            raise ValueError("Template repair requires reviewed validation criteria")
+        return self
 
 
 class CandidateUtility(ExecutionContract):
@@ -79,6 +128,10 @@ class StageDecision(ExecutionContract):
     fallbacks: tuple[Identifier, ...] = ()
     candidates: tuple[CandidateUtility, ...]
     confidence: Literal["low", "medium", "high"]
+    # Legacy confidence remains quality-confidence for historical compatibility.
+    routing_confidence: Literal["low", "medium", "high"] = "low"
+    quality_confidence: Literal["low", "medium", "high"] = "low"
+    routing_confidence_reason: str = "Historical decision; not separately calibrated"
     uncertainty: tuple[str, ...]
     explanation: str
 
@@ -102,6 +155,7 @@ class RoutingDecision(ExecutionContract):
     parallel_waves: tuple[tuple[str, ...], ...]
     strategy_reason: str
     required_terms: tuple[str, ...] = ()
+    execution_plan: ExecutionPlan | None = None
     # False even for a complete deterministic preview; it is not an admission.
     activation_authority: Literal[False] = False
 
@@ -179,3 +233,26 @@ class RouterMetrics(ExecutionContract):
     known_cost_micro_usd: int
     unknown_cost_attempts: int
     policy_disagreement_rate: float | None
+
+
+class OutcomeRating(ExecutionContract):
+    rating: int = Field(ge=1, le=5, strict=True)
+
+
+class ExecutionOutcome(ExecutionContract):
+    run_id: Identifier
+    policy: VersionRef
+    catalog_id: Identifier
+    decision_id: Identifier | None
+    status: str
+    validation_passed: bool | None
+    failed_validations: int
+    attempt_count: int
+    attempt_latency_ms: int | None
+    known_cost_micro_usd: int
+    unknown_cost_attempts: int
+    fallback_count: int
+    repair_count: int
+    synthetic: bool
+    rating: int | None = Field(default=None, ge=1, le=5)
+    affects_ranking: Literal[False] = False
