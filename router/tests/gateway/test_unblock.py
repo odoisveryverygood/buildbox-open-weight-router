@@ -102,27 +102,29 @@ def loopback(rt, monkeypatch):
     # Explicit scoped exception to ordinary-test network denial. ONLY this
     # synthetic server's exact bound loopback port can be connected to.
     state = SimpleNamespace(parts=None, delay=0, seen=[], status=200, result=wire())
+    response_lock = threading.Lock()
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
             pass
 
         def do_POST(self):
-            state.seen.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
-            if getattr(state, "respond", None):
-                state.respond(state.seen[-1])
-            self.send_response(state.status)
+            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            with response_lock:
+                state.seen.append(body)
+                if getattr(state, "respond", None):
+                    state.respond(body)
+                status, parts, result, delay = state.status, state.parts, state.result, state.delay
+            self.send_response(status)
             self.send_header(
                 "Content-Type",
-                "text/event-stream" if state.parts is not None else "application/json",
+                "text/event-stream" if parts is not None else "application/json",
             )
             self.end_headers()
             try:
-                for part in (
-                    state.parts if state.parts is not None else [json.dumps(state.result).encode()]
-                ):
-                    if state.delay:
-                        time.sleep(state.delay)
+                for part in parts if parts is not None else [json.dumps(result).encode()]:
+                    if delay:
+                        time.sleep(delay)
                     self.wfile.write(part)
                     self.wfile.flush()
             except (BrokenPipeError, ConnectionResetError):
@@ -733,6 +735,13 @@ def test_legacy_policy_digest_and_revision_three_migration(tmp_path):
                     "route_requirements",
                     "response_format",
                     "requirements",
+                    "workload_profile",
+                    "routing_decision_id",
+                    "router_policy_ref",
+                    "catalog_digest",
+                    "circuit_policy",
+                    "validation_rules",
+                    "fallback_on",
                 }
             }
         if isinstance(value, list):
@@ -740,6 +749,11 @@ def test_legacy_policy_digest_and_revision_three_migration(tmp_path):
         return value
 
     legacy = old(raw)
+    # Frozen pre-upgrade value, not merely a comparison of two new serializers.
+    assert (
+        digest(ExecutablePolicy.model_validate(legacy))
+        == "b15371932aad4453d73ba03825c3dd5b7400394533851f28298d308d439adea4"
+    )
     assert (
         digest(ExecutablePolicy.model_validate(legacy))
         == hashlib.sha256(

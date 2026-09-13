@@ -38,6 +38,7 @@ from .openapi_schema import enrich_schema
 from .planning import planning_examples
 from .planning_contracts import PlanInput, PlanningCapabilities, PlanView
 from .planning_storage import PlanningStorage
+from .routing_api import router as intelligence_router
 from .storage import SqlStorage, engine_for
 
 
@@ -90,6 +91,7 @@ def create_app(
         },
     )
     app.state.execution_services = execution_services
+    app.include_router(intelligence_router)
     app.state.sandbox_storage = sandbox_storage  # Explicit software-test dependency injection only.
     app.add_middleware(
         TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"]

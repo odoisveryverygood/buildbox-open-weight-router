@@ -224,7 +224,10 @@ class WorkflowRunner:
                 if (
                     sample
                     and sample.processing == "local_only"
-                    and any(not c.local for c in candidates)
+                    and any(
+                        not self.gateway.authority.is_local(context.tenant_id, c)
+                        for c in candidates
+                    )
                 ):
                     raise DomainError(
                         ErrorCode.UNSUPPORTED, "Imported sample forbids hosted processing", 403

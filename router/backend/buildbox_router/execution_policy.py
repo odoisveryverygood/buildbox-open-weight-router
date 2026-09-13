@@ -123,6 +123,19 @@ def edit(
                     ),
                     output_types={"result": "json"},
                 )
+            if stage.workload_profile:
+                from .intelligence.optimization import assess
+                from .routing_contracts import RouterPolicy
+
+                candidate = next(
+                    row
+                    for row in assess(stage.workload_profile, catalog, RouterPolicy())
+                    if row.configuration_id == config
+                )
+                if not candidate.eligible:
+                    raise DomainError(
+                        ErrorCode.UNSUPPORTED, "Edited pin violates stage constraints", 403
+                    )
         compiled.append(ExecutableStage.model_validate(data))
     return ExecutablePolicy.model_validate(
         policy.model_dump()
@@ -132,6 +145,10 @@ def edit(
             "prompts": prompts,
             "quality": "untested_provisional",
             "variant": None,
+            # Manual edits are not a fresh optimizer decision. The preceding exact
+            # version retains the original decision; never reuse its winner claim.
+            "routing_decision_id": None,
+            "router_policy_ref": None,
         }
     )
 
@@ -139,6 +156,12 @@ def edit(
 def variant(
     policy: ExecutablePolicy, catalog: CatalogSnapshot, request: VariantRequest, selector: Selector
 ) -> ExecutablePolicy:
+    if policy.routing_decision_id or any(s.workload_profile for s in policy.stages):
+        raise DomainError(
+            ErrorCode.UNSUPPORTED,
+            "Use workload-intelligence what-if for stage-aware policy variants",
+            422,
+        )
     if catalog.id != policy.catalog_id or request.id == policy.id:
         raise DomainError(
             ErrorCode.CONFLICT, "Variant needs the pinned catalog and a new policy ID", 409

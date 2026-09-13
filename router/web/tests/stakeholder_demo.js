@@ -2,9 +2,10 @@
 // The test-only Basic identity is public; never capture application-key responses.
 async page => {
   const basic=await page.evaluate(()=>btoa('fixture:synthetic-test-password'));
+  const base=await page.evaluate(()=>location.origin);
   await page.context().setExtraHTTPHeaders({});
   await page.route('**/api/**',route=>route.continue({headers:{...route.request().headers(),Authorization:'Basic '+basic}}));
-  await page.goto('http://127.0.0.1:5202/?demo=1');
+  await page.goto(base+'/?demo=1');
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.setViewportSize({width:1440,height:1000});
   await page.getByRole('button',{name:'Run workflow',exact:true}).waitFor();
@@ -33,7 +34,7 @@ async page => {
   await page.locator('#demo-run').screenshot({path:'output/playwright/demo-artifacts/06-fallback.png'});
   await click('Refresh recorded usage');
   await page.locator('#demo-accounting').screenshot({path:'output/playwright/demo-artifacts/07-accounting.png'});
-  const response=await page.request.get('http://127.0.0.1:5202/api/studio/usage',{headers:{Authorization:'Basic '+basic}});
+  const response=await page.request.get(base+'/api/studio/usage',{headers:{Authorization:'Basic '+basic}});
   const usage=await response.json();
   const fallback=usage.attempts.filter(a=>a.trace.policy.id==='demo-fallback');
   if(fallback.length!==2||fallback.filter(a=>a.status==='succeeded').length!==1)throw new Error('Fallback attempts not accurately recorded');

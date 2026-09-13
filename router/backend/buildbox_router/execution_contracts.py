@@ -11,7 +11,14 @@ from typing import Annotated, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, JsonValue, model_validator
 
-from .contracts import CandidateConfiguration, Fact, Identifier, TargetRequirements, Workflow
+from .contracts import (
+    CandidateConfiguration,
+    Fact,
+    Identifier,
+    TargetRequirements,
+    Workflow,
+    WorkloadProfile,
+)
 from .evidence_contracts import EndpointRecord
 from .json_contracts import JsonSchema
 
@@ -34,13 +41,20 @@ class ExecutionContract(Wire):
 def digest(value: BaseModel) -> str:
     def legacy_defaults(item: object) -> object:
         # Additive defaults must not invalidate an already signed 2.0 policy.
-        defaults = {
+        defaults: dict[str, object] = {
             "fallback_configuration_ids": (),
             "route_requirements": None,
             "variant": None,
             "response_format": None,
             "max_attempts": 1,
             "requirements": TargetRequirements().model_dump(mode="json"),
+            "workload_profile": None,
+            "routing_decision_id": None,
+            "router_policy_ref": None,
+            "catalog_digest": None,
+            "validation_rules": [],
+            "fallback_on": [],
+            "circuit_policy": None,
         }
         if isinstance(item, dict):
             return {
@@ -146,6 +160,44 @@ class PolicyHistory(ExecutionContract):
     versions: tuple[VersionRef, ...]
 
 
+FailureKind = Literal[
+    "provider_failure",
+    "rate_limit",
+    "timeout",
+    "invalid_output",
+    "quality_validation",
+    "capability_mismatch",
+    "context_overflow",
+    "budget_violation",
+    "cancelled",
+    "circuit_open",
+]
+
+
+class ValidationRule(ExecutionContract):
+    kind: Literal["required_terms", "python_syntax", "citation_allowlist"]
+    values: tuple[str, ...] = Field(default=(), max_length=20)
+
+    @model_validator(mode="after")
+    def bounded(self) -> "ValidationRule":
+        if any(not v or len(v) > 200 for v in self.values):
+            raise ValueError("Validator values must be bounded nonempty literals")
+        if self.kind != "python_syntax" and not self.values:
+            raise ValueError("Validator needs explicit expected terms/sources")
+        return self
+
+
+class ValidationObservation(ExecutionContract):
+    kind: str
+    passed: bool
+    detail: str
+
+
+class CircuitPolicy(ExecutionContract):
+    failures: int = Field(default=3, ge=1, le=20)
+    cooldown_seconds: int = Field(default=30, ge=1, le=3600)
+
+
 class ExecutableStage(ExecutionContract):
     node_id: Identifier
     input_types: dict[Identifier, ValueType]
@@ -159,6 +211,9 @@ class ExecutableStage(ExecutionContract):
     allowed_tool_ids: tuple[Identifier, ...] = ()
     budget: ExecutionBudget
     stop: StopConditions = Field(default_factory=StopConditions)
+    workload_profile: WorkloadProfile | None = None
+    validation_rules: tuple[ValidationRule, ...] = Field(default=(), max_length=5)
+    fallback_on: tuple[FailureKind, ...] = ()
 
 
 class ExecutablePolicy(ExecutionContract):
@@ -177,6 +232,10 @@ class ExecutablePolicy(ExecutionContract):
     environment: Literal["sandbox"] = "sandbox"
     production_approved: Literal[False] = False
     variant: PolicyVariant | None = None
+    routing_decision_id: Identifier | None = None
+    router_policy_ref: VersionRef | None = None
+    catalog_digest: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    circuit_policy: CircuitPolicy | None = None
 
     @model_validator(mode="after")
     def executable_bindings(self) -> "ExecutablePolicy":
@@ -650,6 +709,11 @@ class DecisionTrace(ExecutionContract):
     served_model: Fact[str]
     served_endpoint: Fact[str]
     quality: Literal["untested_provisional", "measured_not_production_approved"]
+    routing_decision_id: Identifier | None = None
+    router_policy_ref: VersionRef | None = None
+    workflow_version: int | None = None
+    catalog_digest: str | None = None
+    capability_schema: str | None = None
     # No input text, raw provider payload, credentials, or chain-of-thought.
 
 
@@ -667,6 +731,9 @@ class RunAttempt(ExecutionContract):
     gateway_overhead_ms: int | None = Field(default=None, ge=0)
     upstream_ms: int | None = Field(default=None, ge=0)
     time_to_first_content_ms: int | None = Field(default=None, ge=0)
+    failure_kind: FailureKind | None = None
+    fallback_reason: FailureKind | None = None
+    validation: tuple[ValidationObservation, ...] = ()
     latency_definition: Literal["reservation_to_finalization_wall_clock"] = (
         "reservation_to_finalization_wall_clock"
     )

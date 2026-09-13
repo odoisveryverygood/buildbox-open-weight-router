@@ -10,7 +10,9 @@
     "max_tool_calls": 0,
     "timeout_ms": 10000
   },
+  "catalog_digest": null,
   "catalog_id": "synthetic-catalog-v1",
+  "circuit_policy": null,
   "environment": "sandbox",
   "execution_schema": "2.0",
   "id": "sample-policy",
@@ -37,6 +39,8 @@
     }
   ],
   "quality": "untested_provisional",
+  "router_policy_ref": null,
+  "routing_decision_id": null,
   "stages": [
     {
       "allowed_tool_ids": [],
@@ -54,6 +58,7 @@
       "configuration_id": null,
       "execution_schema": "2.0",
       "fallback_configuration_ids": [],
+      "fallback_on": [],
       "input_types": {
         "text": "text"
       },
@@ -71,7 +76,9 @@
         "on_cancel": "stop_before_next_dispatch",
         "on_error": "stop",
         "on_human_approval": "pause"
-      }
+      },
+      "validation_rules": [],
+      "workload_profile": null
     },
     {
       "allowed_tool_ids": [],
@@ -89,6 +96,7 @@
       "configuration_id": "fixture-small-local",
       "execution_schema": "2.0",
       "fallback_configuration_ids": [],
+      "fallback_on": [],
       "input_types": {
         "text": "text"
       },
@@ -110,7 +118,9 @@
         "on_cancel": "stop_before_next_dispatch",
         "on_error": "stop",
         "on_human_approval": "pause"
-      }
+      },
+      "validation_rules": [],
+      "workload_profile": null
     },
     {
       "allowed_tool_ids": [],
@@ -128,6 +138,7 @@
       "configuration_id": null,
       "execution_schema": "2.0",
       "fallback_configuration_ids": [],
+      "fallback_on": [],
       "input_types": {
         "text": "text"
       },
@@ -145,7 +156,9 @@
         "on_cancel": "stop_before_next_dispatch",
         "on_error": "stop",
         "on_human_approval": "pause"
-      }
+      },
+      "validation_rules": [],
+      "workload_profile": null
     }
   ],
   "variant": null,

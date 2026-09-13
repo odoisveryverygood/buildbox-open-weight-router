@@ -54,11 +54,13 @@ export function draftPolicy(view: S['PlanView']): S['ExecutablePolicy'] {
     }
     return {execution_schema:'2.0', node_id:node.id, input_types, output_types, prompt, configuration_id,
       fallback_configuration_ids:[], route_requirements:null, response_format:null,
+      workload_profile:null, validation_rules:[], fallback_on:[],
       operation:null, allowed_tool_ids:node.kind === 'tool' && node.tool_id ? [node.tool_id] : [],
       budget:budget(node.kind === 'llm' ? 1 : 0, node.kind === 'tool' ? 1 : 0), stop:{execution_schema:'2.0', on_error:'stop', on_budget_exhausted:'stop', on_cancel:'stop_before_next_dispatch', on_human_approval:'pause'}};
   });
   return {execution_schema:'2.0', id:`studio-${crypto.randomUUID()}`, version:1, plan:ref(view.plan.id, view.plan.version), workflow, catalog_id:catalog.id,
     input_types:Object.fromEntries(workflow.inputs.map(key => [key, 'text' as const])), stages, prompts, variant:null,
+    catalog_digest:null, circuit_policy:null, router_policy_ref:null, routing_decision_id:null,
     budget:budget(stages.reduce((n,s) => n+s.budget.max_model_calls,0), stages.reduce((n,s) => n+s.budget.max_tool_calls,0)), quality:'untested_provisional', environment:'sandbox', production_approved:false};
 }
 export function parseInputs(text: string, types: S['ExecutablePolicy']['input_types']): S['WorkflowRunRequest']['inputs'] {

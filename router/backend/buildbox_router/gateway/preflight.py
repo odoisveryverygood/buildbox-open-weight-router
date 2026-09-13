@@ -49,6 +49,7 @@ class AuthorizedStage:
     credential: ProviderCredentialReference
     trace: DecisionTrace
     data_class: str
+    local_egress: bool = False
 
 
 class Authority:
@@ -61,9 +62,11 @@ class Authority:
         credential: Callable[[str, str], ProviderCredentialReference],
         catalog: Callable[[str, str], CatalogSnapshot],
         selector: Selector,
+        local_egress: Callable[[str, TargetConfiguration], bool] | None = None,
     ) -> None:
         self.store, self.target, self.grant = store, target, grant
         self.credential, self.catalog, self.selector = credential, catalog, selector
+        self.is_local = local_egress or (lambda _tenant, target: target.local is not None)
         # Only immutable selection results are cached; grants, admissions, credentials,
         # key scope, target freshness and budgets are still checked on every request.
         self._selection_cache: OrderedDict[str, tuple[datetime, tuple[str, ...]]] = OrderedDict()
@@ -143,7 +146,7 @@ class Authority:
             stage = stage.model_copy(update={"configuration_id": configuration_id})
         assert stage.configuration_id is not None
         target = self.target(context.tenant_id, stage.configuration_id)
-        if not target.local and re.search(
+        if not self.is_local(context.tenant_id, target) and re.search(
             r"local[- ]only|no (?:external|hosted|cloud)|must stay local|air[- ]gapped",
             " ".join([policy.workflow.title, *(n.purpose for n in policy.workflow.nodes)]),
             re.I,
@@ -176,6 +179,27 @@ class Authority:
             denied("Configuration drift from pinned catalog")
         if stage.configuration_id not in self._eligible(policy, catalog):
             denied("Hard eligibility evidence is contradicted or unknown")
+        if stage.workload_profile is not None:
+            if stage.workload_profile.data_class == "restricted":
+                denied("Restricted data is not authorized by the runtime grant contract")
+            from ..intelligence.optimization import assess
+            from ..intelligence.planner import catalog_digest
+            from ..routing_contracts import RouterPolicy
+
+            if policy.catalog_digest != catalog_digest(catalog):
+                denied("Advanced decision catalog content changed")
+            row = next(
+                (
+                    r
+                    for r in assess(stage.workload_profile, catalog, RouterPolicy())
+                    if r.configuration_id == stage.configuration_id
+                ),
+                None,
+            )
+            if row is None or not row.eligible:
+                denied("Stage-specific hard requirements unknown, stale or contradicted")
+            if stage.workload_profile.local_only and not self.is_local(context.tenant_id, target):
+                denied("Local-only workload requires a verified loopback transport")
         grant = self.grant(context.tenant_id, stage.configuration_id)
         if (
             grant.tenant_id != context.tenant_id
@@ -235,8 +259,22 @@ class Authority:
             served_model=unknown_identity(),
             served_endpoint=unknown_identity(),
             quality=policy.quality,
+            routing_decision_id=policy.routing_decision_id,
+            router_policy_ref=policy.router_policy_ref,
+            workflow_version=policy.workflow.version,
+            catalog_digest=policy.catalog_digest,
+            capability_schema="capabilities-1" if stage.workload_profile else None,
         )
-        return AuthorizedStage(policy, stage, admission, target, credential, trace, data_class)
+        return AuthorizedStage(
+            policy,
+            stage,
+            admission,
+            target,
+            credential,
+            trace,
+            data_class,
+            self.is_local(context.tenant_id, target),
+        )
 
 
 def input_bound(request: ChatCompletionRequest) -> int:
@@ -276,6 +314,10 @@ def cost_bound(target: TargetConfiguration, input_tokens: int, output_tokens: in
 
 def preflight(value: AuthorizedStage, request: ChatCompletionRequest) -> int:
     budget, target = value.stage.budget, value.target
+    if request.stream and value.stage.validation_rules:
+        denied(
+            "Post-output validators require a nonstream stage; no invalid partial output delivery"
+        )
     count = input_bound(request)
     if count > budget.max_input_tokens or request.max_tokens > budget.max_output_tokens:
         denied("Incoming token envelope exceeds stage bounds")
@@ -322,7 +364,7 @@ def preflight(value: AuthorizedStage, request: ChatCompletionRequest) -> int:
             and endpoint_id not in restrictions.allowed_endpoint_ids
         ):
             denied("Endpoint excluded by stage policy")
-        if restrictions.local_only and target.local is None:
+        if restrictions.local_only and not value.local_egress:
             denied("Stage requires local inference")
         if (
             restrictions.required_region

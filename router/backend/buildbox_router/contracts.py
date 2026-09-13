@@ -1,9 +1,10 @@
 """Canonical versioned contracts. Generate frontend types through OpenAPI."""
 
+import math
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, JsonValue, model_validator
 
 Identifier = Annotated[str, Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$")]
 
@@ -213,6 +214,224 @@ class ConfigurationEligibility(Contract):
     expires_at: str
 
 
+# Normalized, additive intelligence facts. Identity stays on the existing artifact
+# and serving configuration; these records never establish runtime authorization.
+Capability = Literal[
+    "text_input",
+    "image_input",
+    "audio_input",
+    "video_input",
+    "document_input",
+    "text_output",
+    "json_output",
+    "schema_json",
+    "code_output",
+    "tools",
+    "embeddings",
+    "multimodal_output",
+    "streaming",
+    "context_tokens",
+    "max_output_tokens",
+    "quantization",
+    "parameters_billion",
+    "architecture",
+    "family",
+    "backends",
+    "cold_start_ms",
+    "latency_ms",
+    "throughput_tokens_s",
+    "input_usd_per_million",
+    "output_usd_per_million",
+    "request_usd",
+    "gpu_count",
+    "memory_gb",
+    "self_hosted",
+    "local",
+    "privacy_class",
+    "retention_days",
+    "success_rate",
+]
+TaskFamily = Literal[
+    "extraction",
+    "summarization",
+    "classification",
+    "coding",
+    "debugging",
+    "mathematics",
+    "science",
+    "long_context",
+    "tool_use",
+    "structured_extraction",
+    "research",
+    "planning",
+    "multilingual",
+    "vision",
+    "general",
+]
+Strategy = Literal["auto", "single", "multi_stage", "parallel", "cheap_first", "generate_verify"]
+
+
+class CapabilityObservation(Contract):
+    fact: Fact[JsonValue]
+    basis: Literal["declared", "measured", "imported", "estimated", "synthetic", "unknown"]
+    observed_at: AwareDatetime
+    expires_at: AwareDatetime
+
+    @model_validator(mode="after")
+    def valid_observation(self) -> "CapabilityObservation":
+        if self.expires_at <= self.observed_at:
+            raise ValueError("Capability expiry must follow observation")
+        if (self.fact.value is None) != (self.basis == "unknown"):
+            raise ValueError("Unknown capability must remain explicit")
+        if self.basis == "synthetic" and self.fact.provenance.kind != "synthetic":
+            raise ValueError("Synthetic fact must have synthetic provenance")
+        if self.basis == "estimated" and self.fact.provenance.kind != "inference":
+            raise ValueError("Estimates require inference provenance")
+        allowed = {
+            "declared": ("documented",),
+            "measured": ("observed",),
+            "imported": ("documented", "observed"),
+        }
+        if self.basis in allowed and self.fact.provenance.kind not in allowed[self.basis]:
+            raise ValueError("Evidence basis contradicts fact provenance")
+        return self
+
+
+class DeploymentIntelligence(Contract):
+    configuration_id: Identifier
+    capability_schema: Literal["capabilities-1"] = "capabilities-1"
+    facts: dict[Capability, CapabilityObservation]
+
+    @model_validator(mode="after")
+    def units_and_types(self) -> "DeploymentIntelligence":
+        booleans = {
+            "text_input",
+            "image_input",
+            "audio_input",
+            "video_input",
+            "document_input",
+            "text_output",
+            "json_output",
+            "schema_json",
+            "code_output",
+            "tools",
+            "embeddings",
+            "multimodal_output",
+            "streaming",
+            "self_hosted",
+            "local",
+        }
+        strings = {"quantization", "architecture", "family", "privacy_class"}
+        for key, observation in self.facts.items():
+            value = observation.fact.value
+            if value is None:
+                continue
+            if key in booleans:
+                valid = type(value) is bool
+            elif key in strings:
+                valid = isinstance(value, str)
+            elif key == "backends":
+                valid = isinstance(value, list) and all(isinstance(v, str) for v in value)
+            else:
+                valid = (
+                    type(value) in (int, float)
+                    and math.isfinite(cast(float, value))
+                    and cast(float, value) >= 0
+                )
+                if key == "success_rate":
+                    valid = valid and cast(float, value) <= 1
+            if not valid:
+                raise ValueError(f"Invalid normalized capability value for {key}")
+        return self
+
+
+class PerformanceEvidence(Contract):
+    id: Identifier
+    configuration_id: Identifier
+    task: TaskFamily
+    benchmark: str = Field(min_length=1, max_length=200)
+    benchmark_version: str
+    split: str
+    harness: str
+    settings: str
+    raw_metric: float = Field(allow_inf_nan=False)
+    unit: str
+    # Only an explicitly reviewed, task-scoped [0,1] conversion is rankable.
+    normalized_score: float = Field(ge=0, le=1, allow_inf_nan=False)
+    normalization: str = Field(min_length=1)
+    scale_min: float = Field(default=0, allow_inf_nan=False)
+    scale_max: float = Field(default=1, allow_inf_nan=False)
+    higher_is_better: bool = True
+    sample_size: int | None = Field(default=None, ge=1)
+    measured_at: AwareDatetime | None = None
+    retrieved_at: AwareDatetime
+    expires_at: AwareDatetime
+    source_url: str | None = None
+    source_locator: str = Field(min_length=1)
+    provenance: Provenance
+    origin: Literal["internal_evaluation", "curated_import", "manual_review", "synthetic"]
+    reviewed: bool = False
+    limitations: tuple[str, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def dates(self) -> "PerformanceEvidence":
+        if (
+            self.scale_max <= self.scale_min
+            or not self.scale_min <= self.raw_metric <= self.scale_max
+        ):
+            raise ValueError("Benchmark normalization needs a valid explicit scale")
+        expected = (self.raw_metric - self.scale_min) / (self.scale_max - self.scale_min)
+        if not self.higher_is_better:
+            expected = 1 - expected
+        if not math.isclose(self.normalized_score, expected, abs_tol=1e-9):
+            raise ValueError("Normalized benchmark score contradicts raw metric/scale")
+        if self.expires_at <= self.retrieved_at or (
+            self.measured_at and self.measured_at > self.retrieved_at
+        ):
+            raise ValueError("Invalid performance dates; retrieval is not measurement")
+        if (self.origin == "synthetic") != (self.provenance.kind == "synthetic"):
+            raise ValueError("Synthetic performance must remain labeled")
+        return self
+
+
+class WorkloadProfile(Contract):
+    analyzer_version: Literal["workload-rules-1"] = "workload-rules-1"
+    task: TaskFamily = "general"
+    complexity: Literal["simple", "moderate", "complex", "unknown"] = "unknown"
+    required: tuple[Capability, ...] = ("text_input", "text_output")
+    optional: tuple[Capability, ...] = ()
+    input_tokens: int | None = Field(default=None, ge=1, le=131072)
+    output_tokens: int | None = Field(default=None, ge=1, le=16384)
+    latency_sensitivity: Literal["low", "medium", "high", "unknown"] = "unknown"
+    quality_sensitivity: Literal["low", "medium", "high", "unknown"] = "unknown"
+    budget_sensitivity: Literal["low", "medium", "high", "unknown"] = "unknown"
+    local_only: bool = False
+    self_hosted_only: bool = False
+    approved_providers: tuple[str, ...] = ()
+    no_retention: bool = False
+    no_external_tools: bool = True
+    data_class: Literal["synthetic", "public", "tenant_private", "restricted"] = "tenant_private"
+    tools: tuple[Identifier, ...] = ()
+    structured_output: Literal["text", "json", "schema_json"] = "text"
+    determinism: Literal["required", "preferred", "unspecified"] = "unspecified"
+    expected_stages: int | None = Field(default=None, ge=1, le=8)
+    decomposition: bool | None = None
+    verification: bool | None = None
+    parallel: bool | None = None
+    strategy: Strategy = "auto"
+    max_cost_micro_usd: int | None = Field(default=None, ge=0, le=1000000)
+    preferred_cost_micro_usd: int | None = Field(default=None, ge=0, le=1000000)
+    max_latency_ms: int | None = Field(default=None, ge=100, le=120000)
+    min_quality: float | None = Field(default=None, ge=0, le=1, allow_inf_nan=False)
+    max_model_calls: int = Field(default=6, ge=1, le=20)
+    max_tool_calls: int = Field(default=0, ge=0, le=20)
+    max_attempts: int = Field(default=2, ge=1, le=3)
+    # Evidence is rule identifiers and field names, never retained private input.
+    evidence: dict[str, str] = Field(default_factory=dict)
+    explicit_fields: tuple[str, ...] = ()
+    questions: tuple[str, ...] = ()
+
+
 class CatalogSnapshot(Contract):
     id: Identifier
     artifacts: tuple[ModelArtifact, ...]
@@ -220,6 +439,8 @@ class CatalogSnapshot(Contract):
     evidence: tuple[Evidence, ...]
     synthetic: bool
     eligibility: tuple[ConfigurationEligibility, ...] = ()
+    intelligence: tuple[DeploymentIntelligence, ...] = ()
+    performance: tuple[PerformanceEvidence, ...] = ()
 
     @model_validator(mode="after")
     def references(self) -> "CatalogSnapshot":
@@ -228,6 +449,18 @@ class CatalogSnapshot(Contract):
                 raise ValueError("Duplicate catalog identifier")
         artifacts = {a.id for a in self.artifacts}
         configs = {c.id: c for c in self.configurations}
+        if len({x.configuration_id for x in self.intelligence}) != len(self.intelligence):
+            raise ValueError("Duplicate deployment intelligence")
+        if len({x.id for x in self.performance}) != len(self.performance):
+            raise ValueError("Duplicate performance evidence")
+        for intelligence in self.intelligence:
+            if intelligence.configuration_id not in configs:
+                raise ValueError("Intelligence must reference exact deployment configuration")
+        for performance in self.performance:
+            if performance.configuration_id not in configs:
+                raise ValueError("Performance must reference exact deployment configuration")
+        if not self.synthetic and any(p.origin == "synthetic" for p in self.performance):
+            raise ValueError("Synthetic performance cannot enter a public/live catalog")
         if len({e.configuration_id for e in self.eligibility}) != len(self.eligibility):
             raise ValueError("Duplicate configuration eligibility")
         for item in self.eligibility:

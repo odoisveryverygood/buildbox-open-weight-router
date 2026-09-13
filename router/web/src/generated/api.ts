@@ -514,6 +514,176 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/studio/intelligence/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Analyze Workload */
+        post: operations["analyze_workload_api_studio_intelligence_analyze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/intelligence/catalog-diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Diff */
+        post: operations["diff_api_studio_intelligence_catalog_diff_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/intelligence/decisions/{identifier}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Decision */
+        get: operations["get_decision_api_studio_intelligence_decisions__identifier__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/intelligence/decisions/{identifier}/shadow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Shadow */
+        post: operations["shadow_api_studio_intelligence_decisions__identifier__shadow_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/intelligence/decisions/{identifier}/what-if": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** What If */
+        post: operations["what_if_api_studio_intelligence_decisions__identifier__what_if_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/intelligence/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Draft */
+        post: operations["draft_api_studio_intelligence_drafts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/intelligence/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluate */
+        post: operations["evaluate_api_studio_intelligence_evaluate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/intelligence/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metrics */
+        get: operations["metrics_api_studio_intelligence_metrics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/intelligence/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview */
+        post: operations["preview_api_studio_intelligence_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studio/intelligence/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_studio_intelligence_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/studio/keys": {
         parameters: {
             query?: never;
@@ -859,6 +1029,45 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AdvancedScenario */
+        AdvancedScenario: {
+            /** Admission Id */
+            admission_id?: string | null;
+            /** Decision Id */
+            decision_id: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Id */
+            id: string;
+            /** Input */
+            input: string;
+            policy?: components["schemas"]["VersionRef"] | null;
+            request: components["schemas"]["PreviewRequest"];
+            /** Title */
+            title: string;
+        };
+        /** AdvancedStatus */
+        AdvancedStatus: {
+            /** Catalog Ids */
+            catalog_ids: string[];
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Scenarios
+             * @default []
+             */
+            scenarios: components["schemas"]["AdvancedScenario"][];
+            /** Synthetic */
+            synthetic: boolean;
+        };
         /** ApplicationKeyMetadata */
         ApplicationKeyMetadata: {
             /**
@@ -1018,6 +1227,113 @@ export interface components {
              */
             schema_version: "1.0";
         };
+        /** CandidateUtility */
+        CandidateUtility: {
+            /** Configuration Id */
+            configuration_id: string;
+            /**
+             * Conflicts
+             * @default []
+             */
+            conflicts: string[];
+            /** Eligible */
+            eligible: boolean;
+            /**
+             * Evidence Ids
+             * @default []
+             */
+            evidence_ids: string[];
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Metric Basis */
+            metric_basis?: {
+                [key: string]: string;
+            };
+            /** Metrics */
+            metrics?: {
+                [key: string]: number | null;
+            };
+            /** Normalized */
+            normalized?: {
+                [key: string]: number;
+            };
+            /**
+             * Pareto
+             * @default false
+             */
+            pareto: boolean;
+            /**
+             * Rejected
+             * @default []
+             */
+            rejected: string[];
+            /**
+             * Unknown
+             * @default []
+             */
+            unknown: string[];
+            /** Utility */
+            utility?: number | null;
+        };
+        /** CapabilityObservation */
+        CapabilityObservation: {
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "declared" | "measured" | "imported" | "estimated" | "synthetic" | "unknown";
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            fact: components["schemas"]["Fact_JsonValue_"];
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+        };
+        /** CatalogChange */
+        CatalogChange: {
+            /** After */
+            after: string | null;
+            /** Before */
+            before: string | null;
+            /** Configuration Id */
+            configuration_id: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Field */
+            field: string;
+        };
+        /** CatalogDiffRequest */
+        CatalogDiffRequest: {
+            /** After */
+            after: string;
+            /** Before */
+            before: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+        };
         /** CatalogSnapshot */
         CatalogSnapshot: {
             /** Artifacts */
@@ -1033,6 +1349,16 @@ export interface components {
             evidence: components["schemas"]["Evidence"][];
             /** Id */
             id: string;
+            /**
+             * Intelligence
+             * @default []
+             */
+            intelligence: components["schemas"]["DeploymentIntelligence"][];
+            /**
+             * Performance
+             * @default []
+             */
+            performance: components["schemas"]["PerformanceEvidence"][];
             /**
              * Schema Version
              * @default 1.0
@@ -1128,6 +1454,25 @@ export interface components {
              * @constant
              */
             index: 0;
+        };
+        /** CircuitPolicy */
+        CircuitPolicy: {
+            /**
+             * Cooldown Seconds
+             * @default 30
+             */
+            cooldown_seconds: number;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Failures
+             * @default 3
+             */
+            failures: number;
         };
         /** ClaimRecord */
         ClaimRecord: {
@@ -1425,6 +1770,16 @@ export interface components {
              * @default null
              */
             alias_id: string | null;
+            /**
+             * Capability Schema
+             * @default null
+             */
+            capability_schema: string | null;
+            /**
+             * Catalog Digest
+             * @default null
+             */
+            catalog_digest: string | null;
             /** Catalog Id */
             catalog_id: string;
             /**
@@ -1457,12 +1812,24 @@ export interface components {
              * @default null
              */
             requested_endpoint: string | null;
+            /** @default null */
+            router_policy_ref: components["schemas"]["VersionRef"] | null;
+            /**
+             * Routing Decision Id
+             * @default null
+             */
+            routing_decision_id: string | null;
             served_endpoint: components["schemas"]["Fact_str_"];
             served_model: components["schemas"]["Fact_str_"];
             /** Tenant Id */
             tenant_id: string;
             /** Transition Sequence */
             transition_sequence: number;
+            /**
+             * Workflow Version
+             * @default null
+             */
+            workflow_version: number | null;
         };
         /** DemoManifest */
         DemoManifest: {
@@ -1525,6 +1892,38 @@ export interface components {
              * @default []
              */
             tools: components["schemas"]["ToolDefinition-Output"][];
+        };
+        /** DeploymentIntelligence */
+        DeploymentIntelligence: {
+            /**
+             * Capability Schema
+             * @default capabilities-1
+             * @constant
+             */
+            capability_schema: "capabilities-1";
+            /** Configuration Id */
+            configuration_id: string;
+            /** Facts */
+            facts: {
+                [key: string]: components["schemas"]["CapabilityObservation"];
+            };
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+        };
+        /** DraftFromDecision */
+        DraftFromDecision: {
+            /** Decision Id */
+            decision_id: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
         };
         /** DraftPolicy */
         DraftPolicy: {
@@ -1708,8 +2107,15 @@ export interface components {
         /** ExecutablePolicy */
         ExecutablePolicy: {
             budget: components["schemas"]["ExecutionBudget"];
+            /**
+             * Catalog Digest
+             * @default null
+             */
+            catalog_digest: string | null;
             /** Catalog Id */
             catalog_id: string;
+            /** @default null */
+            circuit_policy: components["schemas"]["CircuitPolicy"] | null;
             /**
              * Environment
              * @default sandbox
@@ -1746,6 +2152,13 @@ export interface components {
              * @enum {string}
              */
             quality: "untested_provisional" | "measured_not_production_approved";
+            /** @default null */
+            router_policy_ref: components["schemas"]["VersionRef"] | null;
+            /**
+             * Routing Decision Id
+             * @default null
+             */
+            routing_decision_id: string | null;
             /** Stages */
             stages: components["schemas"]["ExecutableStage"][];
             /** @default null */
@@ -1757,8 +2170,11 @@ export interface components {
         /** ExecutablePolicy */
         "ExecutablePolicy-Input": {
             budget: components["schemas"]["ExecutionBudget"];
+            /** Catalog Digest */
+            catalog_digest?: string | null;
             /** Catalog Id */
             catalog_id: string;
+            circuit_policy?: components["schemas"]["CircuitPolicy"] | null;
             /**
              * Environment
              * @default sandbox
@@ -1795,6 +2211,9 @@ export interface components {
              * @enum {string}
              */
             quality: "untested_provisional" | "measured_not_production_approved";
+            router_policy_ref?: components["schemas"]["VersionRef"] | null;
+            /** Routing Decision Id */
+            routing_decision_id?: string | null;
             /** Stages */
             stages: components["schemas"]["ExecutableStage-Input"][];
             variant?: components["schemas"]["PolicyVariant"] | null;
@@ -1805,8 +2224,11 @@ export interface components {
         /** ExecutablePolicy */
         "ExecutablePolicy-Output": {
             budget: components["schemas"]["ExecutionBudget"];
+            /** Catalog Digest */
+            catalog_digest?: string | null;
             /** Catalog Id */
             catalog_id: string;
+            circuit_policy?: components["schemas"]["CircuitPolicy"] | null;
             /**
              * Environment
              * @default sandbox
@@ -1843,6 +2265,9 @@ export interface components {
              * @enum {string}
              */
             quality: "untested_provisional" | "measured_not_production_approved";
+            router_policy_ref?: components["schemas"]["VersionRef"] | null;
+            /** Routing Decision Id */
+            routing_decision_id?: string | null;
             /** Stages */
             stages: components["schemas"]["ExecutableStage-Output"][];
             variant?: components["schemas"]["PolicyVariant"] | null;
@@ -1874,6 +2299,11 @@ export interface components {
              * @default []
              */
             fallback_configuration_ids: string[];
+            /**
+             * Fallback On
+             * @default []
+             */
+            fallback_on: ("provider_failure" | "rate_limit" | "timeout" | "invalid_output" | "quality_validation" | "capability_mismatch" | "context_overflow" | "budget_violation" | "cancelled" | "circuit_open")[];
             /** Input Types */
             input_types: {
                 [key: string]: "text" | "json" | "boolean" | "number";
@@ -1896,6 +2326,13 @@ export interface components {
             /** @default null */
             route_requirements: components["schemas"]["RouteRequirements"] | null;
             stop?: components["schemas"]["StopConditions"];
+            /**
+             * Validation Rules
+             * @default []
+             */
+            validation_rules: components["schemas"]["ValidationRule"][];
+            /** @default null */
+            workload_profile: components["schemas"]["WorkloadProfile"] | null;
         };
         /** ExecutableStage */
         "ExecutableStage-Input": {
@@ -1918,6 +2355,11 @@ export interface components {
              * @default []
              */
             fallback_configuration_ids: string[];
+            /**
+             * Fallback On
+             * @default []
+             */
+            fallback_on: ("provider_failure" | "rate_limit" | "timeout" | "invalid_output" | "quality_validation" | "capability_mismatch" | "context_overflow" | "budget_violation" | "cancelled" | "circuit_open")[];
             /** Input Types */
             input_types: {
                 [key: string]: "text" | "json" | "boolean" | "number";
@@ -1934,6 +2376,12 @@ export interface components {
             response_format?: components["schemas"]["ResponseFormat-Input"] | null;
             route_requirements?: components["schemas"]["RouteRequirements"] | null;
             stop?: components["schemas"]["StopConditions"];
+            /**
+             * Validation Rules
+             * @default []
+             */
+            validation_rules: components["schemas"]["ValidationRule"][];
+            workload_profile?: components["schemas"]["WorkloadProfile"] | null;
         };
         /** ExecutableStage */
         "ExecutableStage-Output": {
@@ -1956,6 +2404,11 @@ export interface components {
              * @default []
              */
             fallback_configuration_ids: string[];
+            /**
+             * Fallback On
+             * @default []
+             */
+            fallback_on: ("provider_failure" | "rate_limit" | "timeout" | "invalid_output" | "quality_validation" | "capability_mismatch" | "context_overflow" | "budget_violation" | "cancelled" | "circuit_open")[];
             /** Input Types */
             input_types: {
                 [key: string]: "text" | "json" | "boolean" | "number";
@@ -1972,6 +2425,12 @@ export interface components {
             response_format?: components["schemas"]["ResponseFormat-Output"] | null;
             route_requirements?: components["schemas"]["RouteRequirements"] | null;
             stop?: components["schemas"]["StopConditions"];
+            /**
+             * Validation Rules
+             * @default []
+             */
+            validation_rules: components["schemas"]["ValidationRule"][];
+            workload_profile?: components["schemas"]["WorkloadProfile"] | null;
         };
         /** ExecutionBudget */
         ExecutionBudget: {
@@ -2051,6 +2510,19 @@ export interface components {
              * @constant
              */
             schema_version: "1.0";
+        };
+        /** Fact[JsonValue] */
+        Fact_JsonValue_: {
+            provenance: components["schemas"]["Provenance"];
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Unknown Reason */
+            unknown_reason?: string | null;
+            value?: components["schemas"]["JsonValue"] | null;
         };
         /** Fact[bool] */
         Fact_bool_: {
@@ -2922,6 +3394,88 @@ export interface components {
              */
             tool_id: string | null;
         };
+        /** PerformanceEvidence */
+        PerformanceEvidence: {
+            /** Benchmark */
+            benchmark: string;
+            /** Benchmark Version */
+            benchmark_version: string;
+            /** Configuration Id */
+            configuration_id: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Harness */
+            harness: string;
+            /**
+             * Higher Is Better
+             * @default true
+             */
+            higher_is_better: boolean;
+            /** Id */
+            id: string;
+            /** Limitations */
+            limitations: string[];
+            /** Measured At */
+            measured_at?: string | null;
+            /** Normalization */
+            normalization: string;
+            /** Normalized Score */
+            normalized_score: number;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "internal_evaluation" | "curated_import" | "manual_review" | "synthetic";
+            provenance: components["schemas"]["Provenance"];
+            /** Raw Metric */
+            raw_metric: number;
+            /**
+             * Retrieved At
+             * Format: date-time
+             */
+            retrieved_at: string;
+            /**
+             * Reviewed
+             * @default false
+             */
+            reviewed: boolean;
+            /** Sample Size */
+            sample_size?: number | null;
+            /**
+             * Scale Max
+             * @default 1
+             */
+            scale_max: number;
+            /**
+             * Scale Min
+             * @default 0
+             */
+            scale_min: number;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Settings */
+            settings: string;
+            /** Source Locator */
+            source_locator: string;
+            /** Source Url */
+            source_url?: string | null;
+            /** Split */
+            split: string;
+            /**
+             * Task
+             * @enum {string}
+             */
+            task: "extraction" | "summarization" | "classification" | "coding" | "debugging" | "mathematics" | "science" | "long_context" | "tool_use" | "structured_extraction" | "research" | "planning" | "multilingual" | "vision" | "general";
+            /** Unit */
+            unit: string;
+        };
         /** PlanInput */
         PlanInput: {
             /**
@@ -3126,6 +3680,47 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** PolicyEvaluationReport */
+        PolicyEvaluationReport: {
+            /** Case Count */
+            case_count: number;
+            /** Comparisons */
+            comparisons: components["schemas"]["ShadowComparison"][];
+            /** Disagreement Rate */
+            disagreement_rate: number;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @default router_behavior_only
+             * @constant
+             */
+            kind: "router_behavior_only";
+            /**
+             * Model Quality Conclusion
+             * @default false
+             * @constant
+             */
+            model_quality_conclusion: false;
+        };
+        /** PolicyEvaluationRequest */
+        PolicyEvaluationRequest: {
+            /** Decisions */
+            decisions: string[];
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            experimental: components["schemas"]["RouterPolicy"];
+        };
         /** PolicyHistory */
         PolicyHistory: {
             /**
@@ -3210,6 +3805,26 @@ export interface components {
             execution_schema: "2.0";
             policy: components["schemas"]["ExecutablePolicy"];
             transition: components["schemas"]["PolicyTransition"];
+        };
+        /** PreviewRequest */
+        PreviewRequest: {
+            /** Catalog Id */
+            catalog_id: string;
+            /** Description */
+            description: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            overrides?: components["schemas"]["WorkloadProfile"] | null;
+            policy?: components["schemas"]["RouterPolicy"];
+            /**
+             * Required Terms
+             * @default []
+             */
+            required_terms: string[];
         };
         /** PriceComponent */
         PriceComponent: {
@@ -3532,6 +4147,167 @@ export interface components {
              */
             required_region: string | null;
         };
+        /** RouterMetrics */
+        RouterMetrics: {
+            /** Attempts */
+            attempts: number;
+            /** Average Latency Ms */
+            average_latency_ms: number | null;
+            /** Confidence Distribution */
+            confidence_distribution: {
+                [key: string]: number;
+            };
+            /** Configuration Distribution */
+            configuration_distribution: {
+                [key: string]: number;
+            };
+            /** Coverage */
+            coverage: string;
+            /** Decisions */
+            decisions: number;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Failure Rate */
+            failure_rate: number | null;
+            /** Fallback Rate */
+            fallback_rate: number | null;
+            /** Known Cost Micro Usd */
+            known_cost_micro_usd: number;
+            /** Policy Disagreement Rate */
+            policy_disagreement_rate: number | null;
+            /** Rejection Reasons */
+            rejection_reasons: {
+                [key: string]: number;
+            };
+            /** Synthetic */
+            synthetic: boolean;
+            /** Unknown Cost Attempts */
+            unknown_cost_attempts: number;
+        };
+        /** RouterPolicy */
+        RouterPolicy: {
+            /**
+             * Circuit Cooldown Seconds
+             * @default 30
+             */
+            circuit_cooldown_seconds: number;
+            /**
+             * Circuit Failures
+             * @default 3
+             */
+            circuit_failures: number;
+            /**
+             * Clear Margin
+             * @default 0.1
+             */
+            clear_margin: number;
+            /**
+             * Estimated Discount
+             * @default 0.25
+             */
+            estimated_discount: number;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Id
+             * @default balanced
+             */
+            id: string;
+            /**
+             * Minimum Samples
+             * @default 20
+             */
+            minimum_samples: number;
+            /**
+             * Unknown Penalty
+             * @default 0.25
+             */
+            unknown_penalty: number;
+            /**
+             * Version
+             * @default 1
+             */
+            version: number;
+            /** Weights */
+            weights?: {
+                [key: string]: number;
+            };
+        };
+        /** RoutingDecision */
+        RoutingDecision: {
+            /**
+             * Activation Authority
+             * @default false
+             * @constant
+             */
+            activation_authority: false;
+            /**
+             * Blockers
+             * @default []
+             */
+            blockers: string[];
+            /**
+             * Capability Schema
+             * @default capabilities-1
+             * @constant
+             */
+            capability_schema: "capabilities-1";
+            catalog: components["schemas"]["CatalogSnapshot"];
+            /** Catalog Digest */
+            catalog_digest: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Id */
+            id: string;
+            /** Max Model Calls */
+            max_model_calls: number;
+            /** Objective */
+            objective: string;
+            /** Parallel Waves */
+            parallel_waves: string[][];
+            profile: components["schemas"]["WorkloadProfile"];
+            /** Projected Cost Micro Usd */
+            projected_cost_micro_usd: number | null;
+            /** Projected Latency Ms */
+            projected_latency_ms: number | null;
+            /**
+             * Required Terms
+             * @default []
+             */
+            required_terms: string[];
+            router_policy: components["schemas"]["RouterPolicy"];
+            /** Stages */
+            stages: components["schemas"]["StageDecision"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "blocked";
+            /**
+             * Strategy
+             * @enum {string}
+             */
+            strategy: "auto" | "single" | "multi_stage" | "parallel" | "cheap_first" | "generate_verify";
+            /** Strategy Reason */
+            strategy_reason: string;
+        };
         /** RunAttempt */
         RunAttempt: {
             /**
@@ -3547,6 +4323,16 @@ export interface components {
              * @constant
              */
             execution_schema: "2.0";
+            /**
+             * Failure Kind
+             * @default null
+             */
+            failure_kind: ("provider_failure" | "rate_limit" | "timeout" | "invalid_output" | "quality_validation" | "capability_mismatch" | "context_overflow" | "budget_violation" | "cancelled" | "circuit_open") | null;
+            /**
+             * Fallback Reason
+             * @default null
+             */
+            fallback_reason: ("provider_failure" | "rate_limit" | "timeout" | "invalid_output" | "quality_validation" | "capability_mismatch" | "context_overflow" | "budget_violation" | "cancelled" | "circuit_open") | null;
             /**
              * Gateway Overhead Ms
              * @default null
@@ -3591,6 +4377,11 @@ export interface components {
              */
             upstream_ms: number | null;
             usage: components["schemas"]["UsageReconciliation"];
+            /**
+             * Validation
+             * @default []
+             */
+            validation: components["schemas"]["ValidationObservation"][];
         };
         /** RunErrorEvent */
         RunErrorEvent: {
@@ -3826,6 +4617,31 @@ export interface components {
              */
             status: "queued" | "running" | "awaiting_approval" | "succeeded" | "failed" | "cancelled" | "uncertain";
         };
+        /** ShadowComparison */
+        ShadowComparison: {
+            /** Authoritative Decision */
+            authoritative_decision: string;
+            /** Disagreements */
+            disagreements: string[];
+            /**
+             * Executes Models
+             * @default false
+             * @constant
+             */
+            executes_models: false;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Experimental Decision */
+            experimental_decision: string;
+            /** Metric Deltas */
+            metric_deltas: {
+                [key: string]: number | null;
+            };
+        };
         /** SourceCapture */
         SourceCapture: {
             /** Body */
@@ -3872,6 +4688,38 @@ export interface components {
              * @constant
              */
             schema_version: "1.0";
+        };
+        /** StageDecision */
+        StageDecision: {
+            /** Candidates */
+            candidates: components["schemas"]["CandidateUtility"][];
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "low" | "medium" | "high";
+            /** Depends On */
+            depends_on: string[];
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Explanation */
+            explanation: string;
+            /**
+             * Fallbacks
+             * @default []
+             */
+            fallbacks: string[];
+            /** Node Id */
+            node_id: string;
+            profile: components["schemas"]["WorkloadProfile"];
+            /** Selected */
+            selected: string | null;
+            /** Uncertainty */
+            uncertainty: string[];
         };
         /**
          * Status
@@ -4174,6 +5022,40 @@ export interface components {
             /** Unresolved Attempts */
             unresolved_attempts: number;
         };
+        /** ValidationObservation */
+        ValidationObservation: {
+            /** Detail */
+            detail: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /** Kind */
+            kind: string;
+            /** Passed */
+            passed: boolean;
+        };
+        /** ValidationRule */
+        ValidationRule: {
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "required_terms" | "python_syntax" | "citation_allowlist";
+            /**
+             * Values
+             * @default []
+             */
+            values: string[];
+        };
         /** VariantRequest */
         VariantRequest: {
             /**
@@ -4202,6 +5084,17 @@ export interface components {
             id: string;
             /** Version */
             version: number;
+        };
+        /** WhatIfRequest */
+        WhatIfRequest: {
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            overrides?: components["schemas"]["WorkloadProfile"] | null;
+            policy: components["schemas"]["RouterPolicy"];
         };
         /** Workflow */
         Workflow: {
@@ -4270,6 +5163,209 @@ export interface components {
              * @constant
              */
             schema_version: "1.0";
+        };
+        /** WorkloadProfile */
+        WorkloadProfile: {
+            /**
+             * Analyzer Version
+             * @default workload-rules-1
+             * @constant
+             */
+            analyzer_version: "workload-rules-1";
+            /**
+             * Approved Providers
+             * @default []
+             */
+            approved_providers: string[];
+            /**
+             * Budget Sensitivity
+             * @default unknown
+             * @enum {string}
+             */
+            budget_sensitivity: "low" | "medium" | "high" | "unknown";
+            /**
+             * Complexity
+             * @default unknown
+             * @enum {string}
+             */
+            complexity: "simple" | "moderate" | "complex" | "unknown";
+            /**
+             * Data Class
+             * @default tenant_private
+             * @enum {string}
+             */
+            data_class: "synthetic" | "public" | "tenant_private" | "restricted";
+            /**
+             * Decomposition
+             * @default null
+             */
+            decomposition: boolean | null;
+            /**
+             * Determinism
+             * @default unspecified
+             * @enum {string}
+             */
+            determinism: "required" | "preferred" | "unspecified";
+            /** Evidence */
+            evidence?: {
+                [key: string]: string;
+            };
+            /**
+             * Expected Stages
+             * @default null
+             */
+            expected_stages: number | null;
+            /**
+             * Explicit Fields
+             * @default []
+             */
+            explicit_fields: string[];
+            /**
+             * Input Tokens
+             * @default null
+             */
+            input_tokens: number | null;
+            /**
+             * Latency Sensitivity
+             * @default unknown
+             * @enum {string}
+             */
+            latency_sensitivity: "low" | "medium" | "high" | "unknown";
+            /**
+             * Local Only
+             * @default false
+             */
+            local_only: boolean;
+            /**
+             * Max Attempts
+             * @default 2
+             */
+            max_attempts: number;
+            /**
+             * Max Cost Micro Usd
+             * @default null
+             */
+            max_cost_micro_usd: number | null;
+            /**
+             * Max Latency Ms
+             * @default null
+             */
+            max_latency_ms: number | null;
+            /**
+             * Max Model Calls
+             * @default 6
+             */
+            max_model_calls: number;
+            /**
+             * Max Tool Calls
+             * @default 0
+             */
+            max_tool_calls: number;
+            /**
+             * Min Quality
+             * @default null
+             */
+            min_quality: number | null;
+            /**
+             * No External Tools
+             * @default true
+             */
+            no_external_tools: boolean;
+            /**
+             * No Retention
+             * @default false
+             */
+            no_retention: boolean;
+            /**
+             * Optional
+             * @default []
+             */
+            optional: ("text_input" | "image_input" | "audio_input" | "video_input" | "document_input" | "text_output" | "json_output" | "schema_json" | "code_output" | "tools" | "embeddings" | "multimodal_output" | "streaming" | "context_tokens" | "max_output_tokens" | "quantization" | "parameters_billion" | "architecture" | "family" | "backends" | "cold_start_ms" | "latency_ms" | "throughput_tokens_s" | "input_usd_per_million" | "output_usd_per_million" | "request_usd" | "gpu_count" | "memory_gb" | "self_hosted" | "local" | "privacy_class" | "retention_days" | "success_rate")[];
+            /**
+             * Output Tokens
+             * @default null
+             */
+            output_tokens: number | null;
+            /**
+             * Parallel
+             * @default null
+             */
+            parallel: boolean | null;
+            /**
+             * Preferred Cost Micro Usd
+             * @default null
+             */
+            preferred_cost_micro_usd: number | null;
+            /**
+             * Quality Sensitivity
+             * @default unknown
+             * @enum {string}
+             */
+            quality_sensitivity: "low" | "medium" | "high" | "unknown";
+            /**
+             * Questions
+             * @default []
+             */
+            questions: string[];
+            /**
+             * Required
+             * @default [
+             *       "text_input",
+             *       "text_output"
+             *     ]
+             */
+            required: ("text_input" | "image_input" | "audio_input" | "video_input" | "document_input" | "text_output" | "json_output" | "schema_json" | "code_output" | "tools" | "embeddings" | "multimodal_output" | "streaming" | "context_tokens" | "max_output_tokens" | "quantization" | "parameters_billion" | "architecture" | "family" | "backends" | "cold_start_ms" | "latency_ms" | "throughput_tokens_s" | "input_usd_per_million" | "output_usd_per_million" | "request_usd" | "gpu_count" | "memory_gb" | "self_hosted" | "local" | "privacy_class" | "retention_days" | "success_rate")[];
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Self Hosted Only
+             * @default false
+             */
+            self_hosted_only: boolean;
+            /**
+             * Strategy
+             * @default auto
+             * @enum {string}
+             */
+            strategy: "auto" | "single" | "multi_stage" | "parallel" | "cheap_first" | "generate_verify";
+            /**
+             * Structured Output
+             * @default text
+             * @enum {string}
+             */
+            structured_output: "text" | "json" | "schema_json";
+            /**
+             * Task
+             * @default general
+             * @enum {string}
+             */
+            task: "extraction" | "summarization" | "classification" | "coding" | "debugging" | "mathematics" | "science" | "long_context" | "tool_use" | "structured_extraction" | "research" | "planning" | "multilingual" | "vision" | "general";
+            /**
+             * Tools
+             * @default []
+             */
+            tools: string[];
+            /**
+             * Verification
+             * @default null
+             */
+            verification: boolean | null;
+        };
+        /** WorkloadRequest */
+        WorkloadRequest: {
+            /** Description */
+            description: string;
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            overrides?: components["schemas"]["WorkloadProfile"] | null;
         };
     };
     responses: never;
@@ -6000,6 +7096,600 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportedSample-Output"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    analyze_workload_api_studio_intelligence_analyze_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkloadRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkloadProfile"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    diff_api_studio_intelligence_catalog_diff_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CatalogDiffRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogChange"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_decision_api_studio_intelligence_decisions__identifier__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                identifier: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingDecision"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    shadow_api_studio_intelligence_decisions__identifier__shadow_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                identifier: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WhatIfRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShadowComparison"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    what_if_api_studio_intelligence_decisions__identifier__what_if_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                identifier: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WhatIfRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingDecision"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    draft_api_studio_intelligence_drafts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftFromDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutablePolicy-Output"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    evaluate_api_studio_intelligence_evaluate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PolicyEvaluationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PolicyEvaluationReport"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    metrics_api_studio_intelligence_metrics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouterMetrics"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    preview_api_studio_intelligence_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingDecision"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    status_api_studio_intelligence_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvancedStatus"];
                 };
             };
             /** @description Bad Request */

@@ -1,6 +1,106 @@
 {
   "components": {
     "schemas": {
+      "AdvancedScenario": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admission Id"
+          },
+          "decision_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "input": {
+            "title": "Input",
+            "type": "string"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "request": {
+            "$ref": "#/components/schemas/PreviewRequest"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "request",
+          "decision_id",
+          "input"
+        ],
+        "title": "AdvancedScenario",
+        "type": "object"
+      },
+      "AdvancedStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog_ids": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Catalog Ids",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "scenarios": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/AdvancedScenario"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "catalog_ids",
+          "synthetic"
+        ],
+        "title": "AdvancedStatus",
+        "type": "object"
+      },
       "ApplicationKeyMetadata": {
         "additionalProperties": false,
         "properties": {
@@ -366,6 +466,261 @@
         "title": "CandidateConfiguration",
         "type": "object"
       },
+      "CandidateUtility": {
+        "additionalProperties": false,
+        "properties": {
+          "configuration_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Configuration Id",
+            "type": "string"
+          },
+          "conflicts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "eligible": {
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "evidence_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "metric_basis": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "enum": [
+                "quality",
+                "latency",
+                "cost",
+                "throughput",
+                "privacy",
+                "reliability",
+                "capability"
+              ]
+            },
+            "title": "Metric Basis",
+            "type": "object"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "propertyNames": {
+              "enum": [
+                "quality",
+                "latency",
+                "cost",
+                "throughput",
+                "privacy",
+                "reliability",
+                "capability"
+              ]
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "normalized": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "propertyNames": {
+              "enum": [
+                "quality",
+                "latency",
+                "cost",
+                "throughput",
+                "privacy",
+                "reliability",
+                "capability"
+              ]
+            },
+            "title": "Normalized",
+            "type": "object"
+          },
+          "pareto": {
+            "default": false,
+            "title": "Pareto",
+            "type": "boolean"
+          },
+          "rejected": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Rejected",
+            "type": "array"
+          },
+          "unknown": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknown",
+            "type": "array"
+          },
+          "utility": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utility"
+          }
+        },
+        "required": [
+          "configuration_id",
+          "eligible"
+        ],
+        "title": "CandidateUtility",
+        "type": "object"
+      },
+      "CapabilityObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "enum": [
+              "declared",
+              "measured",
+              "imported",
+              "estimated",
+              "synthetic",
+              "unknown"
+            ],
+            "title": "Basis",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "fact": {
+            "$ref": "#/components/schemas/Fact_JsonValue_"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fact",
+          "basis",
+          "observed_at",
+          "expires_at"
+        ],
+        "title": "CapabilityObservation",
+        "type": "object"
+      },
+      "CatalogChange": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before"
+          },
+          "configuration_id": {
+            "title": "Configuration Id",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "configuration_id",
+          "field",
+          "before",
+          "after"
+        ],
+        "title": "CatalogChange",
+        "type": "object"
+      },
+      "CatalogDiffRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "After",
+            "type": "string"
+          },
+          "before": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Before",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          }
+        },
+        "required": [
+          "before",
+          "after"
+        ],
+        "title": "CatalogDiffRequest",
+        "type": "object"
+      },
       "CatalogSnapshot": {
         "additionalProperties": false,
         "properties": {
@@ -402,6 +757,22 @@
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Id",
             "type": "string"
+          },
+          "intelligence": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DeploymentIntelligence"
+            },
+            "title": "Intelligence",
+            "type": "array"
+          },
+          "performance": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PerformanceEvidence"
+            },
+            "title": "Performance",
+            "type": "array"
           },
           "schema_version": {
             "const": "1.0",
@@ -720,6 +1091,33 @@
           "delta"
         ],
         "title": "ChunkChoice",
+        "type": "object"
+      },
+      "CircuitPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "cooldown_seconds": {
+            "default": 30,
+            "maximum": 3600,
+            "minimum": 1,
+            "title": "Cooldown Seconds",
+            "type": "integer"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "failures": {
+            "default": 3,
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Failures",
+            "type": "integer"
+          }
+        },
+        "title": "CircuitPolicy",
         "type": "object"
       },
       "ClaimRecord": {
@@ -1424,6 +1822,30 @@
             "default": null,
             "title": "Alias Id"
           },
+          "capability_schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Capability Schema"
+          },
+          "catalog_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Catalog Digest"
+          },
           "catalog_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Catalog Id",
@@ -1501,6 +1923,30 @@
             "default": null,
             "title": "Requested Endpoint"
           },
+          "router_policy_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "routing_decision_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Routing Decision Id"
+          },
           "served_endpoint": {
             "$ref": "#/components/schemas/Fact_str_"
           },
@@ -1516,6 +1962,18 @@
             "minimum": 1,
             "title": "Transition Sequence",
             "type": "integer"
+          },
+          "workflow_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Workflow Version"
           }
         },
         "required": [
@@ -1686,6 +2144,99 @@
           "expected"
         ],
         "title": "DemoScenario",
+        "type": "object"
+      },
+      "DeploymentIntelligence": {
+        "additionalProperties": false,
+        "properties": {
+          "capability_schema": {
+            "const": "capabilities-1",
+            "default": "capabilities-1",
+            "title": "Capability Schema",
+            "type": "string"
+          },
+          "configuration_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Configuration Id",
+            "type": "string"
+          },
+          "facts": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CapabilityObservation"
+            },
+            "propertyNames": {
+              "enum": [
+                "text_input",
+                "image_input",
+                "audio_input",
+                "video_input",
+                "document_input",
+                "text_output",
+                "json_output",
+                "schema_json",
+                "code_output",
+                "tools",
+                "embeddings",
+                "multimodal_output",
+                "streaming",
+                "context_tokens",
+                "max_output_tokens",
+                "quantization",
+                "parameters_billion",
+                "architecture",
+                "family",
+                "backends",
+                "cold_start_ms",
+                "latency_ms",
+                "throughput_tokens_s",
+                "input_usd_per_million",
+                "output_usd_per_million",
+                "request_usd",
+                "gpu_count",
+                "memory_gb",
+                "self_hosted",
+                "local",
+                "privacy_class",
+                "retention_days",
+                "success_rate"
+              ]
+            },
+            "title": "Facts",
+            "type": "object"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "configuration_id",
+          "facts"
+        ],
+        "title": "DeploymentIntelligence",
+        "type": "object"
+      },
+      "DraftFromDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "decision_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id"
+        ],
+        "title": "DraftFromDecision",
         "type": "object"
       },
       "DraftPolicy": {
@@ -2078,10 +2629,34 @@
           "budget": {
             "$ref": "#/components/schemas/ExecutionBudget"
           },
+          "catalog_digest": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Catalog Digest"
+          },
           "catalog_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Catalog Id",
             "type": "string"
+          },
+          "circuit_policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CircuitPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "environment": {
             "const": "sandbox",
@@ -2141,6 +2716,30 @@
             ],
             "title": "Quality",
             "type": "string"
+          },
+          "router_policy_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "routing_decision_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Routing Decision Id"
           },
           "stages": {
             "items": {
@@ -2190,10 +2789,32 @@
           "budget": {
             "$ref": "#/components/schemas/ExecutionBudget"
           },
+          "catalog_digest": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Digest"
+          },
           "catalog_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Catalog Id",
             "type": "string"
+          },
+          "circuit_policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CircuitPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "environment": {
             "const": "sandbox",
@@ -2253,6 +2874,28 @@
             ],
             "title": "Quality",
             "type": "string"
+          },
+          "router_policy_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "routing_decision_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Routing Decision Id"
           },
           "stages": {
             "items": {
@@ -2301,10 +2944,32 @@
           "budget": {
             "$ref": "#/components/schemas/ExecutionBudget"
           },
+          "catalog_digest": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Digest"
+          },
           "catalog_id": {
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
             "title": "Catalog Id",
             "type": "string"
+          },
+          "circuit_policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CircuitPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "environment": {
             "const": "sandbox",
@@ -2364,6 +3029,28 @@
             ],
             "title": "Quality",
             "type": "string"
+          },
+          "router_policy_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "routing_decision_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Routing Decision Id"
           },
           "stages": {
             "items": {
@@ -2448,6 +3135,26 @@
             },
             "maxItems": 2,
             "title": "Fallback Configuration Ids",
+            "type": "array"
+          },
+          "fallback_on": {
+            "default": [],
+            "items": {
+              "enum": [
+                "provider_failure",
+                "rate_limit",
+                "timeout",
+                "invalid_output",
+                "quality_validation",
+                "capability_mismatch",
+                "context_overflow",
+                "budget_violation",
+                "cancelled",
+                "circuit_open"
+              ],
+              "type": "string"
+            },
+            "title": "Fallback On",
             "type": "array"
           },
           "input_types": {
@@ -2539,6 +3246,26 @@
           },
           "stop": {
             "$ref": "#/components/schemas/StopConditions"
+          },
+          "validation_rules": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ValidationRule"
+            },
+            "maxItems": 5,
+            "title": "Validation Rules",
+            "type": "array"
+          },
+          "workload_profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkloadProfile"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -2591,6 +3318,26 @@
             },
             "maxItems": 2,
             "title": "Fallback Configuration Ids",
+            "type": "array"
+          },
+          "fallback_on": {
+            "default": [],
+            "items": {
+              "enum": [
+                "provider_failure",
+                "rate_limit",
+                "timeout",
+                "invalid_output",
+                "quality_validation",
+                "capability_mismatch",
+                "context_overflow",
+                "budget_violation",
+                "cancelled",
+                "circuit_open"
+              ],
+              "type": "string"
+            },
+            "title": "Fallback On",
             "type": "array"
           },
           "input_types": {
@@ -2678,6 +3425,25 @@
           },
           "stop": {
             "$ref": "#/components/schemas/StopConditions"
+          },
+          "validation_rules": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ValidationRule"
+            },
+            "maxItems": 5,
+            "title": "Validation Rules",
+            "type": "array"
+          },
+          "workload_profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkloadProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -2730,6 +3496,26 @@
             },
             "maxItems": 2,
             "title": "Fallback Configuration Ids",
+            "type": "array"
+          },
+          "fallback_on": {
+            "default": [],
+            "items": {
+              "enum": [
+                "provider_failure",
+                "rate_limit",
+                "timeout",
+                "invalid_output",
+                "quality_validation",
+                "capability_mismatch",
+                "context_overflow",
+                "budget_violation",
+                "cancelled",
+                "circuit_open"
+              ],
+              "type": "string"
+            },
+            "title": "Fallback On",
             "type": "array"
           },
           "input_types": {
@@ -2817,6 +3603,25 @@
           },
           "stop": {
             "$ref": "#/components/schemas/StopConditions"
+          },
+          "validation_rules": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ValidationRule"
+            },
+            "maxItems": 5,
+            "title": "Validation Rules",
+            "type": "array"
+          },
+          "workload_profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkloadProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -3024,6 +3829,46 @@
           "connection_ref"
         ],
         "title": "ExecutionTool",
+        "type": "object"
+      },
+      "Fact_JsonValue_": {
+        "additionalProperties": false,
+        "properties": {
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "unknown_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unknown Reason"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "provenance"
+        ],
+        "title": "Fact[JsonValue]",
         "type": "object"
       },
       "Fact_bool_": {
@@ -5024,6 +5869,202 @@
         "title": "Node",
         "type": "object"
       },
+      "PerformanceEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "benchmark": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Benchmark",
+            "type": "string"
+          },
+          "benchmark_version": {
+            "title": "Benchmark Version",
+            "type": "string"
+          },
+          "configuration_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Configuration Id",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "harness": {
+            "title": "Harness",
+            "type": "string"
+          },
+          "higher_is_better": {
+            "default": true,
+            "title": "Higher Is Better",
+            "type": "boolean"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Limitations",
+            "type": "array"
+          },
+          "measured_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured At"
+          },
+          "normalization": {
+            "minLength": 1,
+            "title": "Normalization",
+            "type": "string"
+          },
+          "normalized_score": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Normalized Score",
+            "type": "number"
+          },
+          "origin": {
+            "enum": [
+              "internal_evaluation",
+              "curated_import",
+              "manual_review",
+              "synthetic"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "raw_metric": {
+            "title": "Raw Metric",
+            "type": "number"
+          },
+          "retrieved_at": {
+            "format": "date-time",
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "reviewed": {
+            "default": false,
+            "title": "Reviewed",
+            "type": "boolean"
+          },
+          "sample_size": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Size"
+          },
+          "scale_max": {
+            "default": 1,
+            "title": "Scale Max",
+            "type": "number"
+          },
+          "scale_min": {
+            "default": 0,
+            "title": "Scale Min",
+            "type": "number"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "settings": {
+            "title": "Settings",
+            "type": "string"
+          },
+          "source_locator": {
+            "minLength": 1,
+            "title": "Source Locator",
+            "type": "string"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "split": {
+            "title": "Split",
+            "type": "string"
+          },
+          "task": {
+            "enum": [
+              "extraction",
+              "summarization",
+              "classification",
+              "coding",
+              "debugging",
+              "mathematics",
+              "science",
+              "long_context",
+              "tool_use",
+              "structured_extraction",
+              "research",
+              "planning",
+              "multilingual",
+              "vision",
+              "general"
+            ],
+            "title": "Task",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "configuration_id",
+          "task",
+          "benchmark",
+          "benchmark_version",
+          "split",
+          "harness",
+          "settings",
+          "raw_metric",
+          "unit",
+          "normalized_score",
+          "normalization",
+          "retrieved_at",
+          "expires_at",
+          "source_locator",
+          "provenance",
+          "origin",
+          "limitations"
+        ],
+        "title": "PerformanceEvidence",
+        "type": "object"
+      },
       "PlanInput": {
         "additionalProperties": false,
         "properties": {
@@ -5455,6 +6496,87 @@
         "title": "PolicyEditRequest",
         "type": "object"
       },
+      "PolicyEvaluationReport": {
+        "additionalProperties": false,
+        "properties": {
+          "case_count": {
+            "title": "Case Count",
+            "type": "integer"
+          },
+          "comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/ShadowComparison"
+            },
+            "title": "Comparisons",
+            "type": "array"
+          },
+          "disagreement_rate": {
+            "title": "Disagreement Rate",
+            "type": "number"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "router_behavior_only",
+            "default": "router_behavior_only",
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_quality_conclusion": {
+            "const": false,
+            "default": false,
+            "title": "Model Quality Conclusion",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "comparisons",
+          "case_count",
+          "disagreement_rate"
+        ],
+        "title": "PolicyEvaluationReport",
+        "type": "object"
+      },
+      "PolicyEvaluationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "decisions": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "title": "Decisions",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "experimental": {
+            "$ref": "#/components/schemas/RouterPolicy"
+          }
+        },
+        "required": [
+          "decisions",
+          "experimental"
+        ],
+        "title": "PolicyEvaluationRequest",
+        "type": "object"
+      },
       "PolicyHistory": {
         "additionalProperties": false,
         "properties": {
@@ -5610,6 +6732,56 @@
           "transition"
         ],
         "title": "PolicyView",
+        "type": "object"
+      },
+      "PreviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Catalog Id",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "overrides": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkloadProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy": {
+            "$ref": "#/components/schemas/RouterPolicy"
+          },
+          "required_terms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Required Terms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "description",
+          "catalog_id"
+        ],
+        "title": "PreviewRequest",
         "type": "object"
       },
       "PriceComponent": {
@@ -6265,6 +7437,361 @@
         "title": "RouteRequirements",
         "type": "object"
       },
+      "RouterMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "average_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Latency Ms"
+          },
+          "confidence_distribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Confidence Distribution",
+            "type": "object"
+          },
+          "configuration_distribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Configuration Distribution",
+            "type": "object"
+          },
+          "coverage": {
+            "title": "Coverage",
+            "type": "string"
+          },
+          "decisions": {
+            "title": "Decisions",
+            "type": "integer"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "failure_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Rate"
+          },
+          "fallback_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Rate"
+          },
+          "known_cost_micro_usd": {
+            "title": "Known Cost Micro Usd",
+            "type": "integer"
+          },
+          "policy_disagreement_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Disagreement Rate"
+          },
+          "rejection_reasons": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Rejection Reasons",
+            "type": "object"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "unknown_cost_attempts": {
+            "title": "Unknown Cost Attempts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "coverage",
+          "synthetic",
+          "decisions",
+          "confidence_distribution",
+          "configuration_distribution",
+          "rejection_reasons",
+          "attempts",
+          "failure_rate",
+          "fallback_rate",
+          "average_latency_ms",
+          "known_cost_micro_usd",
+          "unknown_cost_attempts",
+          "policy_disagreement_rate"
+        ],
+        "title": "RouterMetrics",
+        "type": "object"
+      },
+      "RouterPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "circuit_cooldown_seconds": {
+            "default": 30,
+            "maximum": 3600.0,
+            "minimum": 1.0,
+            "title": "Circuit Cooldown Seconds",
+            "type": "integer"
+          },
+          "circuit_failures": {
+            "default": 3,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Circuit Failures",
+            "type": "integer"
+          },
+          "clear_margin": {
+            "default": 0.1,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Clear Margin",
+            "type": "number"
+          },
+          "estimated_discount": {
+            "default": 0.25,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Estimated Discount",
+            "type": "number"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "default": "balanced",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "minimum_samples": {
+            "default": 20,
+            "minimum": 1.0,
+            "title": "Minimum Samples",
+            "type": "integer"
+          },
+          "unknown_penalty": {
+            "default": 0.25,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Unknown Penalty",
+            "type": "number"
+          },
+          "version": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "propertyNames": {
+              "enum": [
+                "quality",
+                "latency",
+                "cost",
+                "throughput",
+                "privacy",
+                "reliability",
+                "capability"
+              ]
+            },
+            "title": "Weights",
+            "type": "object"
+          }
+        },
+        "title": "RouterPolicy",
+        "type": "object"
+      },
+      "RoutingDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "activation_authority": {
+            "const": false,
+            "default": false,
+            "title": "Activation Authority",
+            "type": "boolean"
+          },
+          "blockers": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Blockers",
+            "type": "array"
+          },
+          "capability_schema": {
+            "const": "capabilities-1",
+            "default": "capabilities-1",
+            "title": "Capability Schema",
+            "type": "string"
+          },
+          "catalog": {
+            "$ref": "#/components/schemas/CatalogSnapshot"
+          },
+          "catalog_digest": {
+            "title": "Catalog Digest",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_model_calls": {
+            "title": "Max Model Calls",
+            "type": "integer"
+          },
+          "objective": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Objective",
+            "type": "string"
+          },
+          "parallel_waves": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Parallel Waves",
+            "type": "array"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/WorkloadProfile"
+          },
+          "projected_cost_micro_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Cost Micro Usd"
+          },
+          "projected_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Latency Ms"
+          },
+          "required_terms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Terms",
+            "type": "array"
+          },
+          "router_policy": {
+            "$ref": "#/components/schemas/RouterPolicy"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/StageDecision"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "blocked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "strategy": {
+            "enum": [
+              "auto",
+              "single",
+              "multi_stage",
+              "parallel",
+              "cheap_first",
+              "generate_verify"
+            ],
+            "title": "Strategy",
+            "type": "string"
+          },
+          "strategy_reason": {
+            "title": "Strategy Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "objective",
+          "created_at",
+          "catalog",
+          "catalog_digest",
+          "profile",
+          "router_policy",
+          "strategy",
+          "stages",
+          "status",
+          "projected_cost_micro_usd",
+          "projected_latency_ms",
+          "max_model_calls",
+          "parallel_waves",
+          "strategy_reason"
+        ],
+        "title": "RoutingDecision",
+        "type": "object"
+      },
       "RunAttempt": {
         "additionalProperties": false,
         "properties": {
@@ -6291,6 +7818,54 @@
             "default": "2.0",
             "title": "Execution Schema",
             "type": "string"
+          },
+          "failure_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "provider_failure",
+                  "rate_limit",
+                  "timeout",
+                  "invalid_output",
+                  "quality_validation",
+                  "capability_mismatch",
+                  "context_overflow",
+                  "budget_violation",
+                  "cancelled",
+                  "circuit_open"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Failure Kind"
+          },
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "provider_failure",
+                  "rate_limit",
+                  "timeout",
+                  "invalid_output",
+                  "quality_validation",
+                  "capability_mismatch",
+                  "context_overflow",
+                  "budget_violation",
+                  "cancelled",
+                  "circuit_open"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fallback Reason"
           },
           "gateway_overhead_ms": {
             "anyOf": [
@@ -6395,6 +7970,14 @@
           },
           "usage": {
             "$ref": "#/components/schemas/UsageReconciliation"
+          },
+          "validation": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ValidationObservation"
+            },
+            "title": "Validation",
+            "type": "array"
           }
         },
         "required": [
@@ -6887,6 +8470,62 @@
         "title": "SandboxRun",
         "type": "object"
       },
+      "ShadowComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "authoritative_decision": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Authoritative Decision",
+            "type": "string"
+          },
+          "disagreements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Disagreements",
+            "type": "array"
+          },
+          "executes_models": {
+            "const": false,
+            "default": false,
+            "title": "Executes Models",
+            "type": "boolean"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "experimental_decision": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Experimental Decision",
+            "type": "string"
+          },
+          "metric_deltas": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Metric Deltas",
+            "type": "object"
+          }
+        },
+        "required": [
+          "authoritative_decision",
+          "experimental_decision",
+          "disagreements",
+          "metric_deltas"
+        ],
+        "title": "ShadowComparison",
+        "type": "object"
+      },
       "SourceCapture": {
         "additionalProperties": false,
         "properties": {
@@ -6971,6 +8610,93 @@
           "rationale"
         ],
         "title": "StackComparison",
+        "type": "object"
+      },
+      "StageDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateUtility"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "confidence": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "depends_on": {
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "fallbacks": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Fallbacks",
+            "type": "array"
+          },
+          "node_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/WorkloadProfile"
+          },
+          "selected": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected"
+          },
+          "uncertainty": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Uncertainty",
+            "type": "array"
+          }
+        },
+        "required": [
+          "node_id",
+          "depends_on",
+          "profile",
+          "selected",
+          "candidates",
+          "confidence",
+          "uncertainty",
+          "explanation"
+        ],
+        "title": "StageDecision",
         "type": "object"
       },
       "Status": {
@@ -7607,6 +9333,70 @@
         "title": "UsageSummary",
         "type": "object"
       },
+      "ValidationObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "passed",
+          "detail"
+        ],
+        "title": "ValidationObservation",
+        "type": "object"
+      },
+      "ValidationRule": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "required_terms",
+              "python_syntax",
+              "citation_allowlist"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "values": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "ValidationRule",
+        "type": "object"
+      },
       "VariantRequest": {
         "additionalProperties": false,
         "properties": {
@@ -7663,6 +9453,35 @@
           "version"
         ],
         "title": "VersionRef",
+        "type": "object"
+      },
+      "WhatIfRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "overrides": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkloadProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy": {
+            "$ref": "#/components/schemas/RouterPolicy"
+          }
+        },
+        "required": [
+          "policy"
+        ],
+        "title": "WhatIfRequest",
         "type": "object"
       },
       "Workflow": {
@@ -7812,6 +9631,471 @@
           "description"
         ],
         "title": "WorkflowTool",
+        "type": "object"
+      },
+      "WorkloadProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "analyzer_version": {
+            "const": "workload-rules-1",
+            "default": "workload-rules-1",
+            "title": "Analyzer Version",
+            "type": "string"
+          },
+          "approved_providers": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Approved Providers",
+            "type": "array"
+          },
+          "budget_sensitivity": {
+            "default": "unknown",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "unknown"
+            ],
+            "title": "Budget Sensitivity",
+            "type": "string"
+          },
+          "complexity": {
+            "default": "unknown",
+            "enum": [
+              "simple",
+              "moderate",
+              "complex",
+              "unknown"
+            ],
+            "title": "Complexity",
+            "type": "string"
+          },
+          "data_class": {
+            "default": "tenant_private",
+            "enum": [
+              "synthetic",
+              "public",
+              "tenant_private",
+              "restricted"
+            ],
+            "title": "Data Class",
+            "type": "string"
+          },
+          "decomposition": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Decomposition"
+          },
+          "determinism": {
+            "default": "unspecified",
+            "enum": [
+              "required",
+              "preferred",
+              "unspecified"
+            ],
+            "title": "Determinism",
+            "type": "string"
+          },
+          "evidence": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Evidence",
+            "type": "object"
+          },
+          "expected_stages": {
+            "anyOf": [
+              {
+                "maximum": 8,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expected Stages"
+          },
+          "explicit_fields": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Explicit Fields",
+            "type": "array"
+          },
+          "input_tokens": {
+            "anyOf": [
+              {
+                "maximum": 131072,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Input Tokens"
+          },
+          "latency_sensitivity": {
+            "default": "unknown",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "unknown"
+            ],
+            "title": "Latency Sensitivity",
+            "type": "string"
+          },
+          "local_only": {
+            "default": false,
+            "title": "Local Only",
+            "type": "boolean"
+          },
+          "max_attempts": {
+            "default": 2,
+            "maximum": 3,
+            "minimum": 1,
+            "title": "Max Attempts",
+            "type": "integer"
+          },
+          "max_cost_micro_usd": {
+            "anyOf": [
+              {
+                "maximum": 1000000,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Cost Micro Usd"
+          },
+          "max_latency_ms": {
+            "anyOf": [
+              {
+                "maximum": 120000,
+                "minimum": 100,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Latency Ms"
+          },
+          "max_model_calls": {
+            "default": 6,
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Max Model Calls",
+            "type": "integer"
+          },
+          "max_tool_calls": {
+            "default": 0,
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Max Tool Calls",
+            "type": "integer"
+          },
+          "min_quality": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Min Quality"
+          },
+          "no_external_tools": {
+            "default": true,
+            "title": "No External Tools",
+            "type": "boolean"
+          },
+          "no_retention": {
+            "default": false,
+            "title": "No Retention",
+            "type": "boolean"
+          },
+          "optional": {
+            "default": [],
+            "items": {
+              "enum": [
+                "text_input",
+                "image_input",
+                "audio_input",
+                "video_input",
+                "document_input",
+                "text_output",
+                "json_output",
+                "schema_json",
+                "code_output",
+                "tools",
+                "embeddings",
+                "multimodal_output",
+                "streaming",
+                "context_tokens",
+                "max_output_tokens",
+                "quantization",
+                "parameters_billion",
+                "architecture",
+                "family",
+                "backends",
+                "cold_start_ms",
+                "latency_ms",
+                "throughput_tokens_s",
+                "input_usd_per_million",
+                "output_usd_per_million",
+                "request_usd",
+                "gpu_count",
+                "memory_gb",
+                "self_hosted",
+                "local",
+                "privacy_class",
+                "retention_days",
+                "success_rate"
+              ],
+              "type": "string"
+            },
+            "title": "Optional",
+            "type": "array"
+          },
+          "output_tokens": {
+            "anyOf": [
+              {
+                "maximum": 16384,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Output Tokens"
+          },
+          "parallel": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Parallel"
+          },
+          "preferred_cost_micro_usd": {
+            "anyOf": [
+              {
+                "maximum": 1000000,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Preferred Cost Micro Usd"
+          },
+          "quality_sensitivity": {
+            "default": "unknown",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "unknown"
+            ],
+            "title": "Quality Sensitivity",
+            "type": "string"
+          },
+          "questions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "required": {
+            "default": [
+              "text_input",
+              "text_output"
+            ],
+            "items": {
+              "enum": [
+                "text_input",
+                "image_input",
+                "audio_input",
+                "video_input",
+                "document_input",
+                "text_output",
+                "json_output",
+                "schema_json",
+                "code_output",
+                "tools",
+                "embeddings",
+                "multimodal_output",
+                "streaming",
+                "context_tokens",
+                "max_output_tokens",
+                "quantization",
+                "parameters_billion",
+                "architecture",
+                "family",
+                "backends",
+                "cold_start_ms",
+                "latency_ms",
+                "throughput_tokens_s",
+                "input_usd_per_million",
+                "output_usd_per_million",
+                "request_usd",
+                "gpu_count",
+                "memory_gb",
+                "self_hosted",
+                "local",
+                "privacy_class",
+                "retention_days",
+                "success_rate"
+              ],
+              "type": "string"
+            },
+            "title": "Required",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "self_hosted_only": {
+            "default": false,
+            "title": "Self Hosted Only",
+            "type": "boolean"
+          },
+          "strategy": {
+            "default": "auto",
+            "enum": [
+              "auto",
+              "single",
+              "multi_stage",
+              "parallel",
+              "cheap_first",
+              "generate_verify"
+            ],
+            "title": "Strategy",
+            "type": "string"
+          },
+          "structured_output": {
+            "default": "text",
+            "enum": [
+              "text",
+              "json",
+              "schema_json"
+            ],
+            "title": "Structured Output",
+            "type": "string"
+          },
+          "task": {
+            "default": "general",
+            "enum": [
+              "extraction",
+              "summarization",
+              "classification",
+              "coding",
+              "debugging",
+              "mathematics",
+              "science",
+              "long_context",
+              "tool_use",
+              "structured_extraction",
+              "research",
+              "planning",
+              "multilingual",
+              "vision",
+              "general"
+            ],
+            "title": "Task",
+            "type": "string"
+          },
+          "tools": {
+            "default": [],
+            "items": {
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$",
+              "type": "string"
+            },
+            "title": "Tools",
+            "type": "array"
+          },
+          "verification": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Verification"
+          }
+        },
+        "title": "WorkloadProfile",
+        "type": "object"
+      },
+      "WorkloadRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "overrides": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkloadProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "WorkloadRequest",
         "type": "object"
       }
     },
@@ -10002,6 +12286,723 @@
         "summary": "Get Sample",
         "tags": [
           "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/intelligence/analyze": {
+      "post": {
+        "operationId": "analyze_workload_api_studio_intelligence_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkloadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkloadProfile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Analyze Workload",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/catalog-diff": {
+      "post": {
+        "operationId": "diff_api_studio_intelligence_catalog_diff_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogDiffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogChange"
+                  },
+                  "title": "Response Diff Api Studio Intelligence Catalog Diff Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Diff",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/decisions/{identifier}": {
+      "get": {
+        "operationId": "get_decision_api_studio_intelligence_decisions__identifier__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingDecision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Decision",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/decisions/{identifier}/shadow": {
+      "post": {
+        "operationId": "shadow_api_studio_intelligence_decisions__identifier__shadow_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WhatIfRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShadowComparison"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Shadow",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/decisions/{identifier}/what-if": {
+      "post": {
+        "operationId": "what_if_api_studio_intelligence_decisions__identifier__what_if_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WhatIfRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingDecision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "What If",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/drafts": {
+      "post": {
+        "operationId": "draft_api_studio_intelligence_drafts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftFromDecision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutablePolicy-Output"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Draft",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/evaluate": {
+      "post": {
+        "operationId": "evaluate_api_studio_intelligence_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyEvaluationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyEvaluationReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Evaluate",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/metrics": {
+      "get": {
+        "operationId": "metrics_api_studio_intelligence_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouterMetrics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Metrics",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/preview": {
+      "post": {
+        "operationId": "preview_api_studio_intelligence_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingDecision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Preview",
+        "tags": [
+          "Workload intelligence"
+        ]
+      }
+    },
+    "/api/studio/intelligence/status": {
+      "get": {
+        "operationId": "status_api_studio_intelligence_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvancedStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Status",
+        "tags": [
+          "Workload intelligence"
         ]
       }
     },

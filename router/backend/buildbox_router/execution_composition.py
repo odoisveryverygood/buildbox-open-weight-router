@@ -123,7 +123,19 @@ def compose_execution(
                     raise ValueError("Admission registry ownership mismatch")
                 append(conn, item.tenant_id, "admission", admission.id, 1, admission)
     authority = Authority(
-        store, target=target, grant=grant, credential=credential, catalog=catalog, selector=selector
+        store,
+        target=target,
+        grant=grant,
+        credential=credential,
+        catalog=catalog,
+        selector=selector,
+        local_egress=lambda tenant, target: (
+            bool(target.local)
+            or bool(
+                target.approved_endpoint_id
+                and endpoint(tenant, target.approved_endpoint_id).network == "loopback"
+            )
+        ),
     )
     keys = ApplicationKeys(store)
     gateway = Gateway(authority, TargetAdapters(secret, endpoint), keys, streaming_enabled=True)

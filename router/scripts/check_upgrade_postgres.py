@@ -83,7 +83,7 @@ def main() -> None:
         assert sum(pool.map(reserve, range(2))) == 1
     engine.dispose()
     print(
-        "PASS PostgreSQL v2->v4, rerun, preserved legacy, immutable aliases/policies, tenant isolation, disabled transition, concurrent sandbox budget"
+        "PASS PostgreSQL v2->v5, rerun, preserved legacy, immutable aliases/policies, tenant isolation, disabled transition, concurrent sandbox budget"
     )
 
 

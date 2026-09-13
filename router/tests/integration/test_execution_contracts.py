@@ -629,7 +629,7 @@ def test_revision_two_to_three_preserves_legacy_records(tmp_path):
         assert (
             conn.execute(text("SELECT MAX(version) FROM schema_revisions")).scalar_one()
             == REVISION
-            == 4
+            == 5
         )
         assert conn.execute(text("SELECT payload FROM records")).scalar_one() == "preserved"
     engine.dispose()

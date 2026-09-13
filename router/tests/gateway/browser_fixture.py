@@ -58,6 +58,7 @@ def create_fixture_app():
     state = next(upstream)
     services = product_services(storage)
     manifest = None
+    advanced_catalogs, advanced_scenarios = (), ()
     if os.getenv("ROUTER_ACCEPTANCE_SETUP") == "synthetic-public-only":
         from .acceptance_setup import setup_scenarios
 
@@ -66,10 +67,15 @@ def create_fixture_app():
         from .stakeholder_setup import setup_demo
 
         manifest = setup_demo(fixture, state, services)
+        from .advanced_setup import setup_advanced
+
+        advanced_catalogs, advanced_scenarios = setup_advanced(fixture, state, services, manifest)
     execution = compose_execution(
         fixture.store, state.registry, services.selector, retention_seconds=3600
     )
     app = create_app(settings, services, execution, fixture.store)
+    app.state.intelligence_catalogs = {"alice": {c.id: c for c in advanced_catalogs}}
+    app.state.advanced_scenarios = advanced_scenarios
     if manifest:
         app.state.demo_manifest = manifest
         execution.gateway.retain_seconds = 3600

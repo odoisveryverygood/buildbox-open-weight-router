@@ -5,7 +5,12 @@ Canonical definitions: `router/backend/buildbox_router/execution_contracts.py`,
 `json_contracts.py`, `execution_ports.py`; generated `router/openapi.json` and
 `router/web/src/generated/api.ts`. Additional fields are forbidden, not discarded.
 Additive execution-schema 2.0 fields preserve existing text requests and policy
-digest defaults; database revision 4 adds the durable runtime queue.
+digest defaults; database revision 4 adds the durable runtime queue. Revision 5
+adds tenant/deployment/catalog-scoped health counters and recovery-probe state.
+The advanced intelligence endpoints are additive; see
+`OPEN_WEIGHT_ROUTER_ARCHITECTURE.md` for their complete route table. They create
+decisions/drafts, never permissions. Stages with strict post-output validators
+reject streaming before dispatch. Existing chat subset behavior is otherwise unchanged.
 
 ## Authentication and model identity
 

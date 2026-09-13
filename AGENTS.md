@@ -1,6 +1,17 @@
 # Buildbox workflow router — upgrade foundation
 
-## Active integration milestone 09
+## Active integration milestone 11 — workload intelligence
+
+The September 13 advanced-router request starts from verified commit
+`7bff0878d68921a11b6b35e238f8b6d1d66eddce` on the same integration branch.
+Read `docs/ADVANCED_ROUTER_AUDIT.md` and
+`docs/OPEN_WEIGHT_ROUTER_ARCHITECTURE.md`. Reuse the canonical policy, gateway,
+worker, catalog, storage and generated types. Intelligence previews, what-if and
+shadow policies never grant execution authority. Preserve the original A–C demo;
+synthetic D–J fixtures do not establish model quality or deployment access.
+The safety/authorization restrictions below are unchanged.
+
+## Prior integration foundation
 
 The user authorized central shared-contract/API/storage/worker and runtime/studio
 integration on `codex/router-v2-integration`, based on Prompt 6 commit

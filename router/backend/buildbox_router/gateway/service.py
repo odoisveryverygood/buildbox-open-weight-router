@@ -1,4 +1,4 @@
-"""Durable alias-pinned gateway; zero retries, no business tool execution."""
+"""Durable alias-pinned gateway; bounded pinned attempts, no business tool execution."""
 
 import asyncio
 import hashlib
@@ -15,6 +15,7 @@ from ..execution_contracts import (
     ChatCompletionChunk,
     ChatCompletionRequest,
     ChatMessage,
+    FailureKind,
     GatewayError,
     GatewayErrorDetail,
     ModelList,
@@ -28,6 +29,8 @@ from ..execution_contracts import (
 from ..execution_ports import InferenceCall, InferenceResult, RequestContext, RuntimeInferencePort
 from ..execution_security import validate_alias
 from ..json_contracts import parse_json
+from ..validators import validate_rules
+from .health import DeploymentHealth
 from .keys import ApplicationKeys
 from .preflight import Authority, AuthorizedStage, preflight
 
@@ -72,6 +75,28 @@ def fingerprint(*parts: object) -> str:
     return hashlib.sha256(
         json.dumps(parts, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+
+
+class RoutedFailure(DomainError):
+    def __init__(self, kind: FailureKind) -> None:
+        self.kind = kind
+        super().__init__(
+            ErrorCode.UNSUPPORTED, f"Stage stopped: {kind}; inspect accounted attempt", 503
+        )
+
+
+def failure_kind(error: BaseException) -> FailureKind:
+    if isinstance(error, RoutedFailure):
+        return error.kind
+    if isinstance(error, (asyncio.CancelledError, GeneratorExit)):
+        return "cancelled"
+    if isinstance(error, TimeoutError) or isinstance(error, DomainError) and error.status == 408:
+        return "timeout"
+    if isinstance(error, DomainError) and error.status == 429:
+        return "rate_limit"
+    if isinstance(error, DomainError) and error.status in (400, 403, 422):
+        return "capability_mismatch"
+    return "provider_failure"
 
 
 def failure(*, partial: bool = False) -> GatewayError:
@@ -276,6 +301,20 @@ class Gateway:
             }
         )
         self.store.save_attempt(context.tenant_id, done, 3)
+        policy = self.store.policy(context.tenant_id, trace.policy).policy
+        if policy.circuit_policy:
+            DeploymentHealth(self.store).observe(
+                context.tenant_id,
+                trace.configuration_id or "missing",
+                trace.catalog_id,
+                policy.circuit_policy,
+                failure=done.failure_kind
+                if done.failure_kind
+                else None
+                if not done.error
+                else "provider_failure",
+                latency_ms=done.latency_ms or 0,
+            )
         return done
 
     async def _infer_once(
@@ -285,6 +324,7 @@ class Gateway:
         request: ChatCompletionRequest,
         run_id: str,
         attempt_number: int = 1,
+        fallback_reason: FailureKind | None = None,
     ) -> tuple[InferenceResult, RunAttempt]:
         # A bounded callback is checked by shared transports between socket reads.
         deadline = min(
@@ -299,9 +339,17 @@ class Gateway:
                 raise TimeoutError("Sandbox stage deadline")
 
         context = replace(context, deadline=deadline, check_cancelled=check)
+        if authorized.policy.circuit_policy and not DeploymentHealth(self.store).acquire(
+            context.tenant_id,
+            authorized.stage.configuration_id or "missing",
+            authorized.policy.catalog_id,
+            authorized.policy.circuit_policy,
+        ):
+            raise RoutedFailure("circuit_open")
         started = time.perf_counter()
         upstream_started: float | None = None
         call, attempt = self.start(context, authorized, request, run_id, attempt_number)
+        attempt = attempt.model_copy(update={"fallback_reason": fallback_reason})
         result: InferenceResult | None = None
         try:
             check()
@@ -332,20 +380,30 @@ class Gateway:
             check()
             if result.completion.model != request.model or result.completion.usage != result.usage:
                 raise ValueError("Response identity/usage mismatch")
-            validate_completion(request, result.completion)
+            try:
+                validate_completion(request, result.completion)
+            except ValueError:
+                raise RoutedFailure("invalid_output") from None
+            observations = validate_rules(
+                result.completion.choices[0].message.content, authorized.stage.validation_rules
+            )
+            attempt = attempt.model_copy(update={"validation": observations})
+            if any(not item.passed for item in observations):
+                raise RoutedFailure("quality_validation")
             if result.usage and (
                 result.usage.completion_tokens > request.max_tokens
                 or result.usage.prompt_tokens > authorized.stage.budget.max_input_tokens
             ):
-                raise ValueError("Observed tokens exceeded dispatch bounds")
+                raise RoutedFailure("budget_violation")
             done = self.finish(context, attempt, result)
             if done.error:
-                raise DomainError(ErrorCode.UNSUPPORTED, "Accounting bound violated", 500)
+                raise RoutedFailure("budget_violation")
             return result, done
         except (asyncio.CancelledError, Exception) as error:
             now = time.perf_counter()
             attempt = attempt.model_copy(
                 update={
+                    "failure_kind": failure_kind(error),
                     "gateway_overhead_ms": max(
                         0, int(((upstream_started or now) - started) * 1000)
                     ),
@@ -367,9 +425,7 @@ class Gateway:
                 )
             if isinstance(error, asyncio.CancelledError):
                 raise
-            raise DomainError(
-                ErrorCode.UNSUPPORTED, "Inference failed; inspect pending accounting", 503
-            ) from None
+            raise RoutedFailure(failure_kind(error)) from None
 
     async def infer(
         self,
@@ -388,11 +444,21 @@ class Gateway:
             )
             try:
                 return await self._infer_once(
-                    attempt_context, candidate, request, run_id, index + 1
+                    attempt_context,
+                    candidate,
+                    request,
+                    run_id,
+                    index + 1,
+                    failure_kind(last) if last else None,
                 )
             except DomainError as error:
                 last = error
                 context.check_cancelled()
+                if (
+                    authorized.stage.fallback_on
+                    and failure_kind(error) not in authorized.stage.fallback_on
+                ):
+                    raise
         assert last is not None
         raise last
 
@@ -472,6 +538,13 @@ class Gateway:
             observation: StreamObservation | None = None
             try:
                 self.keys.check(context, "chat:complete", alias=value.model)
+                if candidate.policy.circuit_policy and not DeploymentHealth(self.store).acquire(
+                    context.tenant_id,
+                    candidate.stage.configuration_id or "missing",
+                    candidate.policy.catalog_id,
+                    candidate.policy.circuit_policy,
+                ):
+                    raise RoutedFailure("circuit_open")
                 call, attempt = self.start(
                     child, candidate, outgoing, context.request_id, index + 1
                 )
@@ -569,12 +642,21 @@ class Gateway:
                     return
             except (GeneratorExit, asyncio.CancelledError, Exception) as error:
                 if attempt:
+                    attempt = attempt.model_copy(update={"failure_kind": failure_kind(error)})
                     try:
                         self.store.trace(child.tenant_id, child.request_id)
                     except DomainError:
                         self.finish(child, attempt, None, partial=exposed)
                 interrupted = isinstance(error, (GeneratorExit, asyncio.CancelledError))
-                if exposed or interrupted or index + 1 == len(candidates):
+                if (
+                    exposed
+                    or interrupted
+                    or index + 1 == len(candidates)
+                    or (
+                        candidate.stage.fallback_on
+                        and failure_kind(error) not in candidate.stage.fallback_on
+                    )
+                ):
                     if self.store.request_state(context.tenant_id, context.request_id) == "running":
                         self.store.advance_request(
                             context.tenant_id, context.request_id, "running", "uncertain"

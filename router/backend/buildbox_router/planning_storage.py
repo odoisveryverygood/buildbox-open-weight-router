@@ -15,6 +15,67 @@ from .storage import SqlStorage
 
 
 class PlanningStorage(SqlStorage):
+    def publish_deterministic(
+        self, owner: str, value: PlanInput, result: PlanningResult
+    ) -> PlanView:
+        """Atomically save already-computed local planning, without stealing a worker job."""
+        now = time.time()
+        job = Job(
+            id=uuid4().hex,
+            workflow_id=result.plan_id,
+            workflow_version=result.version,
+            status="succeeded",
+            operation="planning",
+            phase="deterministic_local",
+            created_at=now,
+            updated_at=now,
+        )
+        plan = PlanVersion(
+            id=result.plan_id,
+            version=result.version,
+            input=value,
+            input_hash=hashlib.sha256(value.model_dump_json().encode()).hexdigest(),
+        )
+        rows = [
+            ("plan", plan.id, plan.version, plan.model_dump_json()),
+            ("planning_result", job.id, 1, result.model_dump_json()),
+        ]
+        if result.workflow:
+            rows.append(
+                (
+                    "workflow",
+                    result.workflow.id,
+                    result.workflow.version,
+                    result.workflow.model_dump_json(),
+                )
+            )
+        with self.engine.begin() as conn:
+            for kind, identifier, version, raw in rows:
+                conn.execute(
+                    text(
+                        "INSERT INTO records(kind,id,version,owner,payload) VALUES(:k,:i,:v,:o,:p)"
+                    ),
+                    {"k": kind, "i": identifier, "v": version, "o": owner, "p": raw},
+                )
+            conn.execute(
+                text(
+                    "INSERT INTO jobs(id,owner,status,updated_at,attempts,payload) VALUES(:i,:o,'succeeded',:n,0,:p)"
+                ),
+                {"i": job.id, "o": owner, "n": now, "p": job.model_dump_json()},
+            )
+            conn.execute(
+                text("INSERT INTO submissions VALUES(:o,:k,:h,:i,:v,:j)"),
+                {
+                    "o": owner,
+                    "k": job.id,
+                    "h": plan.input_hash,
+                    "i": plan.id,
+                    "v": plan.version,
+                    "j": job.id,
+                },
+            )
+        return self.view(owner, plan.id, plan.version)
+
     def submit(
         self,
         owner: str,
