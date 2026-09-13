@@ -269,6 +269,21 @@ def runtime_status(request: Request) -> RuntimeStatus:
     )
 
 
+from .demo_contracts import DemoManifest  # noqa: E402
+
+
+@studio.get("/demo", response_model=DemoManifest)
+def demo_manifest(request: Request) -> DemoManifest:
+    value = getattr(request.app.state, "demo_manifest", None)
+    if (
+        value is None
+        or request.state.owner != "alice"
+        or not repository(request).offline_contract_test
+    ):
+        raise DomainError(ErrorCode.NOT_FOUND, "Local stakeholder demo is not installed", 404)
+    return DemoManifest.model_validate(value)
+
+
 @studio.get("/usage")
 def usage_summary(
     request: Request, route: str = "", since: str = "", until: str = ""

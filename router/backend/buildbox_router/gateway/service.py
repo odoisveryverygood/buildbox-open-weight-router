@@ -535,6 +535,19 @@ class Gateway:
                     done = self.finish(child, attempt, result)
                     if done.error:
                         raise ValueError("Accounting ceiling exceeded")
+                    if self.retain_seconds:
+                        now = datetime.now(UTC)
+                        self.store.save_output(
+                            context.tenant_id,
+                            StoredOutput(
+                                id=context.request_id,
+                                run_id=context.request_id,
+                                node_id=authorized.stage.node_id,
+                                value=completion.model_dump(mode="json"),
+                                created_at=now,
+                                expires_at=now + timedelta(seconds=self.retain_seconds),
+                            ),
+                        )
                     self.store.advance_request(
                         context.tenant_id,
                         context.request_id,

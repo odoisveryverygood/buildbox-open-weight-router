@@ -30,3 +30,8 @@ worker:
 	uv run python -m buildbox_router.worker
 ui:
 	npm run dev
+
+.PHONY: demo
+demo:
+	uv sync --frozen
+	uv run python scripts/demo.py

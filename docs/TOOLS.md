@@ -1,5 +1,23 @@
 # Tool access and runtime boundary
 
+## Stakeholder demo refresh — September 13, 2026
+
+Canonical baseline remains `codex/router-v2-integration` at starting commit
+`1593d043a27847612d861b5d6dc482dc677fa936`; its ancestry already includes the other
+integration branch. No blind merge, new application or live integration was added.
+`make demo` uses isolated loopback ports 8032/5202 and a fresh temporary SQLite DB,
+built UI, real API/worker/guarded HTTP transport and explicitly synthetic upstream.
+The child environment excludes inherited provider credentials. Normal application
+composition does not expose the seeded demo manifest.
+
+Playwright browser interaction, screenshots and video recording worked. Python,
+TypeScript and cURL client checks ran against the synthetic HTTP upstream. Native
+PostgreSQL 17 clean and v2-to-v4 migration checks ran in new isolated local databases.
+No search, provider inference, cloud provisioning or deployment was performed.
+Existing development connector availability is historical, not runtime authority.
+Git has no remote; local compose configuration is not a deployment target.
+See `STAKEHOLDER_DEMO.md` for startup, exact limitations and current media paths.
+
 ## Prompt 09 refresh — September 10, 2026 (America/Los_Angeles)
 
 This section supersedes historical availability claims below for Prompt 09.

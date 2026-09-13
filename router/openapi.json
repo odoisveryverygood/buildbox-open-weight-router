@@ -1534,6 +1534,160 @@
         "title": "DecisionTrace",
         "type": "object"
       },
+      "DemoManifest": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "$ref": "#/components/schemas/CatalogSnapshot"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "fallback": {
+            "$ref": "#/components/schemas/DemoScenario"
+          },
+          "mode": {
+            "default": "synthetic_upstream",
+            "title": "Mode",
+            "type": "string"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/DemoScenario"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          }
+        },
+        "required": [
+          "catalog",
+          "scenarios",
+          "fallback"
+        ],
+        "title": "DemoManifest",
+        "type": "object"
+      },
+      "DemoScenario": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_id": {
+            "title": "Admission Id",
+            "type": "string"
+          },
+          "alias": {
+            "title": "Alias",
+            "type": "string"
+          },
+          "alternative": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "alternative_admission": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alternative Admission"
+          },
+          "assessments": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/Fact_bool_"
+              },
+              "type": "array"
+            },
+            "title": "Assessments",
+            "type": "object"
+          },
+          "execution_schema": {
+            "const": "2.0",
+            "default": "2.0",
+            "title": "Execution Schema",
+            "type": "string"
+          },
+          "expected": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "inputs": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Inputs",
+            "type": "object"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/VersionRef"
+          },
+          "requirements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Requirements",
+            "type": "array"
+          },
+          "selected": {
+            "title": "Selected",
+            "type": "string"
+          },
+          "task": {
+            "title": "Task",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tools": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ToolDefinition-Output"
+            },
+            "title": "Tools",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "task",
+          "requirements",
+          "policy",
+          "plan",
+          "alias",
+          "admission_id",
+          "selected",
+          "explanation",
+          "assessments",
+          "inputs",
+          "expected"
+        ],
+        "title": "DemoScenario",
+        "type": "object"
+      },
       "DraftPolicy": {
         "additionalProperties": false,
         "properties": {
@@ -9642,6 +9796,67 @@
           }
         },
         "summary": "Get Comparison",
+        "tags": [
+          "Sandbox studio v2"
+        ]
+      }
+    },
+    "/api/studio/demo": {
+      "get": {
+        "operationId": "demo_manifest_api_studio_demo_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoManifest"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Demo Manifest",
         "tags": [
           "Sandbox studio v2"
         ]

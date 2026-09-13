@@ -463,6 +463,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/studio/demo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Demo Manifest */
+        get: operations["demo_manifest_api_studio_demo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/studio/imports": {
         parameters: {
             query?: never;
@@ -1446,6 +1463,68 @@ export interface components {
             tenant_id: string;
             /** Transition Sequence */
             transition_sequence: number;
+        };
+        /** DemoManifest */
+        DemoManifest: {
+            catalog: components["schemas"]["CatalogSnapshot"];
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            fallback: components["schemas"]["DemoScenario"];
+            /**
+             * Mode
+             * @default synthetic_upstream
+             */
+            mode: string;
+            /** Scenarios */
+            scenarios: components["schemas"]["DemoScenario"][];
+        };
+        /** DemoScenario */
+        DemoScenario: {
+            /** Admission Id */
+            admission_id: string;
+            /** Alias */
+            alias: string;
+            alternative?: components["schemas"]["VersionRef"] | null;
+            /** Alternative Admission */
+            alternative_admission?: string | null;
+            /** Assessments */
+            assessments: {
+                [key: string]: components["schemas"]["Fact_bool_"][];
+            };
+            /**
+             * Execution Schema
+             * @default 2.0
+             * @constant
+             */
+            execution_schema: "2.0";
+            expected: components["schemas"]["JsonValue"];
+            /** Explanation */
+            explanation: string;
+            /** Id */
+            id: string;
+            /** Inputs */
+            inputs: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            plan: components["schemas"]["VersionRef"];
+            policy: components["schemas"]["VersionRef"];
+            /** Requirements */
+            requirements: string[];
+            /** Selected */
+            selected: string;
+            /** Task */
+            task: string;
+            /** Title */
+            title: string;
+            /**
+             * Tools
+             * @default []
+             */
+            tools: components["schemas"]["ToolDefinition-Output"][];
         };
         /** DraftPolicy */
         DraftPolicy: {
@@ -5747,6 +5826,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ComparisonResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    demo_manifest_api_studio_demo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoManifest"];
                 };
             };
             /** @description Bad Request */

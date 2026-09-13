@@ -57,14 +57,22 @@ def create_fixture_app():
     upstream = loopback.__wrapped__(fixture, patch)
     state = next(upstream)
     services = product_services(storage)
+    manifest = None
     if os.getenv("ROUTER_ACCEPTANCE_SETUP") == "synthetic-public-only":
         from .acceptance_setup import setup_scenarios
 
         setup_scenarios(fixture, state, services)
+    elif os.getenv("ROUTER_ACCEPTANCE_SETUP") == "stakeholder":
+        from .stakeholder_setup import setup_demo
+
+        manifest = setup_demo(fixture, state, services)
     execution = compose_execution(
         fixture.store, state.registry, services.selector, retention_seconds=3600
     )
     app = create_app(settings, services, execution, fixture.store)
+    if manifest:
+        app.state.demo_manifest = manifest
+        execution.gateway.retain_seconds = 3600
     app.state.synthetic_upstream = (upstream, patch)
     app.state.synthetic_context = (fixture, state)
 
