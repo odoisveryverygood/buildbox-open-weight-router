@@ -1,83 +1,53 @@
-# Buildbox workflow router · offline foundation
+# Buildbox router — development
 
-One React/TypeScript UI, one FastAPI/Pydantic backend package, one worker, and a
-PostgreSQL-compatible persistence layer. This is decision-support scaffolding,
-not a live advisor or workflow execution engine.
+FastAPI/Pydantic backend, React/TypeScript studio, a bounded workflow worker, and
+SQLite fixture or PostgreSQL persistence.
 
-## Run locally
-
-Prerequisites: Python 3.12+, `uv`, Node 22.12+ and npm. Initial dependency installation
-uses package registries; ordinary tests and the running fixture path require no
-internet, provider credentials, credits or external services.
+## Complete local sandbox
 
 ```sh
-cd router
+make demo
+```
+
+Open http://127.0.0.1:5202/?intelligence=1.
+Test login: `fixture` / `synthetic-test-password`.
+Original scenarios are at `/?demo=1`. Upstream responses are synthetic;
+no paid credentials are required. Restart for a fresh isolated database.
+
+For alternate ports:
+
+```sh
+BUILDBOX_DEMO_API_PORT=8038 BUILDBOX_DEMO_WEB_PORT=5208 make demo
+```
+
+## Development and checks
+
+Requires Python 3.12+, uv, Node 22.12+ and npm. From this directory:
+
+```sh
 make setup
 make migrate
-```
-
-Run three terminals, each from `router/`:
-
-```sh
-make api
-make worker
-make ui
-```
-
-Open http://127.0.0.1:5173. Select **Document triage**, save, wait for the worker,
-inspect evidence and export an inactive draft. The job URL survives refresh.
-The API's schema explorer is http://127.0.0.1:8000/docs.
-
-Default durable storage is **explicit SQLite fixture mode**, `.local/router.db`.
-No automatic database or live-to-fixture fallback occurs. `.env.example` documents
-environment variables; the application does not silently load `.env` files.
-
-## Local PostgreSQL
-
-PostgreSQL is the intended deployment database. For a working Docker installation:
-
-```sh
-docker compose up -d postgres
-export ROUTER_DATABASE_URL=postgresql+psycopg://router@127.0.0.1:55432/router_fixture
-make migrate
-make api
-```
-
-Export the same URL in the worker terminal. The isolated Compose database uses
-trust authentication on a loopback-only port and must **never** be deployed.
-Migrations use PostgreSQL SQL and an immutable-record trigger; SQLite has its own
-equivalent trigger. Local PostgreSQL execution remains unverified while the host's
-Docker image store reports I/O errors. No managed database was provisioned.
-
-## Checks
-
-```sh
-make generate
 make check
-make test-intelligence
-make test-research
-npm audit
+node web/tests/unit.cjs
+uv run python -m tests.gateway.client_smoke
 ```
 
-The integration suite includes durable reload in a new Python process, ownership,
-immutable versions, graph validation, zero/unknown semantics, hard filtering,
-job claims, evidence retrieval and safe draft exports. Tests use per-test temporary
-databases and reject outbound socket connections. Browser procedure and results:
-`../docs/handoffs/01-foundation.md`.
+For separate development services, run `make api`, `make worker`, and `make ui`
+in separate terminals. UI: http://127.0.0.1:5173; API schema:
+http://127.0.0.1:8000/docs. This default composition does not grant live inference;
+use `make demo` for fully seeded synthetic execution.
+
+`.env.example` documents configuration; environment files are not silently loaded.
+Tests use isolated databases and deny external network calls; selected transport
+tests explicitly allow one synthetic loopback server. Native PostgreSQL clean and
+v2→v5 upgrade checks passed. Never run clean-database checks against application data.
 
 ## Boundaries
 
-- Only the unchanged example is interpretable; other text returns material
-  clarification, not canned success. Constraints can be changed through the API.
-- All catalog entries, costs and evidence are synthetic. Unknown latency/hardware
-  is not converted into zero or a capability claim.
-- Evaluation returns a persisted `not_run` result with an unknown metric; no
-  invented score or paid model call. Ports are ready for controlled evaluation.
-- Policies contain configuration references, not endpoint URLs or credentials.
-  They stay `draft`, `active=false`, `production_write=false`.
-- Workflow versions, recommendations, snapshots, evaluations and policies are
-  append-only in the database. Job status is mutable with claim tokens and leases.
-- Local fixture ownership is not multi-user auth. Shared and live modes refuse
-  startup. Bind to loopback; never expose this foundation publicly.
+Keep test services on loopback. Real execution requires scoped authorization,
+approved provider targets/credentials, capability and privacy checks, license/access
+evidence, and bounded spending. Unknown charges remain unknown. Unreviewed tools,
+arbitrary code execution and production activation remain blocked.
 
-Contracts and lane instructions live in `../docs/`. No lane is started by setup.
+[Architecture](../docs/OPEN_WEIGHT_ROUTER_ARCHITECTURE.md) ·
+[Latest verification](../docs/handoffs/12-advanced-local-sandbox.md)
